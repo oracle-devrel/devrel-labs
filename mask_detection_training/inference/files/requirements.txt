@@ -1,4 +1,4 @@
 numpy==1.24.1
 opencv_python==4.7.0.68
 Pillow==9.4.0
-torch==1.11.0+cu113
+torch==1.13.1
