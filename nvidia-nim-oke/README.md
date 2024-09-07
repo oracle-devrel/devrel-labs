@@ -21,7 +21,7 @@ This is an illustration of how NIM works whenever we invoke a supported model on
 
 ![ngc architecture](./img/ngc_arch.PNG)
 
-[You can watch the solution's video here.]()
+[You can watch the solution's video here.](https://www.youtube.com/watch?v=XfvwXCJgM-M)
 
 ## 0. Prerequisites and docs
 
