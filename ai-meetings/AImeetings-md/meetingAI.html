@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>meetingAI.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="ai-meetings">AI Meetings</h1>
+<p>Welcome to this tutorial on building a web application using Visual Builder Cloud Service! In this tutorial, we'll embark on an exciting journey of leveraging cutting-edge technologies to enhances team meetings by using Oracle 23AI and OCI AI Services for seamless real-time audio transcription, efficient summarization, and easy interrogation of transcriptions. It extracts sentiment, reduces administrative tasks, and provides data-driven insights. This solution, turns meeting data into actionable intelligence and boosts overall productivity.</p>
+<h1 id="1-prepare-your-user"><strong>1. Prepare your user</strong></h1>
+<p>In Oracle Cloud Infrastructure (OCI), API keys are used for secure authentication when accessing OCI resources through REST APIs. OCI API keys consist of two parts: a Public key and a Private key. You use the OCI console to generate the Private/Public key pair.
+Generate API Keys using OCI Console
+To Generate the API Keys using OCI Console:</p>
+<ul>
+<li>Login into your OCI Account.
+<img src="ak1.png" alt="alt text"></li>
+<li>Click on the Profile icon at the top-right corner and select your Profile hyperlink.
+<img src="ak2.png" alt="alt text"></li>
+<li>Under Resources section at the bottom-left, select API Keys and then click Add API Key.
+<img src="ak3.png" alt="alt text"></li>
+<li>The Add API Key dialog is displayed. Select Generate API Key Pair to create a new key pair.
+<img src="ak4.png" alt="alt text"></li>
+<li>Click Download Private Key. A .pem file is saved to your local device. You do not need to download the public key and click Add button.
+<img src="ak5.png" alt="alt text"></li>
+</ul>
+<h1 id="2pick-you-compartment"><strong>2.Pick you compartment</strong></h1>
+<p>Identify the compartment you're currently working within. Navigate to 'Identity' -&gt; 'Compartments'. Locate your compartment and make a note of its OCID (Oracle Cloud Identifier)</p>
+<h1 id="3create-a-bucket-to-store-your-meetings"><strong>3.Create a bucket to store your meetings</strong></h1>
+<p>Create a bucket in your compartment. Navigate to 'Storage' -&gt; 'Object Storage &amp; Archive Storage' -&gt; 'Buckets, Click on &quot;Create bucket&quot; button, provide for instance AI_Meetings and click on &quot;Create&quot;.
+<img src="ak6.jpg" alt="alt text"></p>
+<h1 id="4open-visual-builder"><strong>4.Open Visual Builder</strong></h1>
+<h2 id="configure-access-to-rest-apis">Configure access to REST APIs</h2>
+<ul>
+<li>
+<p>Open Visual Builder and click on the &quot;New&quot; button. Provide a name and an ID, for example &quot;AI_Meetings&quot;. Click on finish.
+<img src="vbcs1.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>Now we are going to create a web application. Click on the first icon (web applications)
+<img src="vbcs2.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>Now, click on the &quot;+ Web Application&quot; button<br>
+<img src="vbcs3.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>Provide an Application name, for example &quot;AI_Meetings&quot;<br>
+<img src="vbcs4.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>Let's do the REST Service definition. Click on &quot;+ Service Connection&quot; button</p>
+</li>
+<li>
+<p><img src="vbcs5.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>Choose source &quot;Define by Endpoint&quot;<br>
+<img src="vbcs6.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>Provide the OCI Object Storage API Endpoint, being xx-xxxxxx-x your region (example: eu-frankfurt-1). For instance https://objectstorage.xx-xxxxxx-x.oraclecloud.com/n/{namespace}/b/AI_Meetings/o/{objectName}
+Enter the Backend Name and select 'Oracle Cloud Infrastructure API Signature 1.0' from the Authentication dropdown menu. Then, click on the pencil icon to proceed
+<img src="vbcs7.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>Enter the data obtained in step 1 in the format ocid.tenancy/ocid.user/key_fingerprint. Paste the content of the Private key file that you downloaded in the first step, then click the 'Save' button. Afterward, proceed by clicking on the 'Next' button
+<img src="vbcs8.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>Include a &quot;service name&quot; and choose &quot;Method&quot; GET and set &quot;Action Hint&quot; to &quot;Get one&quot;<br>
+<img src="vbcs9.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>Click on create to finish the wizard. Now, you have an Object Storage backend.</p>
+</li>
+</ul>
+<p>Let's go to add a new service to the recently created backend OCI Storage API to upload objects and create Preauthenticated requests.</p>
+<p>So, add a new service to the storage backend
+[URL]: vb-catalog://backends/objectStorage
+/n/{object_storage_namespace}/b/{bucket}/o/{object_name}</p>
+<ul>
+<li>&quot;Method&quot;: PUT</li>
+<li>&quot;Action hint&quot;: CREATE</li>
+<li>Dynamic Headers:
+<ul>
+<li>Content-Type required, type String</li>
+<li>Contetn-Disposition required as String</li>
+</ul>
+</li>
+<li>Request body media type: application/octect-stream</li>
+</ul>
+<p>Again, add a new service to the storage backend
+vb-catalog://backends/objectStorage
+/n/{object_storage_namespace}/b/{bucket}/p/</p>
+<ul>
+<li>
+<p>&quot;Method&quot;: POST</p>
+</li>
+<li>
+<p>&quot;Action hint&quot;: CREATE</p>
+</li>
+<li>
+<p>Dynamic Headers:</p>
+<ul>
+<li>Content-Type required, type String</li>
+<li>Content-Disposition required as String</li>
+</ul>
+</li>
+<li>
+<p>Request body media type: application/octect-stream</p>
+<p>Repeat the same operation to provide access to the OCI GenAI API to do summarization (select 'Oracle Cloud Infrastructure API Signature 1.0' from the Authentication dropdown menu as you have done with other backends)
+So, add a new backend and set the URL</p>
+<p>https://inference.generativeai.xx-xxxxxx-x.oci.oraclecloud.com/20231130/actions/generateText</p>
+</li>
+<li>
+<p>&quot;Method&quot;: POST</p>
+</li>
+<li>
+<p>&quot;Action hint&quot;: CREATE</p>
+</li>
+<li>
+<p>Request body:</p>
+</li>
+</ul>
+<pre class="hljs"><code><div>{
+&quot;compartmentId&quot;:&quot;ocid1.compartment.oc1..aaaaaaaxxxxxnauu3aajpx6pfgtwrxq&quot;,
+&quot;extractiveness&quot;: &quot;AUTO&quot;,
+&quot;format&quot;: &quot;AUTO&quot;,
+&quot;input&quot;: &quot;From the deluge on that election Sunday of 28 March, just one year ago today, to the sweltering epilogue of this scorching May, with the European elections on the horizon.........&quot;,
+&quot;length&quot;: &quot;AUTO&quot;,
+  &quot;servingMode&quot;: {
+        &quot;modelId&quot;: &quot;cohere.command&quot;,
+        &quot;servingType&quot;: &quot;ON_DEMAND&quot;
+    },
+&quot;temperature&quot;: 0.1
+}
+</div></code></pre>
+<ul>
+<li>Response body:</li>
+</ul>
+<pre class="hljs"><code><div>{
+    &quot;id&quot;: &quot;0fa30f70-xxxx-xxxx-xxxx-a1697b0d4d68&quot;,
+    &quot;summary&quot;: &quot;A year on from the 28th February coup attempt in Spain, the country is gearing up for European elections while the government continues to push through controversial legislation, such as the Amnesty Law, despite widespread opposition and protests. .........&quot;,
+    &quot;modelId&quot;: &quot;cohere.command&quot;,
+    &quot;modelVersion&quot;: &quot;15.6&quot;
+}
+</div></code></pre>
+<ul>
+<li>Repeat the same operation to provide access to the OCI Speech API to carry out the transcription. On this case we will be able to get transcription status (select 'Oracle Cloud Infrastructure API Signature 1.0' from the Authentication dropdown menu as you have done with other backends)
+So, add a new backend and set the URL
+(https://speech.aiservice.xx-xxxxxxxxx-x.oci.oraclecloud.com/20220101/transcriptionJobs/{transcriptionJobId})</li>
+</ul>
+<ul>
+<li>&quot;Method&quot;: GET</li>
+<li>&quot;Action hint&quot;: Get Many</li>
+<li>Request body:</li>
+</ul>
+<pre class="hljs"><code><div>{
+&quot;compartmentId&quot;:&quot;ocid1.compartment.oc1..aaaaaaaxxxxxnauu3aajpx6pfgtwrxq&quot;,
+&quot;extractiveness&quot;: &quot;AUTO&quot;,
+&quot;format&quot;: &quot;AUTO&quot;,
+&quot;input&quot;: &quot;From the deluge on that election Sunday of 28 March, just one year ago today, to the sweltering epilogue of this scorching May, with the European elections on the horizon.........&quot;,
+&quot;length&quot;: &quot;AUTO&quot;,
+  &quot;servingMode&quot;: {
+        &quot;modelId&quot;: &quot;cohere.command&quot;,
+        &quot;servingType&quot;: &quot;ON_DEMAND&quot;
+    },
+&quot;temperature&quot;: 0.1
+}
+</div></code></pre>
+<ul>
+<li>Response body:</li>
+</ul>
+<pre class="hljs"><code><div>{
+    &quot;id&quot;: &quot;ocid1.aispeechtranscriptionjob.oc1.eu-frankfurt-1.amaaaxxxxxxxxxthlmzclnsoq&quot;,
+    &quot;displayName&quot;: &quot;job-3b63a754-xxxx-xxxx-839e-d9c3cec24eac.mp3&quot;,
+    &quot;compartmentId&quot;: &quot;ocid1.compartment.oc1..aaaaaaaa4bz2p3xxxxxxxlnauu3aajpx6pfgtwrxq&quot;,
+    &quot;description&quot;: null,
+    &quot;modelDetails&quot;: {
+        &quot;modelType&quot;: &quot;WHISPER_MEDIUM&quot;,
+        &quot;domain&quot;: &quot;GENERIC&quot;,
+        &quot;languageCode&quot;: &quot;en&quot;,
+        &quot;transcriptionSettings&quot;: {
+            &quot;diarization&quot;: {
+                &quot;isDiarizationEnabled&quot;: true,
+                &quot;numberOfSpeakers&quot;: 2
+            },
+            &quot;additionalSettings&quot;: null
+        }
+    },
+    &quot;normalization&quot;: {
+        &quot;isPunctuationEnabled&quot;: true,
+        &quot;filters&quot;: []
+    },
+    &quot;timeAccepted&quot;: &quot;2024-05-23T10:35:27.390Z&quot;,
+    &quot;timeStarted&quot;: &quot;2024-05-23T10:35:27.656Z&quot;,
+    &quot;timeFinished&quot;: &quot;2024-05-23T10:37:55.651Z&quot;,
+    &quot;totalTasks&quot;: 1,
+    &quot;outstandingTasks&quot;: 0,
+    &quot;successfulTasks&quot;: 1,
+    &quot;ttlInDays&quot;: 90,
+    &quot;percentComplete&quot;: 0,
+    &quot;inputLocation&quot;: {
+        &quot;locationType&quot;: &quot;OBJECT_LIST_INLINE_INPUT_LOCATION&quot;,
+        &quot;objectLocations&quot;: [
+            {
+                &quot;namespaceName&quot;: &quot;wedoinfra&quot;,
+                &quot;bucketName&quot;: &quot;AI_Meetings&quot;,
+                &quot;objectNames&quot;: [
+                    &quot;3b63a754-xxxx-xxxx-xxxx-d9c3cec24eac.mp3&quot;
+                ]
+            }
+        ]
+    },
+    &quot;outputLocation&quot;: {
+        &quot;namespaceName&quot;: &quot;xxxxxxxx&quot;,
+        &quot;bucketName&quot;: &quot;AI_Meetings&quot;,
+        &quot;prefix&quot;: &quot;id8bb87ba3aa3f403c8fcd0ee3e924bf9b/job-amaaaaaaqtij3maawinnrnqxxxxxxxxxxxxjqh2x3fthlmzclnsoq/&quot;
+    },
+    &quot;createdBy&quot;: &quot;ocid1.user.oc1..aaaaaaaaexwxxxxxqf5ahow5hgf3tj4upskq&quot;,
+    &quot;additionalTranscriptionFormats&quot;: [],
+    &quot;lifecycleState&quot;: &quot;SUCCEEDED&quot;,
+    &quot;lifecycleDetails&quot;: null,
+    &quot;freeformTags&quot;: {},
+    &quot;definedTags&quot;: {
+        &quot;Audit&quot;: {
+            &quot;creator&quot;: &quot;oracleidentitycloudservice/xxxxxxxx@oracle.com at 2024-05-23T10:35:27.251Z&quot;
+        }
+    },
+    &quot;systemTags&quot;: {}
+}
+</div></code></pre>
+<p>Now let's goign to add a new service to the recently created backend OCI Speech API to request the transcription status.</p>
+<ul>
+<li>Now, add a new service connection using (vb-catalog://backends/speech/transcriptionJobs)</li>
+</ul>
+<ul>
+<li>&quot;Method&quot;: POST</li>
+<li>&quot;Action hint&quot;: Create</li>
+<li>Request body:</li>
+</ul>
+<pre class="hljs"><code><div>{
+&quot;compartmentId&quot;:&quot;ocid1.compartment.oc1..aaaaaaaa4bz2p36xc2wxxxxxxxxxxxnauu3aajpx6pfgtwrxq&quot;,
+&quot;displayName&quot;:&quot;name&quot;,
+&quot;inputLocation&quot;: {
+              &quot;locationType&quot;:&quot;OBJECT_LIST_INLINE_INPUT_LOCATION&quot;, 
+              &quot;objectLocations&quot;:
+                                    [{
+                                       &quot;bucketName&quot;:&quot;AI_Meetings&quot;, &quot;namespaceName&quot;:&quot;xxxxx&quot;, &quot;objectNames&quot;: [&quot;f93d5e52-xxxx-xxxx-xxxxx-907dd0e2cacc.mp3&quot;] 
+                                    }]
+                                
+                 },
+&quot;modelDetails&quot;: 
+   {
+     &quot;languageCode&quot;:&quot;en&quot;,
+      &quot;modelType&quot;: &quot;WHISPER_MEDIUM&quot;,
+     &quot;transcriptionSettings&quot;: {
+            &quot;diarization&quot;: {&quot;isDiarizationEnabled&quot;: true, &quot;numberOfSpeakers&quot;:2}
+       }
+   },
+&quot;outputLocation&quot;: {
+                    &quot;bucketName&quot;:&quot;AI_Meetings&quot;, &quot;namespaceName&quot;:&quot;xxxxxxx&quot;, &quot;prefix&quot;: &quot;idxxx&quot;
+                  }
+}
+</div></code></pre>
+<ul>
+<li>Response body:</li>
+</ul>
+<pre class="hljs"><code><div>{
+    &quot;id&quot;: &quot;ocid1.aispeechtranscriptionjob.oc1.eu-frankfurt-1.amaaaaaavfig65yack6kixxxxxxxxxqe3v6wedleiawpbufaa&quot;,
+    &quot;displayName&quot;: &quot;name&quot;,
+    &quot;compartmentId&quot;: &quot;ocid1.compartment.oc1..aaaaaaaaxxxxxwxxxxxxxxxxajpx6pfgtwrxq&quot;,
+    &quot;description&quot;: null,
+    &quot;modelDetails&quot;: {
+        &quot;modelType&quot;: &quot;WHISPER_MEDIUM&quot;,
+        &quot;domain&quot;: &quot;GENERIC&quot;,
+        &quot;languageCode&quot;: &quot;en&quot;,
+        &quot;transcriptionSettings&quot;: {
+            &quot;diarization&quot;: {
+                &quot;isDiarizationEnabled&quot;: true,
+                &quot;numberOfSpeakers&quot;: 2
+            },
+            &quot;additionalSettings&quot;: null
+        }
+    },
+    &quot;normalization&quot;: {
+        &quot;isPunctuationEnabled&quot;: true,
+        &quot;filters&quot;: []
+    },
+    &quot;timeAccepted&quot;: &quot;2024-03-18T18:36:29.364Z&quot;,
+    &quot;timeStarted&quot;: null,
+    &quot;timeFinished&quot;: null,
+    &quot;totalTasks&quot;: 1,
+    &quot;outstandingTasks&quot;: 1,
+    &quot;successfulTasks&quot;: 0,
+    &quot;ttlInDays&quot;: 90,
+    &quot;percentComplete&quot;: 0,
+    &quot;inputLocation&quot;: {
+        &quot;locationType&quot;: &quot;OBJECT_LIST_INLINE_INPUT_LOCATION&quot;,
+        &quot;objectLocations&quot;: [
+            {
+                &quot;namespaceName&quot;: &quot;wedoinfra&quot;,
+                &quot;bucketName&quot;: &quot;AI_Meetings&quot;,
+                &quot;objectNames&quot;: [
+                    &quot;idxxx/f93d5e52-b1fb-xxxx-xxxxx-907dd0e2cacc.mp3&quot;
+                ]
+            }
+        ]
+    },
+    &quot;outputLocation&quot;: {
+        &quot;namespaceName&quot;: &quot;wedoinfra&quot;,
+        &quot;bucketName&quot;: &quot;AI_Meetings&quot;,
+        &quot;prefix&quot;: &quot;idxxx/job-amaaaaaavfig65yaxxxxxx5zohqe3v6wedleiawpbufaa/&quot;
+    },
+    &quot;createdBy&quot;: &quot;ocid1.user.oc1..aaaaaaaaexwuvo3enpxxxxxxx5ahow5hgf3tj4upskq&quot;,
+    &quot;additionalTranscriptionFormats&quot;: [],
+    &quot;lifecycleState&quot;: &quot;ACCEPTED&quot;,
+    &quot;lifecycleDetails&quot;: null,
+    &quot;freeformTags&quot;: {},
+    &quot;definedTags&quot;: {
+        &quot;Oracle-Tags&quot;: {
+            &quot;CreatedBy&quot;: &quot;default/xxxxxxx@oracle.com&quot;,
+            &quot;CreatedOn&quot;: &quot;2024-03-18T18:36:29.266Z&quot;
+        }
+    },
+    &quot;systemTags&quot;: {}
+}
+</div></code></pre>
+<ul>
+<li>Repeat the same operation to provide access to the OCI Language API to analyze the transcription.Select 'Oracle Cloud Infrastructure API Signature 1.0' from the Authentication dropdown menu as you have done with other backends.
+So, add a new backend and set the URL
+(https://language.aiservice.xx-xxxxxx-x.oci.oraclecloud.com/20221001/actions/batchDetectLanguageSentiments)</li>
+</ul>
+<ul>
+<li>&quot;Method&quot;: POST</li>
+<li>&quot;Action hint&quot;: Create</li>
+<li>Request body:</li>
+</ul>
+<pre class="hljs"><code><div>{
+&quot;documents&quot;: [
+    {
+        &quot;key&quot; : &quot;doc1&quot;,
+        &quot;text&quot; : &quot;OCI recently added new services to existing compliance program including SOC, HIPAA, and ISO to enable our customers to solve their  use cases. We also released new white papers and guidance documents related to  Object Storage, the Australian Prudential Regulation Authority (APRA), and the Central Bank of Brazil. These resources help regulated customers better  understand how OCI supports their regional and industry-specific compliance  requirements. Not only are we expanding our number of compliance offerings and  regulatory alignments, we continue to add regions and services at a faster clip.&quot;
+    }
+]
+}
+</div></code></pre>
+<ul>
+<li>Response body:</li>
+</ul>
+<pre class="hljs"><code><div>{
+    &quot;documents&quot;: [
+        {
+            &quot;key&quot;: &quot;doc1&quot;,
+            &quot;documentSentiment&quot;: &quot;&quot;,
+            &quot;documentScores&quot;: {},
+            &quot;sentences&quot;: [],
+            &quot;aspects&quot;: [
+                {
+                    &quot;offset&quot;: 322,
+                    &quot;length&quot;: 9,
+                    &quot;text&quot;: &quot;resources&quot;,
+                    &quot;sentiment&quot;: &quot;Positive&quot;,
+                    &quot;scores&quot;: {
+                        &quot;Positive&quot;: 0.9814186299929331,
+                        &quot;Negative&quot;: 0.016609141881639276,
+                        &quot;Neutral&quot;: 0,
+                        &quot;Mixed&quot;: 0.001972228125427651
+                    }
+                }
+            ],
+            &quot;languageCode&quot;: &quot;en&quot;
+        }
+    ],
+    &quot;errors&quot;: []
+}
+</div></code></pre>
+<ul>
+<li>Finally let's go to add a new service to the recently created backend OCI Language API to detect pre-trained entities: (vb-catalog://backends/Language/batchDetectLanguageEntities)</li>
+</ul>
+<ul>
+<li>&quot;Method&quot;: POST</li>
+<li>&quot;Action hint&quot;: Get Many</li>
+<li>Request body:</li>
+</ul>
+<pre class="hljs"><code><div>{
+    &quot;documents&quot;: [
+       {            
+            &quot;key&quot;: &quot;doc1&quot;,             
+            &quot;text&quot;: &quot; The video demonstrates the capabilities of the Oracle Cloud Language Service. Language detection and text classification capabilities are shown using pre-trained models. The named entity recognition capability can extract entities like ..........&quot;         
+        }
+    ]
+}
+</div></code></pre>
+<ul>
+<li>Response body example:</li>
+</ul>
+<pre class="hljs"><code><div>{
+    &quot;documents&quot;: [
+        {
+            &quot;key&quot;: &quot;doc1&quot;,
+            &quot;entities&quot;: [
+                {
+                    &quot;offset&quot;: 1,
+                    &quot;length&quot;: 15,
+                    &quot;text&quot;: &quot;Red Bull Racing&quot;,
+                    &quot;type&quot;: &quot;ORGANIZATION&quot;,
+                    &quot;subType&quot;: null,
+                    &quot;score&quot;: 0.9914557536443075,
+                    &quot;metaInfo&quot;: null
+                },
+                {
+                    &quot;offset&quot;: 17,
+                    &quot;length&quot;: 5,
+                    &quot;text&quot;: &quot;Honda&quot;,
+                    &quot;type&quot;: &quot;ORGANIZATION&quot;,
+                    &quot;subType&quot;: null,
+                    &quot;score&quot;: 0.6515498757362366,
+                    &quot;metaInfo&quot;: null
+                },
+                {
+                    &quot;offset&quot;: 28,
+                    &quot;length&quot;: 9,
+                    &quot;text&quot;: &quot;four-time&quot;,
+                    &quot;type&quot;: &quot;QUANTITY&quot;,
+                    &quot;subType&quot;: null,
+                    &quot;score&quot;: 0.9998091459274292,
+                    &quot;metaInfo&quot;: [
+                        {
+                            &quot;offset&quot;: 28,
+                            &quot;length&quot;: 9,
+                            &quot;text&quot;: &quot;four-time&quot;,
+                            &quot;subType&quot;: &quot;UNIT&quot;,
+                            &quot;score&quot;: 0.9998091459274292
+                        }
+                    ]
+                },
+                {
+                    &quot;offset&quot;: 48,
+                    &quot;length&quot;: 5,
+                    &quot;text&quot;: &quot;World&quot;,
+                    &quot;type&quot;: &quot;LOCATION&quot;,
+                    &quot;subType&quot;: &quot;NON_GPE&quot;,
+                    &quot;score&quot;: 0.582543671131134,
+                    &quot;metaInfo&quot;: null
+                },
+                ...
+                ]
+
+</div></code></pre>
+<ul>
+<li>
+<p>Lastly add a custom endpoint to provide RAG capabilities around the transcription.</p>
+<ul>
+<li>Add the endpoint http://xxx.xx.xxx.xxx:8888/v2/answer/?conv_id={id}</li>
+<li>We will cover in another session how to create a RAG solution.</li>
+</ul>
+</li>
+<li>
+<p>So, finally your service connections will be something similar to this image:</p>
+<p><img src="vbcs10.jpg" alt="alt text"></p>
+</li>
+</ul>
+<h2 id="create-business-objects">Create business objects</h2>
+<ul>
+<li>Choose business objects panel and add two tables:
+<ul>
+<li>Meetings: add a string field like meetingName</li>
+<li>Transcriptions: add some string fields: jobID, jobName and status</li>
+</ul>
+</li>
+</ul>
+<p><img src="vbcs10b.jpg" alt="alt text"></p>
+<h2 id="build-the-web-app">Build the Web App</h2>
+<ul>
+<li>
+<p>First of all you must create some types &amp;  variables:</p>
+<ul>
+<li>Type tokenType is a object of spearkerIndex (number) and token (string)</li>
+<li>Define also following variables:
+<ul>
+<li>String type: filename, meetingName, jobIdName, jobStatus, parURL, outputlocation, transcriptionText, summaryText, mention, ...</li>
+<li>Boolean type: loading, uploadSuccess, meetingCreated, transcriptionTask, summaryStatus,  summary, spareTime, ragResponse, query,...</li>
+<li>Number: fileSize, nParticipants,meetingID, transcriptionID, jobId, positive, negative, mixed, neutral, ...</li>
+<li>String array: requirements, ...</li>
+<li>tokenType array: tokenArray, ...</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>In the components panel, search for &quot;file picker&quot; and drag it onto your canvas. To enhance its appearance, click on the grid layout and switch it to &quot;Flex&quot; mode (found in the properties panel). Set the &quot;Direction&quot; to &quot;vertical&quot; and justify it both &quot;center&quot; and &quot;middle&quot;. Next, navigate to the &quot;All&quot; tab, type &quot;style&quot; into the search bar, and provide some CSS styling such as &quot;margin-top:30px;&quot; to achieve the desired spacing. Drop a few components like images and texts.
+<img src="vbcs11.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>In the File Picker properties panel provided the supported files that your application will support.<br>
+<img src="vbcs12.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>In the file picker create an event. On this event, you will manage the file upload to the object storage.</p>
+</li>
+</ul>
+<pre class="hljs"><code><div>define([
+  'vb/action/actionChain',
+  'vb/action/actions',
+  'vb/action/actionUtils',
+], (
+  ActionChain,
+  Actions,
+  ActionUtils
+) =&gt; {
+  'use strict';
+
+  class FilePickerSelectChain extends ActionChain {
+
+    /**
+     * @param {Object} context
+     * @param {Object} params
+     * @param {object[]} params.files 
+     */
+    async run(context, { files }) {
+      const { $page, $flow, $application } = context;
+
+      $page.variables.loading = true;
+      let size=&quot;&quot;;
+      if(files[0].size === 0) size= '0 Bytes';
+      var k = 1000,
+        dm = 2,
+        sizes = ['Bytes', 'KB', 'MB', 'GB','TB', 'PB', 'EB', 'ZB', 'YB'],
+        i = Math.floor(Math.log(files[0].size) / Math.log(k));
+      size= parseFloat((files[0].size / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+      $page.variables.fileSize = size;
+
+    
+      function getExtension(fileName) {
+          if (typeof fileName !== 'string' || !fileName) {
+              return ''; // Returns an empty string if the input is invalid
+          }
+          const ultimoPunto = fileName.lastIndexOf(&quot;.&quot;);
+          if (ultimoPunto === -1) return ''; // Returns an empty string if there is no dot in the filename
+          return fileName.slice(ultimoPunto + 1);
+      }
+
+      function generateUUID() {
+          let dt = new Date().getTime();
+          const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+              const r = (dt + Math.random()*16)%16 | 0;
+              dt = Math.floor(dt/16);
+              return (c == 'x' ? r : (r&amp;0x3|0x8)).toString(16);
+          });
+          return uuid;
+      }
+
+    let uuid = generateUUID();
+
+    let ext = getExtension(files[0].name);
+  
+      $page.variables.filename =  uuid+&quot;.&quot;+ext;
+
+
+      const callRestStoragePutObjectResult = await Actions.callRest(context, {
+        endpoint: 'Storage/putObject',
+        uriParams: {
+          bucket: 'AI_Meetings',
+          'object_storage_namespace': '{your_namespace}',
+          'object_name': $page.variables.filename,
+        },
+        body: files[0],
+      });
+
+      if (callRestStoragePutObjectResult.status===200) {
+
+        $page.variables.uploadSuccess = true;
+      } else {
+        await Actions.fireNotificationEvent(context, {
+          summary: 'There was an error uploading the file',
+          displayMode: 'transient',
+          type: 'error',
+        });
+      }
+      $page.variables.loading = false;
+      return;
+    }
+  }
+
+  return FilePickerSelectChain;
+});
+</div></code></pre>
+<ul>
+<li>Drop a inpunt text to capture the meeting name and a button to create the meeting. So, you can associate a string variable to the input text (example meetingName). We will create the meeting metadata on the business object</li>
+<li>Associate an ojAction event to the button (it's the action chain):</li>
+</ul>
+<pre class="hljs"><code><div>
+define([
+  'vb/action/actionChain',
+  'vb/action/actions',
+  'vb/action/actionUtils',
+], (
+  ActionChain,
+  Actions,
+  ActionUtils
+) =&gt; {
+  'use strict';
+
+  class createMeeting extends ActionChain {
+
+    /**
+     * @param {Object} context
+     */
+    async run(context) {
+      const { $page, $flow, $application } = context;
+
+      if ($application.functions.isFormValid('oj-validation-group-upload')) {
+        $page.variables.loading = true;
+        let transcription = true;
+        let summarization = true;
+        let sentiment = true;
+        let temp = &quot;&quot;;
+        let internalM = true;
+        let meetingDesc =&quot;&quot;;
+         $page.variables.requirements.push(&quot;transcription&quot;,&quot;summarization&quot;,&quot;sentiment_analysis&quot;);
+
+
+    
+        const callRestBusinessObjectsCreateMeetingResult = await Actions.callRest(context, {
+          endpoint: 'businessObjects/create_Meetings',
+          body: {
+         &quot;internalMeeting&quot;:  internalM ,
+         &quot;meetingName&quot;:  $page.variables.meetingName ,
+         &quot;meetingDesc&quot;:  meetingDesc ,
+         &quot;speakersN&quot;:  $page.variables.nParticipants ,
+         &quot;speakersInvolved&quot;:  temp ,
+         &quot;transcription&quot;:  transcription ,
+         &quot;summarization&quot;: summarization,
+         &quot;sentiment&quot;:  sentiment ,
+         &quot;fname&quot; : $page.variables.filename,
+        },
+        });
+
+        if (callRestBusinessObjectsCreateMeetingResult.status===201) {
+
+          $page.variables.currentRequest = callRestBusinessObjectsCreateMeetingResult.body.id;
+          $page.variables.meetingID = callRestBusinessObjectsCreateMeetingResult.body.id;
+          $page.variables.meetingCreated = true;
+
+        $page.variables.transcriptionID =  $page.variables.meetingID;
+          await Actions.callChain(context, {
+            chain: 'createTranscriptionJob',
+          });
+
+          await Actions.fireNotificationEvent(context, {
+            summary: 'Your meeting has been created successfully',
+            displayMode: 'transient',
+            type: 'confirmation',
+          });
+        } else {
+          await Actions.fireNotificationEvent(context, {
+            summary: 'There was a problem creating your meeting',
+            type: 'warning',
+            displayMode: 'transient',
+          });
+        }
+      } else {
+        await Actions.fireNotificationEvent(context, {
+          summary: 'The Meeting name is mandatory',
+          displayMode: 'transient',
+          type: 'warning',
+        });
+      }
+
+      $page.variables.loading = false;
+
+      return;
+    }
+  }
+
+  return createMeeting;
+});
+
+</div></code></pre>
+<ul>
+<li>Now we will create another Action chain to create the transcription job using the Speech service.
+We will provide information as the compartment, bucket, object and we will update the Transcription table with the relevant information.</li>
+</ul>
+<pre class="hljs"><code><div>
+define([
+  'vb/action/actionChain',
+  'vb/action/actions',
+  'vb/action/actionUtils',
+], (
+  ActionChain,
+  Actions,
+  ActionUtils
+) =&gt; {
+  'use strict';
+
+  class createTranscriptionJob extends ActionChain {
+
+    /**
+     * @param {Object} context
+     */
+    async run(context) {
+      const { $page, $flow, $application } = context;
+
+      const callRestCreateJobPostTranscriptionJobsResult = await Actions.callRest(context, {
+        endpoint: 'CreateJob/postTranscriptionJobs',
+        body: {
+      &quot;compartmentId&quot;:&quot;ocid1.compartment.oc1..aaaaaaaa4bxxxxxxauu3aajpx6pfgtwrxq&quot;,
+      &quot;displayName&quot;:&quot;job-&quot;+$page.variables.filename,
+      &quot;inputLocation&quot;: {
+                    &quot;locationType&quot;:&quot;OBJECT_LIST_INLINE_INPUT_LOCATION&quot;, 
+                    &quot;objectLocations&quot;:
+                                          [{
+                                             &quot;bucketName&quot;:&quot;AI_Meetings&quot;, &quot;namespaceName&quot;:&quot;&lt;&lt;your_namespace&gt;&gt;&quot;, &quot;objectNames&quot;: [$page.variables.filename] 
+                                          }]
+                                      
+                       },
+      &quot;modelDetails&quot;: 
+         {
+           &quot;languageCode&quot;:&quot;en&quot;,
+            &quot;modelType&quot;: &quot;WHISPER_MEDIUM&quot;,
+           &quot;transcriptionSettings&quot;: {
+                  &quot;diarization&quot;: {
+                    &quot;isDiarizationEnabled&quot;: true
+                    }
+             }
+         },
+      &quot;outputLocation&quot;: {
+                          &quot;bucketName&quot;:&quot;AI_Meetings&quot;, &quot;namespaceName&quot;:&quot;&lt;your_namespace&gt;&quot;, &quot;prefix&quot;: &quot;id&quot;+$application.user.userId
+                        }
+      },
+      });
+
+      if (callRestCreateJobPostTranscriptionJobsResult.status===200 || callRestCreateJobPostTranscriptionJobsResult.status===201) {
+        $page.variables.jobIdName = callRestCreateJobPostTranscriptionJobsResult.body.displayName;
+        $page.variables.jobStatus = callRestCreateJobPostTranscriptionJobsResult.body.lifecycleState;
+        $page.variables.jobId = callRestCreateJobPostTranscriptionJobsResult.body.id;
+
+        const callRestBusinessObjectsCreateTranscriptionsResult = await Actions.callRest(context, {
+          endpoint: 'businessObjects/create_Transcriptions',
+          body: {
+        &quot;jobID&quot;: $page.variables.jobId,
+        &quot;jobNAME&quot;: $page.variables.jobIdName,
+        &quot;status&quot;: $page.variables.jobStatus
+        },
+        });
+
+        const callRestBusinessObjectsUpdateMeetingsResult = await Actions.callRest(context, {
+          endpoint: 'businessObjects/update_Meetings',
+          uriParams: {
+            'Meetings_Id': $page.variables.currentRequest,
+          },
+          body: {
+         &quot;transcriptionId&quot;: callRestBusinessObjectsCreateTranscriptionsResult.body.id
+        },
+        });
+
+        await Actions.fireNotificationEvent(context, {
+          summary: 'We are processing your request. It will take a while...',
+          type: 'info',
+          displayMode: 'transient',
+        });
+
+        return;
+      } else {
+        return;
+      }
+    }
+  }
+
+  return createTranscriptionJob;
+});
+
+</div></code></pre>
+<ul>
+<li>Due to it's a sync request, we are going to create a refresh button to check the current transcription status.
+<img src="vbcs13.jpg" alt="alt text">
+Crate an ojAction event asociated to the button to refresh the page</li>
+</ul>
+<pre class="hljs"><code><div>define([
+  'vb/action/actionChain',
+  'vb/action/actions',
+  'vb/action/actionUtils',
+], (
+  ActionChain,
+  Actions,
+  ActionUtils
+) =&gt; {
+  'use strict';
+
+  class ButtonActionRefresh extends ActionChain {
+
+    /**
+     * @param {Object} context
+     */
+    async run(context) {
+      const { $page, $flow, $application } = context;
+      window.location.href = window.location.href;
+    }
+  }
+
+  return ButtonActionRefresh;
+});
+</div></code></pre>
+<ul>
+<li>It's time to create an event listener to get the status also when your open the page. So create a vbEnter event with an Action Chain named loadData.
+<img src="vbcs14.jpg" alt="alt text"></li>
+</ul>
+<pre class="hljs"><code><div>define([
+  'vb/action/actionChain',
+  'vb/action/actions',
+  'vb/action/actionUtils',
+], (
+  ActionChain,
+  Actions,
+  ActionUtils
+) =&gt; {
+  'use strict';
+
+  class loadData extends ActionChain {
+
+    /**
+     * @param {Object} context
+     */
+    async run(context) {
+      const { $page, $flow, $application } = context;
+
+      if ($page.variables.meetingID &gt;0 ||  $page.variables.parURL) {
+      
+
+      $page.variables.loading = true;
+        $page.variables.uploadSuccess = true;
+        $page.variables.meetingCreated = true;
+
+      await Actions.callChain(context, {
+        chain: 'loadMeeting',
+      });
+
+        if (!($page.variables.transcriptionID &gt;0)) {
+          await Actions.fireNotificationEvent(context, {
+            summary: 'Attention',
+            message: 'You are trying to access a meeting that doesn\'t exist.',
+            displayMode: 'transient',
+            type: 'error',
+          });
+
+          const navigateToPageMainBrowseResult = await Actions.navigateToPage(context, {
+            page: 'main-browse',
+          });
+        }
+
+      const callRestBusinessObjectsGetTranscriptionsResult = await Actions.callRest(context, {
+        endpoint: 'businessObjects/get_Transcriptions',
+        uriParams: {
+          'Transcriptions_Id': $page.variables.transcriptionID,
+        },
+      });
+
+      $page.variables.jobId = callRestBusinessObjectsGetTranscriptionsResult.body.jobID;
+
+      const callRestCreateJobGetTranscriptionJobsResult = await Actions.callRest(context, {
+        endpoint: 'CreateJob/getTranscriptionJobs',
+        uriParams: {
+          transcriptionJobId: $page.variables.jobId,
+        },
+      });
+
+      $page.variables.jobStatus = callRestCreateJobGetTranscriptionJobsResult.body.lifecycleState;
+      $page.variables.jobCompletion = callRestCreateJobGetTranscriptionJobsResult.body.percentComplete;
+      $page.variables.outputlocation = callRestCreateJobGetTranscriptionJobsResult.body.outputLocation.prefix;
+
+
+      if (callRestBusinessObjectsGetTranscriptionsResult.body.status!==callRestCreateJobGetTranscriptionJobsResult.body.lifecycleState) {
+        const callRestBusinessObjectsUpdateTranscriptionsResult = await Actions.callRest(context, {
+          endpoint: 'businessObjects/update_Transcriptions',
+          uriParams: {
+            'Transcriptions_Id': $page.variables.transcriptionID,
+          },
+          body: {
+                    &quot;status&quot;:  $page.variables.jobStatus,
+                },
+        });
+      }
+
+      if (callRestCreateJobGetTranscriptionJobsResult.body.lifecycleState==='SUCCEEDED') {
+
+        const currentDate = new Date();
+        // Add 3 hours to the current time
+        currentDate.setHours(currentDate.getHours() + 3);
+        // Convert the date to RFC 3339 format
+        const rfc3339Date = currentDate.toISOString();
+        // Remove the milliseconds and 'Z' at the end, then append the timezone offset
+        const expirationTime = rfc3339Date.split('.')[0] + currentDate.toISOString().slice(19);
+
+        let urlTemp = $page.variables.outputlocation +'&lt;namespace&gt;_AI_Meetings_'+ callRestCreateJobGetTranscriptionJobsResult.body.inputLocation.objectLocations[0].objectNames[0]+'.json';
+        const callRestStorageCreatePARResult = await Actions.callRest(context, {
+          endpoint: 'Storage/createPAR',
+          uriParams: {
+            bucketName: 'AI_Meetings',
+            namespaceName: '&lt;namespace&gt;',
+          },
+          body: {
+        &quot;accessType&quot;: &quot;ObjectRead&quot;,
+        &quot;name&quot;: &quot;PARTest&quot;,
+        &quot;objectName&quot;: urlTemp,
+        &quot;timeExpires&quot;: expirationTime
+        },
+        });
+
+          $page.variables.spareTime = false;
+
+        $page.variables.parURL = callRestStorageCreatePARResult.body.fullPath;
+        let tokens=[];
+
+
+          async function procesarTranscripciones() {
+              try {
+                        // Get the JSON from the URL
+                        const respuesta = await fetch($page.variables.parURL);
+                        const datos = await respuesta.json();
+                        // Check if the JSON is in the expected format
+                        if (!datos.transcriptions || !Array.isArray(datos.transcriptions)) {
+                            console.error('The JSON is not in the expected format.');
+                            return;
+                        }
+                        const conversation = datos.transcriptions[0].transcription;
+                         $page.variables.transcriptionText = conversation;
+                        
+                  
+                        
+                        
+                        const speakers = datos.transcriptions[0].speakerCount;       
+                        $page.variables.nParticipants = speakers; 
+                        const callRestBusinessObjectsUpdateTranscriptionsResult = await Actions.callRest(context, {
+                            endpoint: 'businessObjects/update_Meetings',
+                            uriParams: {
+                                'Meetings_Id': $page.variables.meetingID,
+                            },
+                            body: {
+                                &quot;speakersN&quot;: Number(speakers),
+                            },
+                        });
+                        
+                        // Initialise an object to separate tokens by speaker
+                        const tokensBySpeaker = {};
+                        for (let i = 0; i &lt; speakers; i++) {
+                            tokensBySpeaker[`Speaker${i}`] = [];
+                        }
+                    
+                        
+                       tokens = datos.transcriptions[0].tokens;
+                   
+                        if (!tokens) {
+                            console.error('No tokens were found in the transcription');
+                            return;
+                        }
+                        
+                        // Iterate through tokens and sort them out
+                        for (const token of tokens) {
+                            if (tokensBySpeaker.hasOwnProperty(`Speaker${token.speakerIndex}`)) {
+                                tokensBySpeaker[`Speaker${token.speakerIndex}`].push(token.token);
+                            } 
+                        }
+                        
+                        
+                        // Print the results
+                        for (let i = 0; i &lt; speakers; i++) {
+                            console.log(`Tokens Speaker ${i}:`, tokensBySpeaker[`Speaker${i}`].join(' '));
+                        }
+                    
+                        return;
+                      
+                } catch (error) {
+                  // Error handling (e.g. network or parse problem)
+                  console.error('Error getting or processing JSON:', error);
+                  return false;
+                      }
+            }
+          
+            let result = await procesarTranscripciones();
+            let groupWords = await agruparPorSpeaker(tokens);
+            $page.variables.tokenArray=groupWords;
+        $page.variables.transcriptionTask = true;
+
+            function agruparPorSpeaker(tokens) {
+                  const agrupados = [];
+                  let currentSpeaker = null;
+                  let currentText = &quot;&quot;;
+
+                  tokens.forEach(token =&gt; {
+                      if (token.speakerIndex !== currentSpeaker) {
+                          if (currentSpeaker !== null) {
+                              agrupados.push({
+                                  speakerIndex: currentSpeaker,
+                                  token: currentText.trim()
+                              });
+                          }
+                          currentSpeaker = token.speakerIndex;
+                          currentText = token.token;
+                      } else {
+                          currentText += &quot; &quot; + token.token;
+                      }
+                  });
+
+                  if (currentSpeaker !== null) {
+                      agrupados.push({
+                          speakerIndex: currentSpeaker,
+                          token: currentText.trim()
+                      });
+                  }
+
+                  return agrupados;
+              }
+
+         await Actions.callChain(context, {
+        chain: 'sentimentDetection',
+      });
+
+      await Actions.callChain(context, {
+        chain: 'summarization',
+      });
+
+          await Actions.callChain(context, {
+            chain: 'ActionPeopleMentions',
+          });
+
+      $page.variables.loading=false;
+        
+      } else if (callRestCreateJobGetTranscriptionJobsResult.body.lifecycleState==='IN_PROGRESS') {
+          $page.variables.loading = true;
+          $page.variables.spareTime = true;
+
+      }
+    
+    
+
+    }
+    }
+  }
+
+  return loadData;
+});
+
+</div></code></pre>
+<ul>
+<li>
+<p>We need to create a few more action chains to request sentiment analysis, summarization and mentions.
+Please note that there are limitations on the size of the text to be summarised or analysed. So we will do chunking when necessary.</p>
+</li>
+<li>
+<p>Action chain for sentiment detection</p>
+</li>
+</ul>
+<pre class="hljs"><code><div>define([
+  'vb/action/actionChain',
+  'vb/action/actions',
+  'vb/action/actionUtils',
+], (
+  ActionChain,
+  Actions,
+  ActionUtils
+) =&gt; {
+  'use strict';
+
+  class sentimentDetection extends ActionChain {
+
+    /**
+     * @param {Object} context
+     */
+    async run(context) {
+      const { $page, $flow, $application } = context;
+      
+      $page.variables.loading = true;
+      await processSentimentAnalysis();
+      $page.variables.loading = false;
+    
+
+    async function processSentimentAnalysis() {
+      const text = $page.variables.transcriptionText;
+      const chunkSize = 4999; // Adjust based on API limits
+      const chunks = splitText(text, chunkSize);
+
+      const sentimentResults = await Promise.all(chunks.map(async (chunk, index) =&gt; {
+        return callSentimentAnalysisAPI(chunk, index);
+      }));
+
+      compileSentimentResults(sentimentResults);
+    }
+
+    function splitText(text, chunkSize) {
+      const chunks = [];
+      let startIndex = 0;
+
+      while (startIndex &lt; text.length) {
+        let endIndex = startIndex + chunkSize;
+        if (endIndex &gt; text.length) {
+          endIndex = text.length;
+        } else {
+          while (endIndex &gt; startIndex &amp;&amp; text[endIndex] !== ' ') {
+            endIndex--;
+          }
+
+          if (endIndex === startIndex) {
+            endIndex = Math.min(startIndex + chunkSize, text.length);
+          }
+        }
+
+        const chunk = text.slice(startIndex, endIndex).trim();
+        chunks.push(chunk);
+        startIndex = endIndex + 1;
+      }
+
+      return chunks;
+    }
+
+    async function callSentimentAnalysisAPI(text, index) {
+      return Actions.callRest(context, {
+        endpoint: 'SentimentAnalysis/postBatchDetectLanguageSentiments',
+        body: {
+          documents: [
+            {
+              key: `doc${index}`,
+              text: text,
+            },
+          ],
+        },
+        uriParams: {
+          level: 'SENTENCE',
+        },
+      });
+    }
+
+
+function compileSentimentResults(results) {
+  let allSentiments = [];
+  let totalPositive = 0;
+  let totalNegative = 0;
+  let totalNeutral = 0;
+  let totalMixed = 0;
+  let count = 0;
+
+  results.forEach(result =&gt; {
+    if (result.status === 200) {
+      try {
+        const documentSentiment = result.body.documents[0].documentSentiment;
+        const scores = result.body.documents[0].documentScores;
+
+        totalPositive += scores.Positive;
+        totalNegative += scores.Negative;
+        totalNeutral += scores.Neutral;
+        totalMixed += scores.Mixed;
+        count++;
+
+        const data = result.body.documents[0].sentences;
+        const processedData = data.map(item =&gt; {
+          const scores = item.scores;
+          const highestScore = Object.keys(scores).reduce((a, b) =&gt; scores[a] &gt; scores[b] ? a : b);
+          return {
+            sentence: item.text,
+            sentiment: item.sentiment,
+            value: (scores[highestScore] * 100).toFixed(2) // Convert to percentage and round to two decimals
+          };
+        });
+        allSentiments = allSentiments.concat(processedData);
+      } catch (error) {
+        Actions.fireNotificationEvent(context, {
+          summary: 'Attention',
+          message: 'There was an error processing the sentiment data',
+          displayMode: 'transient',
+          type: 'warning',
+        });
+      }
+    }
+  });
+
+  // Calculate averages
+  if (count &gt; 0) {
+    $page.variables.positive = (totalPositive / count).toFixed(2);
+    $page.variables.negative = (totalNegative / count).toFixed(2);
+    $page.variables.neutral = (totalNeutral / count).toFixed(2);
+    $page.variables.mixed = (totalMixed / count).toFixed(2);
+
+    $page.variables.chartDataArray[0].value = $page.variables.positive ;
+    $page.variables.chartDataArray[1].value = $page.variables.negative ;
+    $page.variables.chartDataArray[2].value = $page.variables.neutral ;
+    $page.variables.chartDataArray[3].value = $page.variables.mixed ;
+ 
+  }
+
+  $page.variables.tableArray = allSentiments;
+}
+
+  }
+  }
+  return sentimentDetection;
+});
+
+</div></code></pre>
+<ul>
+<li>Action chain for summarization. We will do chunking too.</li>
+</ul>
+<pre class="hljs"><code><div>define([
+  'vb/action/actionChain',
+  'vb/action/actions',
+  'vb/action/actionUtils',
+], (
+  ActionChain,
+  Actions,
+  ActionUtils
+) =&gt; {
+  'use strict';
+
+  class SummarizationChunks extends ActionChain {
+
+    /**
+     * @param {Object} context
+     */
+    async run(context) {
+      const { $page, $flow, $application } = context;
+      
+      
+      async function splitText(text, chunkSize) {
+      const chunks = [];
+      let startIndex = 0;
+      
+      while (startIndex &lt; text.length) {
+        let endIndex = startIndex + chunkSize;
+      
+        if (endIndex &gt; text.length) {
+          endIndex = text.length;
+        } else {
+          while (endIndex &gt; startIndex &amp;&amp; text[endIndex] !== ' ') {
+            endIndex--;
+          }
+      
+          if (endIndex === startIndex) {
+            endIndex = Math.min(startIndex + chunkSize, text.length);
+          }
+        }
+      
+        const chunk = text.slice(startIndex, endIndex).trim();
+        chunks.push(chunk);
+        startIndex = endIndex + 1;
+      }
+      
+      return chunks;
+          }
+      
+          async function summarizeText(text) {
+                const chunkSize = 3500; // Example chunk size
+                const chunks = await splitText(text, chunkSize);
+                
+                const summaries = await Promise.all(chunks.map(async chunk =&gt; {
+                return await summarizeChunk(chunk);
+                }));
+                
+                const combinedSummary = summaries.join(' ');
+                return combinedSummary;
+          }
+      
+          async function summarizeChunk(text) {
+            const callRestSummarizationPostSummarizeTextResult = await Actions.callRest(context, {
+                endpoint: 'Summarization/postSummarizeText',
+                body: {
+                &quot;compartmentId&quot;: &quot;ocid1.compartment.oc1..aaaaaaaa4bz2p36xc2wxxxxxxxx5jmm5gtlnauu3aajpx6pfgtwrxq&quot;,
+                &quot;extractiveness&quot;: $page.variables.extractiveness,
+                &quot;format&quot;: $page.variables.format,
+                &quot;input&quot;: text,
+                &quot;length&quot;: $page.variables.length,
+                &quot;servingMode&quot;: {
+                    &quot;modelId&quot;: &quot;cohere.command&quot;,
+                    &quot;servingType&quot;: &quot;ON_DEMAND&quot;
+                },
+                &quot;temperature&quot;: 0.0
+                },
+            });
+            return callRestSummarizationPostSummarizeTextResult.body.summary;
+          }
+      
+          async function startSummarization() {
+                const text = $page.variables.transcriptionText; 
+                let result = await summarizeText(text);
+                console.log(&quot;Result: &quot; + result);
+                $page.variables.summaryText=result;
+          }
+
+
+
+            const size = $page.variables.transcriptionText.length;
+            if (size &lt; 250) {
+                $page.variables.minimumSize = true;
+                $page.variables.summaryStatus = true;
+                return;
+            }
+
+
+    if (size &lt; 3500) {
+            $page.variables.loading = true;
+              const callRestSummarizationPostSummarizeTextResult3 = await Actions.callRest(context, {
+            endpoint: 'Summarization/postSummarizeText',
+            body: {
+              &quot;compartmentId&quot;: &quot;ocid1.compartment.oc1..aaaaaaaa4bz2p36xcxxxxxxajpx6pfgtwrxq&quot;,
+              &quot;extractiveness&quot;: $page.variables.extractiveness,
+              &quot;format&quot;: $page.variables.format,
+              &quot;input&quot;: $page.variables.transcriptionText,
+              &quot;length&quot;: $page.variables.length,
+              &quot;servingMode&quot;: {
+                &quot;modelId&quot;: &quot;cohere.command&quot;,
+                &quot;servingType&quot;: &quot;ON_DEMAND&quot;
+              },
+              &quot;temperature&quot;: 0.0
+            },
+          });
+          $page.variables.summaryText=callRestSummarizationPostSummarizeTextResult3.body.summary;
+            $page.variables.loading = false;
+            $page.variables.summaryStatus = true;
+            return;
+      }else{
+          $page.variables.loading = true;
+          await startSummarization(context);
+          const callRestSummarizationPostSummarizeTextResult2 = await Actions.callRest(context, {
+            endpoint: 'Summarization/postSummarizeText',
+            body: {
+                &quot;compartmentId&quot;: &quot;ocid1.compartment.oc1..aaaaaaaa4bz2p36xc2wxxxxxxx5gtlnauu3aajpx6pfgtwrxq&quot;,
+                &quot;extractiveness&quot;: $page.variables.extractiveness,
+                &quot;format&quot;: $page.variables.format,
+                &quot;input&quot;: $page.variables.summaryText,
+                &quot;length&quot;: $page.variables.length,
+                &quot;servingMode&quot;: {
+                  &quot;modelId&quot;: &quot;cohere.command&quot;,
+                  &quot;servingType&quot;: &quot;ON_DEMAND&quot;
+                },
+                &quot;temperature&quot;: 0.0
+              },
+              });
+            $page.variables.summaryText=callRestSummarizationPostSummarizeTextResult2.body.summary;
+            $page.variables.loading = false;
+            $page.variables.summaryStatus = true;
+            return;
+      }
+  }
+  }
+  return SummarizationChunks;
+  
+});
+
+</div></code></pre>
+<ul>
+<li>Action chain for mentions using AI Language</li>
+</ul>
+<pre class="hljs"><code><div>define([
+  'vb/action/actionChain',
+  'vb/action/actions',
+  'vb/action/actionUtils',
+], (
+  ActionChain,
+  Actions,
+  ActionUtils
+) =&gt; {
+  'use strict';
+
+  class ActionPeopleMentions extends ActionChain {
+
+    /**
+     * @param {Object} context
+     */
+    async run(context) {
+      const { $page, $flow, $application } = context;
+
+
+  async function startMentioning() {
+      const text = $page.variables.transcriptionText; // Ensure this is properly initialized and accessible
+      let result = await analyzeText(text);
+
+      console.log(&quot;Result: &quot; + result);
+    }
+    await startMentioning();
+    $page.variables.languageProcessingFinish=true;
+    $page.variables.loading =false;
+
+    async function splitText(text, chunkSize) {
+      const chunks = [];
+      let startIndex = 0;
+
+      while (startIndex &lt; text.length) {
+        let endIndex = startIndex + chunkSize;
+
+        if (endIndex &gt; text.length) {
+          endIndex = text.length;
+        } else {
+          while (endIndex &gt; startIndex &amp;&amp; text[endIndex] !== ' ') {
+            endIndex--;
+          }
+
+          if (endIndex === startIndex) {
+            endIndex = Math.min(startIndex + chunkSize, text.length);
+          }
+        }
+
+        const chunk = text.slice(startIndex, endIndex).trim();
+        chunks.push(chunk);
+        startIndex = endIndex + 1;
+      }
+
+      return chunks;
+    }
+
+
+    async function analyzeText(text) {
+      const chunkSize = 3500; // Example chunk size
+      const chunks = await splitText(text, chunkSize);
+
+      const analysis = await Promise.all(chunks.map(async chunk =&gt; {
+        return mentionAnalysis(chunk);
+      }));
+      return;
+    }
+    
+  
+  function processEntities(data) {   
+    try{ 
+        data.documents[0].entities.forEach(entity =&gt; {
+            if ((entity.type === &quot;PERSON&quot;) &amp;&amp; (entity.score&gt;0.7)) {
+                $page.variables.arrayMention.push(entity.text);
+            } else if ((entity.type === &quot;ORGANIZATION&quot;) &amp;&amp; (entity.score&gt;0.8)) {
+                $page.variables.arrayOrg.push(entity.text);
+            } else if ((entity.type === &quot;PRODUCT&quot;) &amp;&amp; (entity.score&gt;0.8)) {
+                $page.variables.arrayProduct.push(entity.text);
+            } else if ((entity.type === &quot;DATETIME&quot;) &amp;&amp; (entity.score&gt;0.8)) {
+                $page.variables.arrayDatetime.push(entity.text);
+            }else if ((entity.type === &quot;LOCATION&quot;) &amp;&amp; (entity.score&gt;0.8)) {
+                $page.variables.arrayLocation.push(entity.text);
+            }
+        })
+ } catch (error) {
+      console.error(error);
+ }
+
+    $page.variables.arrayMention = [...new Set($page.variables.arrayMention)];
+    $page.variables.arrayOrg = [...new Set($page.variables.arrayOrg)];
+    $page.variables.arrayProduct = [...new Set($page.variables.arrayProduct)];
+    $page.variables.arrayLocation = [...new Set($page.variables.arrayLocation)];
+    $page.variables.arrayDatetime = [...new Set($page.variables.arrayDatetime)];
+    
+    let json = {&quot;personEntities&quot;: $page.variables.arrayMention, &quot;orgEntities&quot;: $page.variables.arrayOrg};
+    return json; 
+}
+
+    async function mentionAnalysis(text) {
+       const callRestSentimentAnalysisDetectLanguageEntitiesResult = await Actions.callRest(context, {
+        endpoint: 'SentimentAnalysis/DetectLanguageEntities',
+        body: {
+          &quot;documents&quot;: [
+      {             &quot;key&quot;: &quot;doc1&quot;, &quot;text&quot;: text
+               }
+          ]
+      },
+      });
+      const callFunctionResult = processEntities(callRestSentimentAnalysisDetectLanguageEntitiesResult.body);
+      return true;
+    
+    }
+
+      return;
+    }
+  }
+  
+  return ActionPeopleMentions;
+});
+
+</div></code></pre>
+<ul>
+<li>
+<p>Now, let's drop and configure some components to show the information.
+<img src="drop.jpg" alt="alt text"></p>
+</li>
+<li>
+<p>Sample use case:
+<img src="sample.png" alt="alt text"></p>
+</li>
+<li>
+<p>If you want to import my project and start to use it, please first of all you must do some configurations.</p>
+<ul>
+<li>Edit server configurations to add your credentials (user ocid, user fingerprint, tenant ocid and your private certificate)</li>
+<li>Provide values to application variables: namespace, bucket &amp; your ocid compartmment.</li>
+</ul>
+</li>
+</ul>
+<h2 id="i-hope-you-liked-it-from-today-you-can-make-your-meetings-smarter">I hope you liked it. From today you can make your meetings smarter!</h2>
+<p>Author: Jesús Brasero</p>
+
+</body>
+</html>

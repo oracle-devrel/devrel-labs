@@ -1,0 +1,26 @@
+{
+    "documents": [
+        {
+            "key": "doc1",
+            "documentSentiment": "",
+            "documentScores": {},
+            "sentences": [],
+            "aspects": [
+                {
+                    "offset": 322,
+                    "length": 9,
+                    "text": "resources",
+                    "sentiment": "Positive",
+                    "scores": {
+                        "Positive": 0.9814186299929331,
+                        "Negative": 0.016609141881639276,
+                        "Neutral": 0,
+                        "Mixed": 0.001972228125427651
+                    }
+                }
+            ],
+            "languageCode": "en"
+        }
+    ],
+    "errors": []
+}

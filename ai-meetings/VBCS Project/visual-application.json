@@ -1,0 +1,13 @@
+{
+    "vbcs.dt.version": "20231205-24.04.3",
+    "dependencies": {
+        "upgrade": "micro",
+        "paths": {
+            "jet": "https://static.oracle.com/cdn/jet/15.1.5",
+            "telemetry": "https://static.oracle.com/cdn/trace/8.0.0",
+            "oracleImageGallery": "https://static.oracle.com/cdn/fnd/gallery/2404.0.1",
+            "visualRuntime": "https://static.oracle.com/cdn/vb/2404.5.0"
+        }
+    },
+    "source.version": "2404"
+}

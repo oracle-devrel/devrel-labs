@@ -1,0 +1,129 @@
+.chat-message {
+    padding: 10px;
+    margin: 5px;
+    border-radius: 10px;
+    max-width: 60%;
+    word-wrap: break-word;
+}
+
+.chat-message.You {
+    background-color: #DCF8C6; /* Verde claro como WhatsApp */
+    align-self: flex-end;
+    text-align: right;
+}
+
+.chat-message.AI {
+    background-color: #FFFFFF; /* Blanco */
+    align-self: flex-start;
+    text-align: left;
+}
+
+#chat-window {
+    display: flex;
+    flex-direction: column;
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 6px 20px rgba(0, 0, 0, 0.1); /* Sombra bonita y elevada */
+}
+
+.chat-t-message {
+    padding: 10px;
+    margin: 5px;
+    border-radius: 10px;
+    max-width: 60%;
+    word-wrap: break-word;
+}
+
+.chat-t-message.Speaker2 {
+    background-color: #DCF8C6; /* Verde claro como WhatsApp */
+    align-self: flex-end;
+    text-align: right;
+}
+
+.chat-t-message.Speaker1 {
+    background-color: #FFFFFF; /* Blanco */
+    align-self: flex-start;
+    text-align: left;
+}
+
+#chat-t-window {
+    display: flex;
+    flex-direction: column;
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 6px 20px rgba(0, 0, 0, 0.1); /* Sombra bonita y elevada */
+}
+
+
+button {
+  font-size: 16px;
+  padding: 10px 20px;
+  margin: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#startBtn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+#startBtn:hover {
+  background-color: #45a049;
+}
+
+#stopBtn {
+  background-color: #f44336;
+  color: white;
+}
+
+#stopBtn:hover {
+  background-color: #e53935;
+}
+
+#transcript {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #333;
+  white-space: pre-line;
+  text-align: left;
+  margin: 0 auto;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width:100%;
+  min-height: 100px;
+}
+
+#summary {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #333;
+  white-space: pre-line;
+  text-align: left;
+  margin: 0 auto;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width:100%;
+  min-height: 100px;
+}
+
+/* Media query para dispositivos móviles */
+@media (max-width: 600px) {
+  #transcript, #summary {
+    width: 90%; /* Ajusta el ancho según tus necesidades */
+  }
+}

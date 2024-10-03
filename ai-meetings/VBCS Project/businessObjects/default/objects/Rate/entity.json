@@ -1,0 +1,69 @@
+{
+    "fields": [
+        {
+            "type": "number",
+            "name": "id",
+            "internal": false,
+            "key": true,
+            "oid": "29ab525c-72b3-4146-b51c-4640c45516e4",
+            "required": true,
+            "unique": true,
+            "displayLabel": "Id"
+        },
+        {
+            "type": "datetime",
+            "name": "creationDate",
+            "internal": false,
+            "oid": "5ef94f0b-3732-42f3-a8af-4c6c2317ba0e",
+            "displayLabel": "Created",
+            "historyType": "timeCreated"
+        },
+        {
+            "type": "datetime",
+            "name": "lastUpdateDate",
+            "internal": false,
+            "oid": "8b8af324-249f-47b8-a05d-472c5377033d",
+            "displayLabel": "Last Updated",
+            "historyType": "timeUpdated"
+        },
+        {
+            "type": "string",
+            "name": "createdBy",
+            "internal": false,
+            "oid": "7852322d-c0e6-4f70-ab5d-2cebdebebcf4",
+            "displayLabel": "Created By",
+            "historyType": "createdBy"
+        },
+        {
+            "type": "string",
+            "name": "lastUpdatedBy",
+            "internal": false,
+            "oid": "8125a5de-4432-4208-85e4-c2b555adb316",
+            "displayLabel": "Last Updated By",
+            "historyType": "updatedBy"
+        },
+        {
+            "type": "number",
+            "name": "versionNumber",
+            "internal": false,
+            "oid": "8b9b5a65-2577-48e0-9401-796fa0865adf",
+            "displayLabel": "Version Number",
+            "historyType": "versionNumber"
+        },
+        {
+            "type": "number",
+            "name": "rate",
+            "oid": "60546998-b7c5-4ffa-a1ba-3233e92fa03d",
+            "displayLabel": "rate"
+        },
+        {
+            "type": "string",
+            "name": "feedback",
+            "oid": "95ede8a8-9907-4b6d-9124-30ccafe4a7f9",
+            "displayLabel": "feedback"
+        }
+    ],
+    "name": "Rate",
+    "oid": "47a0aaaa-6bef-482b-941b-306bc53dd8a3",
+    "displayLabel": "Rate"
+}

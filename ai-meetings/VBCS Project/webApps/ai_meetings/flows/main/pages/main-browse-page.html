@@ -1,0 +1,236 @@
+<div class="oj-flex oj-sm-justify-content-center" style="margin-top:30px;">
+  <div class="oj-panel oj-flex-item oj-panel-shadow-lg oj-sm-flex-initial" style="width:100%;max-width:1000px;">
+    <div class="oj-flex oj-sm-justify-content-flex-end">
+      <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial oj-sm-align-items-flex-end"
+          on-click="[[$listeners.flexClick2]]" style="margin-left:10px;">
+            <span class="oj-flex-item oj-sm-flex-initial oj-ux-ico-star" style="cursor:pointer;"></span>
+        </div>
+        <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial oj-sm-align-items-flex-end"
+          on-click="[[$listeners.flexClick]]" style="margin-left:10px;">
+            <span class="oj-flex-item oj-sm-flex-initial oj-ux-ico-veryhappy-outline" style="cursor:pointer;"></span>
+        </div>
+    </div>
+    <div class="oj-flex oj-sm-flex-direction-column oj-sm-align-items-center">
+        <div class="oj-flex-item oj-sm-flex-initial">
+            <oj-bind-if test="[[ true]]">
+                <h4 class="oj-header">AI Meetings</h4>
+            </oj-bind-if>
+        </div>
+            <div>
+                <img :src="[[ $flow.path + 'resources/images/artificial-intelligence-ai-icon.png' ]]" width="100"
+                  style="margin-left:30px;margin-right:30px;">
+        </div>
+        <div class="oj-sm-align-self-center oj-flex-item oj-sm-flex-initial">
+            <oj-bind-if test="[[ $application.responsive.smOnly ]]">
+                <div class="oj-flex oj-sm-justify-content-space-between oj-sm-only-flex-direction-column"
+                  style="min-height:100px;">
+                    <oj-button label="New Meeting" chroming="callToAction" class="oj-button-sm"
+                      on-oj-action="[[$listeners.buttonAction4]]">
+                        <span class="oj-ux-ico-new-application" slot="startIcon"></span>
+                    </oj-button>
+                    <oj-button label="Real time summarization" chroming="callToAction" class="oj-button-sm"
+                      on-oj-action="[[$listeners.buttonAction7]]">
+                        <span class="oj-ux-ico-chat-transfer" slot="startIcon"></span>
+                    </oj-button>
+                </div>
+            </oj-bind-if>
+        </div>
+    </div>
+    <div class="oj-flex oj-sm-justify-content-center oj-sm-flex-direction-column oj-sm-align-items-center"
+      style="padding-top:20px;margin-bottom:40px;">
+        <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-center">
+            <oj-bind-if test="[[ $application.responsive.smOnly ]]">
+                <div class="oj-flex oj-sm-justify-content-center">
+                    <div class="oj-flex-item oj-sm-flex-initial" style="font-size:8pt;">
+                        <oj-bind-text value="Swipe to actions"></oj-bind-text>
+                    </div>
+                </div>
+                <div class="oj-flex oj-sm-justify-content-center oj-sm-align-items-center">
+                    <oj-list-view class="oj-flex-item oj-listview-card-layout oj-sm-align-self-center"
+                      data="[[$variables.meetingsListSDP]]" style="margin-left:50px;" selection-mode="single">
+                        <template slot="itemTemplate">
+                            <li class="oj-swipeactions-container">
+                                <oj-swipe-actions class="oj-listview-item-layout"
+                                  on-oj-action="[[$listeners.ojSwipeActionsPerformed]]">
+                                    <oj-list-item-layout class="">
+                                        <div style="width:100%;">
+                                            <oj-label-value>
+                                                <oj-label slot="label">Name:</oj-label>
+                                                <div slot="value">
+                                                    <oj-bind-text value="[[ $current.data.meetingName ]]"></oj-bind-text>
+                                                </div>
+                                            </oj-label-value>
+                                        </div>
+                                        <div slot="secondary">
+                                            <oj-label-value>
+                                                <oj-label slot="label">Speakers</oj-label>
+                                                <div slot="value">
+                                                    <oj-bind-text value="[[ $current.data.speakersN ]]"></oj-bind-text>
+                                                </div>
+                                            </oj-label-value>
+                                        </div>
+                                        <div slot="tertiary">
+                                            <oj-label-value>
+                                                <oj-label slot="label">Creation date:</oj-label>
+                                                <oj-input-date readonly="true" value="{{ $current.data.creationDate }}"
+                                                  converter='{"type": "datetime", "options": {"pattern":"dd/MM/yy"}}'
+                                                  slot="value" id="creation_date"></oj-input-date>
+                                            </oj-label-value>
+                                        </div>
+                                    </oj-list-item-layout>
+                                    <template slot="end">
+                                        <oj-option value="delete" class="oj-swipeactions-danger">
+                                            <oj-bind-text value="Delete"></oj-bind-text>
+                                            <span slot="startIcon" class="oj-ux-ico-delete-all"></span>
+                                        </oj-option>
+                                        <oj-option value="view" class="oj-swipeactions-default">
+                                            <oj-bind-text value="View"></oj-bind-text>
+                                            <span slot="startIcon" class="oj-ux-ico-file-view-details"></span>
+                                        </oj-option>
+                                    </template>
+                                </oj-swipe-actions>
+                            </li>
+                        </template>
+                        <template slot="noData">
+                            <oj-bind-text value="There are no meetings yet."></oj-bind-text>
+                        </template>
+                    </oj-list-view>
+                </div>
+            </oj-bind-if>
+        </div>
+        <div class="oj-flex oj-flex-item oj-sm-flex-initial" style="margin-bottom:20px;">
+            <div class="oj-flex-item oj-sm-flex-initial">
+                <oj-bind-if test="[[ $application.responsive.mdUp ]]">
+                    <oj-table scroll-policy="loadMoreOnScroll" data="[[$variables.meetingsListSDP]]"
+                      columns='[[ [{"headerText":"Name","field":"meetingName","sortable":"disabled","width":$variables.width},{"headerText":"Speakers","field":"speakersN","sortable":"disabled","width":$variables.widthSpeakers},{"headerText":"Creation date","sortable":"disabled","template":"multiFieldCellTemplate3","width":$variables.widthCreation},{"sortable":"disabled","template":"delete"}] ]]'
+                      selection-mode.row="single" on-first-selected-row-changed="[[$listeners.tableFirstSelectedRow]]" >
+                        <template slot="detail">
+                            <oj-button label="Detail" chroming="danger" class="oj-button-sm" on-oj-action=""
+                              display="icons">
+                                <span class="oj-ux-ico-delete-all" slot="startIcon"></span>
+                            </oj-button>
+                        </template>
+                        <template slot="delete">
+                            <oj-bind-if test="[[ $application.responsive.mdUp ]]">
+                                <div>
+                                    <oj-button label="Detail" chroming="callToAction" class="oj-button-sm"
+                                      on-oj-action="[[$listeners.buttonAction6]]" display="icons">
+                                        <span class="oj-ux-ico-file-view-details" slot="startIcon"></span>
+                                    </oj-button>
+                                    <oj-button label="Delete" chroming="danger" class="oj-button-sm"
+                                      on-oj-action="[[$listeners.buttonAction5]]" display="icons">
+                                        <span class="oj-ux-ico-delete-all" slot="startIcon"></span>
+                                    </oj-button>
+                                </div>
+                            </oj-bind-if>
+                        </template>
+                        <template slot="multiFieldCellTemplate3">
+                            <oj-input-date-time value="[[ $current.row.creationDate ]]" readonly="true"
+                              converter='{"type": "datetime", "options": {"pattern":"MM/dd/yy"}}'></oj-input-date-time>
+                        </template>
+                        <template slot="noData">
+                            <oj-bind-text value="There are no meetings yet."></oj-bind-text>
+                        </template>
+                    </oj-table>
+                </oj-bind-if>
+            </div>
+        </div>
+        <div
+          class="oj-flex-item oj-sm-flex-initial oj-flex oj-sm-justify-content-space-between oj-sm-only-flex-direction-column oj-sm-align-self-center"
+          style="min-height:100px;">
+            <oj-button label="New Meeting" chroming="callToAction" class="oj-button-sm"
+              on-oj-action="[[$listeners.buttonAction4]]">
+                <span class="oj-ux-ico-new-application" slot="startIcon"></span>
+            </oj-button>
+        </div>
+    </div>
+  </div>
+</div>
+<oj-dialog dialog-title="Rate this app" id="oj-dialog--rate">
+  <div slot="body">
+    <div class="oj-flex oj-sm-flex-direction-column oj-sm-align-items-center" style="padding-top:10px;">
+        <oj-rating-gauge value="{{ $variables.rate }}" class="oj-flex-item" size="lg" changed-state.color="#FF0000"
+          selected-state.color="#FFFAFA"></oj-rating-gauge>
+        <oj-text-area label-hint="Any feedback?"
+          class="oj-form-control-width-md oj-form-control-max-width-md oj-flex-item oj-sm-flex-initial"
+          placeholder="Any feedback?" rows="3" style="padding-top:10px;" value="{{ $variables.feedback }}"></oj-text-area>
+    </div>
+  </div>
+  <div slot="footer">
+    <oj-button class="oj-button-sm" on-oj-action="[[$listeners.buttonAction2]]">Close
+        <span class="oj-ux-ico-close" slot="startIcon"></span>
+    </oj-button>
+    <oj-button class="oj-button-sm" on-oj-action="[[$listeners.buttonAction3]]" chroming="callToAction">Save
+        <span class="oj-ux-ico-save-and-close" slot="startIcon"></span>
+    </oj-button>
+  </div>
+</oj-dialog>
+
+
+
+
+
+
+<oj-dialog dialog-title="The Team: EMEA AI Specialist Team" id="oj-dialog">
+  <div slot="body">
+    <div class="oj-flex oj-sm-flex-direction-column" style="padding-top:20px;">
+        <div class="oj-flex oj-flex-item oj-sm-flex-initial oj-sm-align-items-center">
+            <div class="oj-flex-item oj-sm-flex-initial">
+                <img height="50" :src="[[ $flow.path + 'resources/images/alex.jpeg' ]]">
+            </div>
+            <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial">
+                <div class="oj-flex-item oj-sm-flex-initial" style="padding-left:10px;">
+                <oj-bind-text value="Alexandru Negrea"></oj-bind-text>
+                </div>
+                <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-center" style="padding-left:10px;">
+                <oj-bind-text value="AI and App Integration"></oj-bind-text>
+                </div>
+                <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-flex-start" style="padding-left:10px;">
+                <oj-bind-text value="Specialist Leader"></oj-bind-text>
+                </div>
+            </div>
+        </div>
+        <div class="oj-flex oj-flex-item oj-sm-flex-initial oj-sm-align-items-center" style="margin-top:10px;">
+            <div class="oj-flex-item oj-sm-flex-initial">
+                <img height="50" :src="[[ $flow.path + 'resources/images/luigi.jpeg' ]]">
+            </div>
+            <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial">
+                <div class="oj-flex-item oj-sm-flex-initial" style="padding-left:10px;">
+                <oj-bind-text value="Luigi Saeta"></oj-bind-text>
+                </div>
+                <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-center" style="padding-left:10px;">
+                <oj-bind-text value=" Gen AI Cloud Service Specialist"></oj-bind-text>
+                </div>
+            </div>
+        </div>
+        <div class="oj-flex oj-flex-item oj-sm-flex-initial oj-sm-align-items-center" style="margin-top:10px;">
+            <div class="oj-flex-item oj-sm-flex-initial">
+                <img height="50" :src="[[ $flow.path + 'resources/images/Marc.jpeg' ]]">
+            </div>
+            <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial">
+                <div class="oj-flex-item oj-sm-flex-initial" style="padding-left:10px;">
+                <oj-bind-text value="Marc Gueury"></oj-bind-text>
+                </div>
+                <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-center" style="padding-left:10px;">
+                <oj-bind-text value=" AI Cloud Service Specialist"></oj-bind-text>
+                </div>
+            </div>
+        </div>
+        <div class="oj-flex oj-flex-item oj-sm-flex-initial oj-sm-align-items-center" style="margin-top:10px;">
+            <div class="oj-flex-item oj-sm-flex-initial">
+                <img height="50" :src="[[ $flow.path + 'resources/images/jesus.jpeg' ]]">
+            </div>
+            <div class="oj-flex oj-sm-flex-direction-column"><div class="oj-flex-item oj-sm-flex-initial"
+                                                                 style="padding-left:10px;">
+                <oj-bind-text value="Jesús Brasero"></oj-bind-text>
+            </div>
+            <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-center" style="padding-left:10px;">
+                <oj-bind-text value=" AI Cloud Service Specialist"></oj-bind-text>
+            </div></div>
+        </div>
+    </div>
+  </div>
+  <div slot="footer">
+    <oj-button chroming="callToAction" on-oj-action="[[$listeners.buttonAction]]">Close</oj-button>
+  </div>
+</oj-dialog>

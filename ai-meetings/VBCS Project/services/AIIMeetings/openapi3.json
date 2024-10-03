@@ -1,0 +1,128 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "RAG",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "vb-catalog://backends/ragLuigi"
+        }
+    ],
+    "paths": {
+        "/v2/answer/": {
+            "post": {
+                "operationId": "post",
+                "parameters": [
+                    {
+                        "name": "conv_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number"
+                        },
+                        "x-vb": {
+                            "defaultValue": "1"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostRequest"
+                            },
+                            "examples": {
+                                "vb": {
+                                    "externalValue": "./examples/post/request_application_json_vb.json"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "Default response",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "vb": {
+                                        "externalValue": "./examples/post/response_default_application_json_vb.json"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-vb": {
+                    "actionHint": "getOne"
+                }
+            }
+        },
+        "/v2/summarize/": {
+            "post": {
+                "operationId": "postV2Summarize2",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostV2SummarizeRequest"
+                            },
+                            "examples": {
+                                "vb": {
+                                    "externalValue": "./examples/postV2Summarize/request_application_json_vb.json"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "Default response",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "vb": {
+                                        "externalValue": "./examples/postV2Summarize2/response_default_application_json_vb.json"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-vb": {
+                    "actionHint": "custom"
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "PostRequest": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "documents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "PostV2SummarizeRequest": {
+                "type": "object",
+                "properties": {
+                    "documents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

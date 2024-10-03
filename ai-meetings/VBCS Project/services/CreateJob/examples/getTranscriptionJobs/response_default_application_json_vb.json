@@ -1,0 +1,58 @@
+{
+    "id": "ocid1.aispeechtranscriptionjob.oc1.eu-frankfurt-1.amaaaaaaqtij3maawinnrnqbu6jhuft3r472crmi6wjqh2x3fthlmzclnsoq",
+    "displayName": "job-3b63a754-8214-4955-839e-d9c3cec24eac.mp3",
+    "compartmentId": "ocid1.compartment.oc1..aaaaaaaa4bz2p36xc2wvhqvxr65s22xmp5jmm5gtlnauu3aajpx6pfgtwrxq",
+    "description": null,
+    "modelDetails": {
+        "modelType": "WHISPER_MEDIUM",
+        "domain": "GENERIC",
+        "languageCode": "en",
+        "transcriptionSettings": {
+            "diarization": {
+                "isDiarizationEnabled": true,
+                "numberOfSpeakers": 2
+            },
+            "additionalSettings": null
+        }
+    },
+    "normalization": {
+        "isPunctuationEnabled": true,
+        "filters": []
+    },
+    "timeAccepted": "2024-05-23T10:35:27.390Z",
+    "timeStarted": "2024-05-23T10:35:27.656Z",
+    "timeFinished": "2024-05-23T10:37:55.651Z",
+    "totalTasks": 1,
+    "outstandingTasks": 0,
+    "successfulTasks": 1,
+    "ttlInDays": 90,
+    "percentComplete": 0,
+    "inputLocation": {
+        "locationType": "OBJECT_LIST_INLINE_INPUT_LOCATION",
+        "objectLocations": [
+            {
+                "namespaceName": "wedoinfra",
+                "bucketName": "AI_Meetings",
+                "objectNames": [
+                    "3b63a754-8214-4955-839e-d9c3cec24eac.mp3"
+                ]
+            }
+        ]
+    },
+    "outputLocation": {
+        "namespaceName": "wedoinfra",
+        "bucketName": "AI_Meetings",
+        "prefix": "id8bb87ba3aa3f403c8fcd0ee3e924bf9b/job-amaaaaaaqtij3maawinnrnqbu6jhuft3r472crmi6wjqh2x3fthlmzclnsoq/"
+    },
+    "createdBy": "ocid1.user.oc1..aaaaaaaaexwuvo3enpyxhncmhumlpwvjl5suvh2oqf5ahow5hgf3tj4upskq",
+    "additionalTranscriptionFormats": [],
+    "lifecycleState": "SUCCEEDED",
+    "lifecycleDetails": null,
+    "freeformTags": {},
+    "definedTags": {
+        "Audit": {
+            "creator": "oracleidentitycloudservice/jesus.brasero@oracle.com at 2024-05-23T10:35:27.251Z"
+        }
+    },
+    "systemTags": {}
+}

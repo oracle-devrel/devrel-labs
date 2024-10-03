@@ -1,0 +1,355 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Objectstorage Eu Frankfurt 1 Oraclecloud Com",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "vb-catalog://backends/objectStorage"
+        }
+    ],
+    "paths": {
+        "/n/{object_storage_namespace}/b/{bucket}/o/{object_name}": {
+            "parameters": [
+                {
+                    "name": "object_storage_namespace",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    },
+                    "x-vb": {
+                        "defaultValue": "wedoinfra"
+                    }
+                },
+                {
+                    "name": "bucket",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    },
+                    "x-vb": {
+                        "defaultValue": "AI_Meetings"
+                    }
+                },
+                {
+                    "name": "object_name",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    },
+                    "x-vb": {
+                        "defaultValue": "test.mp3"
+                    }
+                }
+            ],
+            "put": {
+                "operationId": "putObject",
+                "parameters": [
+                    {
+                        "name": "Content-Disposition",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true,
+                        "x-vb": {
+                            "defaultValue": "audio/mpeg"
+                        }
+                    },
+                    {
+                        "name": "content-type",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "x-vb": {
+                            "defaultValue": "application/json"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/octet-stream": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PutNObject_storage_namespaceBBucketOObject_nameRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {},
+                "x-vb": {
+                    "actionHint": "create"
+                }
+            }
+        },
+        "/n/{namespaceName}/b/{bucketName}/o/{objectName}": {
+            "parameters": [
+                {
+                    "name": "namespaceName",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    },
+                    "x-vb": {
+                    }
+                },
+                {
+                    "name": "bucketName",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    },
+                    "x-vb": {
+                    }
+                },
+                {
+                    "name": "objectName",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "get": {
+                "operationId": "getObject",
+                "responses": {
+                    "default": {
+                        "description": "Response for default",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetNNamespaceNameBBucketNameOObjectName"
+                                },
+                                "examples": {
+                                    "vb": {
+                                        "summary": "Example stored by VB User",
+                                        "externalValue": "./examples/getObject/response_default_application_json_vb.json"
+                                    }
+                                }
+                            }
+                        }
+                    }
+               },
+                "x-vb": {
+                    "actionHint": "getOne",
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    }
+                },
+                "parameters": []
+            }
+        },
+        "/n/{namespaceName}/b/{bucketName}/p/": {
+            "parameters": [
+                {
+                    "name": "namespaceName",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    },
+                    "x-vb": {
+                    }
+                },
+                {
+                    "name": "bucketName",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    },
+                    "x-vb": {
+                    }
+                }
+            ],
+            "post": {
+                "operationId": "createPAR",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostNNamespaceNameBBucketNamePRequest"
+                            },
+                            "examples": {
+                                "vb": {
+                                    "externalValue": "./examples/createPAR/request_application_json_vb.json"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "Response for default",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostNNamespaceNameBBucketNamePResponse"
+                                },
+                                "examples": {
+                                    "vb": {
+                                        "summary": "Example stored by VB User",
+                                        "externalValue": "./examples/createPAR/response_default_application_json_vb.json"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-vb": {
+                    "actionHint": "create"
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "PutNObject_storage_namespaceBBucketOObject_nameRequest": {
+                "type": "string",
+                "format": "binary"
+            },
+            "GetNNamespaceNameBBucketNameOObjectName": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "timeCreated": {
+                        "type": "string"
+                    },
+                    "modelDetails": {
+                        "type": "object",
+                        "properties": {
+                            "domain": {
+                                "type": "string"
+                            },
+                            "languageCode": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "audioFormatDetails": {
+                        "type": "object",
+                        "properties": {
+                            "format": {
+                                "type": "string"
+                            },
+                            "numberOfChannels": {
+                                "type": "integer"
+                            },
+                            "encoding": {
+                                "type": "string"
+                            },
+                            "sampleRateInHz": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "transcriptions": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "transcription": {
+                                    "type": "string"
+                                },
+                                "confidence": {
+                                    "type": "string"
+                                },
+                                "speakerCount": {
+                                    "type": "integer"
+                                },
+                                "tokens": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "token": {
+                                                "type": "string"
+                                            },
+                                            "startTime": {
+                                                "type": "string"
+                                            },
+                                            "endTime": {
+                                                "type": "string"
+                                            },
+                                            "confidence": {
+                                                "type": "string"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "speakerIndex": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "PostNNamespaceNameBBucketNamePRequest": {
+                "type": "object",
+                "properties": {
+                    "accessType": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "objectName": {
+                        "type": "string"
+                    },
+                    "timeExpires": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PostNNamespaceNameBBucketNamePResponse": {
+                "type": "object",
+                "properties": {
+                    "accessUri": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "accessType": {
+                        "type": "string"
+                    },
+                    "bucketListingAction": {
+                        "nullable": true
+                    },
+                    "objectName": {
+                        "type": "string"
+                    },
+                    "timeCreated": {
+                        "type": "string"
+                    },
+                    "timeExpires": {
+                        "type": "string"
+                    },
+                    "queryObjectDetails": {
+                        "nullable": true
+                    },
+                    "fullPath": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

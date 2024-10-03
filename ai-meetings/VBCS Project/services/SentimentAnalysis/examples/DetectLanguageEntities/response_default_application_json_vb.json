@@ -1,0 +1,73 @@
+{
+    "documents": [
+        {
+            "key": "doc1",
+            "entities": [
+                {
+                    "offset": 1,
+                    "length": 15,
+                    "text": "Red Bull Racing",
+                    "type": "ORGANIZATION",
+                    "subType": null,
+                    "score": 0.9914557536443075,
+                    "metaInfo": null
+                },
+                {
+                    "offset": 17,
+                    "length": 5,
+                    "text": "Honda",
+                    "type": "ORGANIZATION",
+                    "subType": null,
+                    "score": 0.6515498757362366,
+                    "metaInfo": null
+                },
+                {
+                    "offset": 28,
+                    "length": 9,
+                    "text": "four-time",
+                    "type": "QUANTITY",
+                    "subType": null,
+                    "score": 0.9998091459274292,
+                    "metaInfo": [
+                        {
+                            "offset": 28,
+                            "length": 9,
+                            "text": "four-time",
+                            "subType": "UNIT",
+                            "score": 0.9998091459274292
+                        }
+                    ]
+                },
+                {
+                    "offset": 48,
+                    "length": 5,
+                    "text": "World",
+                    "type": "LOCATION",
+                    "subType": "NON_GPE",
+                    "score": 0.582543671131134,
+                    "metaInfo": null
+                },
+                {
+                    "offset": 80,
+                    "length": 27,
+                    "text": "Oracle Cloud Infrastructure",
+                    "type": "ORGANIZATION",
+                    "subType": null,
+                    "score": 0.998045802116394,
+                    "metaInfo": null
+                },
+                {
+                    "offset": 109,
+                    "length": 3,
+                    "text": "OCI",
+                    "type": "ORGANIZATION",
+                    "subType": null,
+                    "score": 0.9986366033554077,
+                    "metaInfo": null
+                }
+            ],
+            "languageCode": "en"
+        }
+    ],
+    "errors": []
+}

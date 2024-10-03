@@ -1,0 +1,230 @@
+{
+  "title": "Browse my meetings",
+  "description": "",
+  "variables": {
+    "feedback": {
+      "type": "string"
+    },
+    "meetingsListSDP": {
+      "type": "vb/ServiceDataProvider",
+      "defaultValue": {
+        "endpoint": "businessObjects/getall_Meetings",
+        "keyAttributes": "id",
+        "itemsPath": "items",
+        "responseType": "getallMeetingsResponse",
+        "filterCriterion": {
+          "op": "$or",
+          "criteria": [
+            {
+              "op": "$eq",
+              "attribute": "createdBy",
+              "value": "{{ $application.user.email }}"
+            },
+            {
+              "op": "$eq",
+              "attribute": "createdBy",
+              "value": "jesus.brasero@oracle.com"
+            }
+          ]
+        }
+      }
+    },
+    "rate": {
+      "type": "number",
+      "defaultValue": 1
+    },
+    "width": {
+      "type": "number"
+    },
+    "widthCreation": {
+      "type": "number"
+    },
+    "widthSpeakers": {
+      "type": "number"
+    }
+  },
+  "metadata": {},
+  "types": {
+    "@decorators.getallMeetingsResponse": {
+      "endpoint": "getall_Meetings",
+      "service": "businessObjects",
+      "path": "response"
+    },
+    "getallMeetingsResponse": {
+      "items": [
+        {
+          "createdBy": "string",
+          "creationDate": "string",
+          "id": "number",
+          "meetingName": "string",
+          "speakersN": "number",
+          "transcriptionId": "number",
+          "transcriptionIdObject": {
+            "items": [
+              {
+                "id": "number",
+                "status": "string"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "eventListeners": {
+    "buttonAction": {
+      "chains": [
+        {
+          "chain": "ButtonCloseDialogTeam"
+        }
+      ]
+    },
+    "buttonAction2": {
+      "chains": [
+        {
+          "chain": "ButtonCloseDialogRate"
+        }
+      ]
+    },
+    "buttonAction3": {
+      "chains": [
+        {
+          "chain": "ButtonSaveRate"
+        }
+      ]
+    },
+    "buttonAction4": {
+      "chains": [
+        {
+          "chain": "ButtonActionChain"
+        }
+      ]
+    },
+    "buttonAction5": {
+      "chains": [
+        {
+          "chain": "ButtonDeleteMeeting",
+          "parameters": {
+            "key": "{{ $current.key }}",
+            "index": "{{ $current.index }}",
+            "current": "{{ $current }}"
+          }
+        }
+      ]
+    },
+    "buttonAction6": {
+      "chains": [
+        {
+          "chain": "ButtonMeetingDetail",
+          "parameters": {
+            "key": "{{ $current.key }}",
+            "index": "{{ $current.index }}",
+            "current": "{{ $current }}"
+          }
+        }
+      ]
+    },
+    "buttonAction7": {
+      "chains": [
+        {
+          "chain": "ButtonActionChain1"
+        }
+      ]
+    },
+    "flexClick": {
+      "chains": [
+        {
+          "chain": "OpenDialogTeam"
+        }
+      ]
+    },
+    "flexClick2": {
+      "chains": [
+        {
+          "chain": "OpenDialogRate"
+        }
+      ]
+    },
+    "ojSwipeActionsPerformed": {
+      "chains": [
+        {
+          "chain": "ListViewSwipeActionChain",
+          "parameters": {
+            "navigationItem": "[[$event.target.value]]",
+            "meetingsId": "[[$current.key]]",
+            "rowData": "[[$current.data]]"
+          }
+        }
+      ]
+    },
+    "tableFirstSelectedRow": {
+      "chains": [
+        {
+          "chain": "TableFirstSelectedRowChangeChain",
+          "parameters": {
+            "rowKey": "{{$event.detail.value.key}}",
+            "rowData": "{{$event.detail.value.data}}"
+          }
+        }
+      ]
+    },
+    "vbEnter": {
+      "chains": [
+        {
+          "parameters": {},
+          "chain": "checkWidth"
+        }
+      ]
+    }
+
+  },
+  "imports": {
+    "components": {
+      "oj-button": {
+        "path": "ojs/ojbutton"
+      },
+      "oj-dialog": {
+        "path": "ojs/ojdialog"
+      },
+      "oj-input-date": {
+        "path": "ojs/ojdatetimepicker"
+      },
+      "oj-input-date-time": {
+        "path": "ojs/ojdatetimepicker"
+      },
+      "oj-label": {
+        "path": "ojs/ojlabel"
+      },
+      "oj-label-value": {
+        "path": "ojs/ojlabelvalue"
+      },
+      "oj-list-item-layout": {
+        "path": "ojs/ojlistitemlayout"
+      },
+      "oj-list-view": {
+        "path": "ojs/ojlistview"
+      },
+      "oj-option": {
+        "path": "ojs/ojoption"
+      },
+      "oj-rating-gauge": {
+        "path": "ojs/ojgauge"
+      },
+      "oj-swipe-actions": {
+        "path": "ojs/ojswipeactions"
+      },
+      "oj-table": {
+        "path": "ojs/ojtable"
+      },
+      "oj-text-area": {
+        "path": "ojs/ojinputtext"
+      }
+
+   },
+    "modules": {
+      "ojValidationDateTime": {
+        "path": "ojs/ojvalidation-datetime"
+      }
+    }
+  }
+}

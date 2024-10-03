@@ -1,0 +1,59 @@
+{
+    "id": "ocid1.aispeechtranscriptionjob.oc1.eu-frankfurt-1.amaaaaaavfig65yack6kiwu3eetpqlxebmqhp5zohqe3v6wedleiawpbufaa",
+    "displayName": "name",
+    "compartmentId": "ocid1.compartment.oc1..aaaaaaaa4bz2p36xc2wvhqvxr65s22xmp5jmm5gtlnauu3aajpx6pfgtwrxq",
+    "description": null,
+    "modelDetails": {
+        "modelType": "WHISPER_MEDIUM",
+        "domain": "GENERIC",
+        "languageCode": "en",
+        "transcriptionSettings": {
+            "diarization": {
+                "isDiarizationEnabled": true,
+                "numberOfSpeakers": 2
+            },
+            "additionalSettings": null
+        }
+    },
+    "normalization": {
+        "isPunctuationEnabled": true,
+        "filters": []
+    },
+    "timeAccepted": "2024-03-18T18:36:29.364Z",
+    "timeStarted": null,
+    "timeFinished": null,
+    "totalTasks": 1,
+    "outstandingTasks": 1,
+    "successfulTasks": 0,
+    "ttlInDays": 90,
+    "percentComplete": 0,
+    "inputLocation": {
+        "locationType": "OBJECT_LIST_INLINE_INPUT_LOCATION",
+        "objectLocations": [
+            {
+                "namespaceName": "wedoinfra",
+                "bucketName": "AI_Meetings",
+                "objectNames": [
+                    "idxxx/f93d5e52-b1fb-4981-8467-907dd0e2cacc.mp3"
+                ]
+            }
+        ]
+    },
+    "outputLocation": {
+        "namespaceName": "wedoinfra",
+        "bucketName": "AI_Meetings",
+        "prefix": "idxxx/job-amaaaaaavfig65yack6kiwu3eetpqlxebmqhp5zohqe3v6wedleiawpbufaa/"
+    },
+    "createdBy": "ocid1.user.oc1..aaaaaaaaexwuvo3enpyxhncmhumlpwvjl5suvh2oqf5ahow5hgf3tj4upskq",
+    "additionalTranscriptionFormats": [],
+    "lifecycleState": "ACCEPTED",
+    "lifecycleDetails": null,
+    "freeformTags": {},
+    "definedTags": {
+        "Oracle-Tags": {
+            "CreatedBy": "default/jesus.brasero@oracle.com",
+            "CreatedOn": "2024-03-18T18:36:29.266Z"
+        }
+    },
+    "systemTags": {}
+}
