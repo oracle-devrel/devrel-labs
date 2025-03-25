@@ -146,6 +146,13 @@ Then, we can start setting up the solution in our cluster by following these ste
   kubectl apply -n agentic-rag -f local-deployment/service.yaml
   ```
 
+  If for some reason, after applying these, there's a `NoSchedule` policy being triggered, you can untaint the nodes and try again:
+
+  ```bash
+  kubectl taint nodes -l node.kubernetes.io/instance-type=VM.GPU.A10.1 nvidia.com/gpu:NoSchedule-
+  # make sure to select your own instance shape if you're using a different type than A10 GPU.
+  ```
+
 5. Monitor the Deployment
 
   With the following commands, we can check the status of our pod:
