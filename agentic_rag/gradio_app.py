@@ -365,10 +365,17 @@ def create_interface():
                     repo_button = gr.Button("Process Repository")
                     repo_output = gr.Textbox(label="Repository Processing Output")
         
+        # Define collection choices once to ensure consistency
+        collection_choices = [
+            "PDF Collection",
+            "Repository Collection", 
+            "Web Knowledge Base",
+            "General Knowledge"
+        ]
+        
         with gr.Tab("Standard Chat Interface"):
             with gr.Row():
                 with gr.Column(scale=1):
-                    # Create model choices with quantization options
                     standard_agent_dropdown = gr.Dropdown(
                         choices=model_choices,
                         value=model_choices[0] if model_choices else None,
@@ -376,8 +383,8 @@ def create_interface():
                     )
                 with gr.Column(scale=1):
                     standard_collection_dropdown = gr.Dropdown(
-                        choices=["PDF Collection", "Repository Collection", "Web Knowledge Base", "General Knowledge"],
-                        value="PDF Collection",
+                        choices=collection_choices,
+                        value=collection_choices[0],
                         label="Select Knowledge Base",
                         info="Choose which knowledge base to use for answering questions"
                     )
@@ -386,7 +393,7 @@ def create_interface():
             > - This interface ALWAYS uses the selected collection without performing query analysis.
             > - "PDF Collection": Will ALWAYS search the PDF documents regardless of query type.
             > - "Repository Collection": Will ALWAYS search the repository code regardless of query type.
-            > - "Web Knowledge Base": Will ALWAYS search the web content regardless of query type.
+            > - "Web Knowledge Base": Will ALWAYS search web content regardless of query type.
             > - "General Knowledge": Will ALWAYS use the model's built-in knowledge without searching collections.
             """)
             standard_chatbot = gr.Chatbot(height=400)
@@ -398,7 +405,6 @@ def create_interface():
         with gr.Tab("Chain of Thought Chat Interface"):
             with gr.Row():
                 with gr.Column(scale=1):
-                    # Create model choices with quantization options
                     cot_agent_dropdown = gr.Dropdown(
                         choices=model_choices,
                         value=model_choices[0] if model_choices else None,
@@ -406,8 +412,8 @@ def create_interface():
                     )
                 with gr.Column(scale=1):
                     cot_collection_dropdown = gr.Dropdown(
-                        choices=["PDF Collection", "Repository Collection", "Web Knowledge Base", "General Knowledge"],
-                        value="PDF Collection",
+                        choices=collection_choices,
+                        value=collection_choices[0],
                         label="Select Knowledge Base",
                         info="Choose which knowledge base to use for answering questions"
                     )
@@ -416,7 +422,7 @@ def create_interface():
             > - When a specific collection is selected, the system will ALWAYS use that collection without analysis:
             >   - "PDF Collection": Will ALWAYS search the PDF documents.
             >   - "Repository Collection": Will ALWAYS search the repository code.
-            >   - "Web Knowledge Base": Will ALWAYS search the web content.
+            >   - "Web Knowledge Base": Will ALWAYS search web content.
             >   - "General Knowledge": Will ALWAYS use the model's built-in knowledge.
             > - This interface shows step-by-step reasoning and may perform query analysis when needed.
             """)
