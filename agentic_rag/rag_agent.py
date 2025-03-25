@@ -102,8 +102,13 @@ class RAGAgent:
                 logger.warning("No planner agent available, using direct response")
                 return self._generate_general_response(query)
             
-            plan = self.agents["planner"].plan(query, initial_context)
-            logger.info(f"Generated plan:\n{plan}")
+            try:
+                plan = self.agents["planner"].plan(query, initial_context)
+                logger.info(f"Generated plan:\n{plan}")
+            except Exception as e:
+                logger.error(f"Error in planning step: {str(e)}")
+                logger.info("Falling back to general response")
+                return self._generate_general_response(query)
             
             # Step 2: Research each step (if researcher is available)
             logger.info("Step 2: Research")
@@ -112,11 +117,21 @@ class RAGAgent:
                 for step in plan.split("\n"):
                     if not step.strip():
                         continue
-                    step_research = self.agents["researcher"].research(query, step)
-                    research_results.append({"step": step, "findings": step_research})
-                    # Log which sources were used for this step
-                    source_indices = [initial_context.index(finding) + 1 for finding in step_research if finding in initial_context]
-                    logger.info(f"Research for step: {step}\nUsing sources: {source_indices}")
+                    try:
+                        step_research = self.agents["researcher"].research(query, step)
+                        # Extract findings from research result
+                        findings = step_research.get("findings", []) if isinstance(step_research, dict) else []
+                        research_results.append({"step": step, "findings": findings})
+                        
+                        # Log which sources were used for this step
+                        try:
+                            source_indices = [initial_context.index(finding) + 1 for finding in findings if finding in initial_context]
+                            logger.info(f"Research for step: {step}\nUsing sources: {source_indices}")
+                        except ValueError as ve:
+                            logger.warning(f"Could not find some findings in initial context: {str(ve)}")
+                    except Exception as e:
+                        logger.error(f"Error during research for step '{step}': {str(e)}")
+                        research_results.append({"step": step, "findings": []})
             else:
                 # If no researcher or no context, use the steps directly
                 research_results = [{"step": step, "findings": []} for step in plan.split("\n") if step.strip()]
@@ -130,13 +145,17 @@ class RAGAgent:
             
             reasoning_steps = []
             for result in research_results:
-                step_reasoning = self.agents["reasoner"].reason(
-                    query,
-                    result["step"],
-                    result["findings"] if result["findings"] else [{"content": "Using general knowledge", "metadata": {"source": "General Knowledge"}}]
-                )
-                reasoning_steps.append(step_reasoning)
-                logger.info(f"Reasoning for step: {result['step']}\n{step_reasoning}")
+                try:
+                    step_reasoning = self.agents["reasoner"].reason(
+                        query,
+                        result["step"],
+                        result["findings"] if result["findings"] else [{"content": "Using general knowledge", "metadata": {"source": "General Knowledge"}}]
+                    )
+                    reasoning_steps.append(step_reasoning)
+                    logger.info(f"Reasoning for step: {result['step']}\n{step_reasoning}")
+                except Exception as e:
+                    logger.error(f"Error in reasoning for step '{result['step']}': {str(e)}")
+                    reasoning_steps.append(f"Error in reasoning for this step: {str(e)}")
             
             # Step 4: Synthesize final answer
             logger.info("Step 4: Synthesis")
@@ -144,8 +163,13 @@ class RAGAgent:
                 logger.warning("No synthesizer agent available, using direct response")
                 return self._generate_general_response(query)
             
-            final_answer = self.agents["synthesizer"].synthesize(query, reasoning_steps)
-            logger.info(f"Final synthesized answer:\n{final_answer}")
+            try:
+                final_answer = self.agents["synthesizer"].synthesize(query, reasoning_steps)
+                logger.info(f"Final synthesized answer:\n{final_answer}")
+            except Exception as e:
+                logger.error(f"Error in synthesis step: {str(e)}")
+                logger.info("Falling back to general response")
+                return self._generate_general_response(query)
             
             return {
                 "answer": final_answer,
@@ -153,7 +177,7 @@ class RAGAgent:
                 "reasoning_steps": reasoning_steps
             }
         except Exception as e:
-            logger.error(f"Error in CoT processing: {str(e)}")
+            logger.error(f"Error in CoT processing: {str(e)}", exc_info=True)
             logger.info("Falling back to general response")
             return self._generate_general_response(query)
     

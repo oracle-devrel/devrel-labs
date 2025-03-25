@@ -272,35 +272,76 @@ class LocalRAGAgent:
                 self.agents = create_agents(self.llm, self.vector_store)
             
             # Get planning step
-            planning_result = self.agents["planner"].plan(query, context)
-            logger.info("Planning step completed")
+            try:
+                planning_result = self.agents["planner"].plan(query, context)
+                logger.info("Planning step completed")
+            except Exception as e:
+                logger.error(f"Error in planning step: {str(e)}")
+                logger.info("Falling back to general response")
+                return self._generate_general_response(query)
             
             # Get research step
-            research_result = self.agents["researcher"].research(query, context)
-            logger.info("Research step completed")
+            research_results = []
+            if self.agents.get("researcher") is not None and context:
+                for step in planning_result.split("\n"):
+                    if not step.strip():
+                        continue
+                    try:
+                        step_research = self.agents["researcher"].research(query, step)
+                        # Extract findings from research result
+                        findings = step_research.get("findings", []) if isinstance(step_research, dict) else []
+                        research_results.append({"step": step, "findings": findings})
+                        
+                        # Log which sources were used for this step
+                        try:
+                            source_indices = [context.index(finding) + 1 for finding in findings if finding in context]
+                            logger.info(f"Research for step: {step}\nUsing sources: {source_indices}")
+                        except ValueError as ve:
+                            logger.warning(f"Could not find some findings in initial context: {str(ve)}")
+                    except Exception as e:
+                        logger.error(f"Error during research for step '{step}': {str(e)}")
+                        research_results.append({"step": step, "findings": []})
+            else:
+                # If no researcher or no context, use the steps directly
+                research_results = [{"step": step, "findings": []} for step in planning_result.split("\n") if step.strip()]
+                logger.info("No research performed (no researcher agent or no context available)")
             
             # Get reasoning step
-            reasoning_result = self.agents["reasoner"].reason(query, research_result["context"])
-            logger.info("Reasoning step completed")
+            reasoning_steps = []
+            if not self.agents.get("reasoner"):
+                logger.warning("No reasoner agent available, using direct response")
+                return self._generate_general_response(query)
+            
+            for result in research_results:
+                try:
+                    step_reasoning = self.agents["reasoner"].reason(
+                        query,
+                        result["step"],
+                        result["findings"] if result["findings"] else [{"content": "Using general knowledge", "metadata": {"source": "General Knowledge"}}]
+                    )
+                    reasoning_steps.append(step_reasoning)
+                    logger.info(f"Reasoning for step: {result['step']}\n{step_reasoning}")
+                except Exception as e:
+                    logger.error(f"Error in reasoning for step '{result['step']}': {str(e)}")
+                    reasoning_steps.append(f"Error in reasoning for this step: {str(e)}")
             
             # Get synthesis step
-            synthesis_result = self.agents["synthesizer"].synthesize(
-                query, 
-                planning_result["context"],
-                research_result["context"],
-                reasoning_result["context"]
-            )
-            logger.info("Synthesis step completed")
+            if not self.agents.get("synthesizer"):
+                logger.warning("No synthesizer agent available, using direct response")
+                return self._generate_general_response(query)
+            
+            try:
+                synthesis_result = self.agents["synthesizer"].synthesize(query, reasoning_steps)
+                logger.info("Synthesis step completed")
+            except Exception as e:
+                logger.error(f"Error in synthesis step: {str(e)}")
+                logger.info("Falling back to general response")
+                return self._generate_general_response(query)
             
             return {
                 "answer": synthesis_result["answer"],
-                "reasoning_steps": [
-                    planning_result["answer"],
-                    research_result["answer"],
-                    reasoning_result["answer"],
-                    synthesis_result["answer"]
-                ],
-                "context": synthesis_result["context"]
+                "reasoning_steps": reasoning_steps,
+                "context": context
             }
             
         except Exception as e:

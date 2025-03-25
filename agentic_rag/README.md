@@ -119,6 +119,7 @@ The API will be available at `http://localhost:8000`. You can then use the API e
 ### 2. Using the Gradio Interface (Recommended)
 
 The system provides a user-friendly web interface using Gradio, which allows you to:
+- Select and pull `ollama` models directly from the interface
 - Upload and process PDF documents
 - Process web content from URLs
 - Chat with your documents using either local or OpenAI models
