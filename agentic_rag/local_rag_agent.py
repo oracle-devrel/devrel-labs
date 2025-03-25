@@ -245,126 +245,91 @@ class LocalRAGAgent:
             else:
                 return self._generate_general_response(query)
         else:
-            # For PDF or Repository collections, use context-based processing
+            # For PDF, Repository, or Web collections, use context-based processing
             if self.use_cot:
                 return self._process_query_with_cot(query)
             else:
                 return self._process_query_standard(query)
     
     def _process_query_with_cot(self, query: str) -> Dict[str, Any]:
-        """Process query using Chain of Thought reasoning with multiple agents"""
-        logger.info("Processing query with Chain of Thought reasoning")
-        
-        # Get initial context based on selected collection
-        initial_context = []
-        if self.collection == "PDF Collection":
-            logger.info(f"Retrieving context from PDF Collection for query: '{query}'")
-            pdf_context = self.vector_store.query_pdf_collection(query)
-            initial_context.extend(pdf_context)
-            logger.info(f"Retrieved {len(pdf_context)} chunks from PDF Collection")
-            # Don't log individual sources to keep console clean
-        elif self.collection == "Repository Collection":
-            logger.info(f"Retrieving context from Repository Collection for query: '{query}'")
-            repo_context = self.vector_store.query_repo_collection(query)
-            initial_context.extend(repo_context)
-            logger.info(f"Retrieved {len(repo_context)} chunks from Repository Collection")
-            # Don't log individual sources to keep console clean
-        # For General Knowledge, no context is needed
-        else:
-            logger.info("Using General Knowledge collection, no context retrieval needed")
-        
+        """Process query using Chain of Thought reasoning"""
         try:
-            # Step 1: Planning
-            logger.info("Step 1: Planning")
-            if not self.agents or "planner" not in self.agents:
-                logger.warning("No planner agent available, using direct response")
-                return self._generate_general_response(query)
-            
-            plan = self.agents["planner"].plan(query, initial_context)
-            logger.info(f"Generated plan:\n{plan}")
-            
-            # Step 2: Research each step (if researcher is available)
-            logger.info("Step 2: Research")
-            research_results = []
-            if self.agents.get("researcher") is not None and initial_context:
-                for step in plan.split("\n"):
-                    if not step.strip():
-                        continue
-                    step_research = self.agents["researcher"].research(query, step)
-                    research_results.append({"step": step, "findings": step_research})
-                    # Don't log source indices to keep console clean
-                    logger.info(f"Research for step: {step}")
+            # Get context based on collection type
+            if self.collection == "PDF Collection":
+                context = self.vector_store.query_pdf_collection(query)
+            elif self.collection == "Repository Collection":
+                context = self.vector_store.query_repo_collection(query)
+            elif self.collection == "Web Knowledge Base":
+                context = self.vector_store.query_web_collection(query)
             else:
-                # If no researcher or no context, use the steps directly
-                research_results = [{"step": step, "findings": []} for step in plan.split("\n") if step.strip()]
-                logger.info("No research performed (no researcher agent or no context available)")
+                context = []
             
-            # Step 3: Reasoning about each step
-            logger.info("Step 3: Reasoning")
-            if not self.agents.get("reasoner"):
-                logger.warning("No reasoner agent available, using direct response")
-                return self._generate_general_response(query)
+            # Log number of chunks retrieved
+            logger.info(f"Retrieved {len(context)} chunks from {self.collection}")
             
-            reasoning_steps = []
-            for result in research_results:
-                step_reasoning = self.agents["reasoner"].reason(
-                    query,
-                    result["step"],
-                    result["findings"] if result["findings"] else [{"content": "Using general knowledge", "metadata": {"source": "General Knowledge"}}]
-                )
-                reasoning_steps.append(step_reasoning)
-                # Log just the step, not the full reasoning
-                logger.info(f"Reasoning for step: {result['step']}")
+            # Create agents if not already created
+            if not self.agents:
+                self.agents = create_agents(self.llm, self.vector_store)
             
-            # Step 4: Synthesize final answer
-            logger.info("Step 4: Synthesis")
-            if not self.agents.get("synthesizer"):
-                logger.warning("No synthesizer agent available, using direct response")
-                return self._generate_general_response(query)
+            # Get planning step
+            planning_result = self.agents["planner"].plan(query, context)
+            logger.info("Planning step completed")
             
-            final_answer = self.agents["synthesizer"].synthesize(query, reasoning_steps)
-            logger.info("Final answer synthesized successfully")
+            # Get research step
+            research_result = self.agents["researcher"].research(query, context)
+            logger.info("Research step completed")
+            
+            # Get reasoning step
+            reasoning_result = self.agents["reasoner"].reason(query, research_result["context"])
+            logger.info("Reasoning step completed")
+            
+            # Get synthesis step
+            synthesis_result = self.agents["synthesizer"].synthesize(
+                query, 
+                planning_result["context"],
+                research_result["context"],
+                reasoning_result["context"]
+            )
+            logger.info("Synthesis step completed")
             
             return {
-                "answer": final_answer,
-                "context": initial_context,
-                "reasoning_steps": reasoning_steps
+                "answer": synthesis_result["answer"],
+                "reasoning_steps": [
+                    planning_result["answer"],
+                    research_result["answer"],
+                    reasoning_result["answer"],
+                    synthesis_result["answer"]
+                ],
+                "context": synthesis_result["context"]
             }
+            
         except Exception as e:
             logger.error(f"Error in CoT processing: {str(e)}")
-            logger.info("Falling back to general response")
-            return self._generate_general_response(query)
+            raise
     
     def _process_query_standard(self, query: str) -> Dict[str, Any]:
-        """Process query using standard approach without Chain of Thought"""
-        # Initialize context variables
-        pdf_context = []
-        repo_context = []
-        
-        # Get context based on selected collection
-        if self.collection == "PDF Collection":
-            logger.info(f"Retrieving context from PDF Collection for query: '{query}'")
-            pdf_context = self.vector_store.query_pdf_collection(query)
-            logger.info(f"Retrieved {len(pdf_context)} chunks from PDF Collection")
-            # Don't log individual sources to keep console clean
-        elif self.collection == "Repository Collection":
-            logger.info(f"Retrieving context from Repository Collection for query: '{query}'")
-            repo_context = self.vector_store.query_repo_collection(query)
-            logger.info(f"Retrieved {len(repo_context)} chunks from Repository Collection")
-            # Don't log individual sources to keep console clean
-        
-        # Combine all context
-        all_context = pdf_context + repo_context
-        
-        # Generate response using context if available, otherwise use general knowledge
-        if all_context:
-            logger.info(f"Generating response using {len(all_context)} context chunks")
-            response = self._generate_response(query, all_context)
-        else:
-            logger.info("No context found, using general knowledge")
-            response = self._generate_general_response(query)
-        
-        return response
+        """Process query using standard RAG approach"""
+        try:
+            # Get context based on collection type
+            if self.collection == "PDF Collection":
+                context = self.vector_store.query_pdf_collection(query)
+            elif self.collection == "Repository Collection":
+                context = self.vector_store.query_repo_collection(query)
+            elif self.collection == "Web Knowledge Base":
+                context = self.vector_store.query_web_collection(query)
+            else:
+                context = []
+            
+            # Log number of chunks retrieved
+            logger.info(f"Retrieved {len(context)} chunks from {self.collection}")
+            
+            # Generate response using context
+            response = self._generate_response(query, context)
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error in standard processing: {str(e)}")
+            raise
     
     def _generate_text(self, prompt: str, max_length: int = 512) -> str:
         """Generate text using the local model"""
@@ -456,7 +421,7 @@ def main():
     parser.add_argument("--model", default="mistralai/Mistral-7B-Instruct-v0.2", help="Model to use")
     parser.add_argument("--quiet", action="store_true", help="Disable verbose logging")
     parser.add_argument("--use-cot", action="store_true", help="Enable Chain of Thought reasoning")
-    parser.add_argument("--collection", choices=["PDF Collection", "Repository Collection", "General Knowledge"], 
+    parser.add_argument("--collection", choices=["PDF Collection", "Repository Collection", "General Knowledge", "Web Knowledge Base"], 
                         help="Specify which collection to query")
     parser.add_argument("--skip-analysis", action="store_true", help="Skip query analysis step")
     parser.add_argument("--verbose", action="store_true", help="Show full content of sources")

@@ -78,6 +78,19 @@ class RAGAgent:
                 # Only log content preview at debug level
                 content_preview = chunk["content"][:150] + "..." if len(chunk["content"]) > 150 else chunk["content"]
                 logger.debug(f"Content preview for source [{i+1}]: {content_preview}")
+        elif self.collection == "Web Knowledge Base":
+            logger.info(f"Retrieving context from Web Knowledge Base for query: '{query}'")
+            web_context = self.vector_store.query_web_collection(query)
+            initial_context.extend(web_context)
+            logger.info(f"Retrieved {len(web_context)} chunks from Web Knowledge Base")
+            # Log each chunk with citation number but not full content
+            for i, chunk in enumerate(web_context):
+                source = chunk["metadata"].get("source", "Unknown")
+                title = chunk["metadata"].get("title", "Unknown")
+                logger.info(f"Source [{i+1}]: {source} (title: {title})")
+                # Only log content preview at debug level
+                content_preview = chunk["content"][:150] + "..." if len(chunk["content"]) > 150 else chunk["content"]
+                logger.debug(f"Content preview for source [{i+1}]: {content_preview}")
         # For General Knowledge, no context is needed
         else:
             logger.info("Using General Knowledge collection, no context retrieval needed")
@@ -147,16 +160,15 @@ class RAGAgent:
     def _process_query_standard(self, query: str) -> Dict[str, Any]:
         """Process query using standard approach without Chain of Thought"""
         # Initialize context variables
-        pdf_context = []
-        repo_context = []
+        context = []
         
         # Get context based on selected collection
         if self.collection == "PDF Collection":
             logger.info(f"Retrieving context from PDF Collection for query: '{query}'")
-            pdf_context = self.vector_store.query_pdf_collection(query)
-            logger.info(f"Retrieved {len(pdf_context)} chunks from PDF Collection")
+            context = self.vector_store.query_pdf_collection(query)
+            logger.info(f"Retrieved {len(context)} chunks from PDF Collection")
             # Log each chunk with citation number but not full content
-            for i, chunk in enumerate(pdf_context):
+            for i, chunk in enumerate(context):
                 source = chunk["metadata"].get("source", "Unknown")
                 pages = chunk["metadata"].get("page_numbers", [])
                 logger.info(f"Source [{i+1}]: {source} (pages: {pages})")
@@ -165,24 +177,33 @@ class RAGAgent:
                 logger.debug(f"Content preview for source [{i+1}]: {content_preview}")
         elif self.collection == "Repository Collection":
             logger.info(f"Retrieving context from Repository Collection for query: '{query}'")
-            repo_context = self.vector_store.query_repo_collection(query)
-            logger.info(f"Retrieved {len(repo_context)} chunks from Repository Collection")
+            context = self.vector_store.query_repo_collection(query)
+            logger.info(f"Retrieved {len(context)} chunks from Repository Collection")
             # Log each chunk with citation number but not full content
-            for i, chunk in enumerate(repo_context):
+            for i, chunk in enumerate(context):
                 source = chunk["metadata"].get("source", "Unknown")
                 file_path = chunk["metadata"].get("file_path", "Unknown")
                 logger.info(f"Source [{i+1}]: {source} (file: {file_path})")
                 # Only log content preview at debug level
                 content_preview = chunk["content"][:150] + "..." if len(chunk["content"]) > 150 else chunk["content"]
                 logger.debug(f"Content preview for source [{i+1}]: {content_preview}")
-        
-        # Combine all context
-        all_context = pdf_context + repo_context
+        elif self.collection == "Web Knowledge Base":
+            logger.info(f"Retrieving context from Web Knowledge Base for query: '{query}'")
+            context = self.vector_store.query_web_collection(query)
+            logger.info(f"Retrieved {len(context)} chunks from Web Knowledge Base")
+            # Log each chunk with citation number but not full content
+            for i, chunk in enumerate(context):
+                source = chunk["metadata"].get("source", "Unknown")
+                title = chunk["metadata"].get("title", "Unknown")
+                logger.info(f"Source [{i+1}]: {source} (title: {title})")
+                # Only log content preview at debug level
+                content_preview = chunk["content"][:150] + "..." if len(chunk["content"]) > 150 else chunk["content"]
+                logger.debug(f"Content preview for source [{i+1}]: {content_preview}")
         
         # Generate response using context if available, otherwise use general knowledge
-        if all_context:
-            logger.info(f"Generating response using {len(all_context)} context chunks")
-            response = self._generate_response(query, all_context)
+        if context:
+            logger.info(f"Generating response using {len(context)} context chunks")
+            response = self._generate_response(query, context)
         else:
             logger.info("No context found, using general knowledge")
             response = self._generate_general_response(query)

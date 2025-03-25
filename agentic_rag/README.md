@@ -116,7 +116,7 @@ python main.py
 
 The API will be available at `http://localhost:8000`. You can then use the API endpoints as described in the API Endpoints section below.
 
-### 2. Using the Gradio Interface
+### 2. Using the Gradio Interface (Recommended)
 
 The system provides a user-friendly web interface using Gradio, which allows you to:
 - Upload and process PDF documents
