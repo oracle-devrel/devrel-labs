@@ -10,7 +10,7 @@ The system has the following features:
 
 - Intelligent query routing
 - PDF processing using Docling for accurate text extraction and chunking
-- Persistent vector storage with ChromaDB (PDF and Websites)
+- Persistent vector storage with ChromaDB and Oracle Database 23ai (PDF and Websites)
 - Smart context retrieval and response generation
 - FastAPI-based REST API for document upload and querying
 - Support for both OpenAI-based agents or local, transformer-based agents (`Mistral-7B` by default)
@@ -358,7 +358,7 @@ The system consists of several key components:
 1. **PDF Processor**: we use `docling` to extract and chunk text from PDF documents
 2. **Web Processor**: we use `trafilatura` to extract and chunk text from websites
 3. **GitHub Repository Processor**: we use `gitingest` to extract and chunk text from repositories
-4. **Vector Store**: Manages document embeddings and similarity search using `ChromaDB`
+4. **Vector Store**: Manages document embeddings and similarity search using `ChromaDB` and `Oracle Database 23ai`
 5. **RAG Agent**: Makes intelligent decisions about query routing and response generation
    - OpenAI Agent: Uses `gpt-4-turbo-preview` for high-quality responses, but requires an OpenAI API key
    - Local Agent: Uses `Mistral-7B` as an open-source alternative
