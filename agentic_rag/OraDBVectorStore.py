@@ -338,6 +338,72 @@ class OraDBVectorStore:
             formatted_results.append(result)
         
         return formatted_results
+        
+    def get_collection_count(self, collection_name: str) -> int:
+        """Get the total number of chunks in a collection
+        
+        Args:
+            collection_name: Name of the collection (pdf_documents, web_documents, repository_documents, general_knowledge)
+            
+        Returns:
+            Number of chunks in the collection
+        """
+        # Map collection names to table names
+        collection_map = {
+            "pdf_documents": "PDFCollection",
+            "web_documents": "WebCollection",
+            "repository_documents": "RepoCollection", 
+            "general_knowledge": "GeneralCollection"
+        }
+        
+        table_name = collection_map.get(collection_name)
+        if not table_name:
+            raise ValueError(f"Unknown collection name: {collection_name}")
+        
+        # Count the rows in the table
+        sql = f"SELECT COUNT(*) FROM {table_name}"
+        self.cursor.execute(sql)
+        count = self.cursor.fetchone()[0]
+        
+        return count
+    
+    def get_latest_chunk(self, collection_name: str) -> Dict[str, Any]:
+        """Get the most recently inserted chunk from a collection
+        
+        Args:
+            collection_name: Name of the collection (pdf_documents, web_documents, repository_documents, general_knowledge)
+            
+        Returns:
+            Dictionary containing the content and metadata of the latest chunk
+        """
+        # Map collection names to table names
+        collection_map = {
+            "pdf_documents": "PDFCollection",
+            "web_documents": "WebCollection",
+            "repository_documents": "RepoCollection", 
+            "general_knowledge": "GeneralCollection"
+        }
+        
+        table_name = collection_map.get(collection_name)
+        if not table_name:
+            raise ValueError(f"Unknown collection name: {collection_name}")
+        
+        # Get the most recently inserted row (using ID as a proxy for insertion time)
+        # This assumes IDs are assigned sequentially or have a timestamp component
+        sql = f"SELECT Id, Text, MetaData FROM {table_name} ORDER BY ROWID DESC FETCH FIRST 1 ROW ONLY"
+        self.cursor.execute(sql)
+        row = self.cursor.fetchone()
+        
+        if not row:
+            raise ValueError(f"No chunks found in collection: {collection_name}")
+        
+        result = {
+            "id": row[0],
+            "content": row[1],
+            "metadata": json.loads(row[2]) if isinstance(row[2], str) else row[2]
+        }
+        
+        return result
 
 def main():
     parser = argparse.ArgumentParser(description="Manage Oracle DB vector store")

@@ -206,6 +206,43 @@ python store.py --query "your search query"
 python local_rag_agent.py --query "your search query"
 ```
 
+#### Test Oracle DB Vector Store
+
+The system includes a test script to verify Oracle DB connectivity and examine the contents of your collections. This is useful for:
+- Checking if Oracle DB is properly configured
+- Viewing statistics about your collections
+- Inspecting the content stored in each collection
+- Testing basic vector search functionality
+
+To run the test:
+
+```bash
+# Basic test - checks connection and runs a test query
+python test_oradb.py
+
+# Show only collection statistics without inserting test data
+python test_oradb.py --stats-only
+
+# Specify a custom query for testing
+python test_oradb.py --query "artificial intelligence"
+```
+
+The script will:
+1. Verify Oracle DB credentials in your `config.yaml` file
+2. Test connection to the Oracle DB
+3. Display the total number of chunks in each collection (PDF, Web, Repository, General Knowledge)
+4. Show content and metadata from the most recently inserted chunk in each collection
+5. Unless running with `--stats-only`, insert test data and run a sample vector search
+
+Requirements:
+- Oracle DB credentials properly configured in `config.yaml`:
+  ```yaml
+  ORACLE_DB_USERNAME: ADMIN
+  ORACLE_DB_PASSWORD: your_password_here
+  ORACLE_DB_DSN: your_connection_string_here
+  ```
+- The `oracledb` Python package installed
+
 #### Use RAG Agent
 
 To query documents using either OpenAI or a local model, run:
