@@ -500,19 +500,18 @@ Answer:"""
         }
 
 def main():
-    parser = argparse.ArgumentParser(description="Query documents using local Mistral model")
-    parser.add_argument("--query", required=True, help="Query to process")
-    parser.add_argument("--store-path", default="embeddings", help="Path to the vector store")
-    parser.add_argument("--model", default="mistralai/Mistral-7B-Instruct-v0.2", help="Model to use")
-    parser.add_argument("--quiet", action="store_true", help="Disable verbose logging")
-    parser.add_argument("--use-cot", action="store_true", help="Enable Chain of Thought reasoning")
-    parser.add_argument("--collection", choices=["PDF Collection", "Repository Collection", "General Knowledge", "Web Knowledge Base"], 
-                        help="Specify which collection to query")
-    parser.add_argument("--skip-analysis", action="store_true", help="Skip query analysis step")
+    parser = argparse.ArgumentParser(description="Query documents using local LLM")
+    parser.add_argument("--query", required=True, help="Query to search for")
+    parser.add_argument("--embeddings", default="oracle", choices=["oracle", "chromadb"], help="Embeddings backend to use")
+    parser.add_argument("--model", default="ollama:qwen2", help="Model to use (default: ollama:qwen2)")
+    parser.add_argument("--collection", help="Collection to search (PDF, Repository, General Knowledge)")
+    parser.add_argument("--use-cot", action="store_true", help="Use Chain of Thought reasoning")
+    parser.add_argument("--store-path", default="embeddings", help="Path to ChromaDB store")
+    parser.add_argument("--skip-analysis", action="store_true", help="Skip query analysis (not recommended)")
     parser.add_argument("--verbose", action="store_true", help="Show full content of sources")
-    parser.add_argument("--embeddings", choices=["oracle", "chromadb"], default="oracle", 
-                        help="Select embeddings backend (default: oracle)")
-    
+    parser.add_argument("--quiet", action="store_true", help="Disable verbose logging")
+    parser.add_argument("--quantization", choices=["4bit", "8bit"], help="Quantization method (4bit or 8bit)")
+        
     args = parser.parse_args()
     
     # Set logging level based on quiet flag
