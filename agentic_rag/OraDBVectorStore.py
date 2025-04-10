@@ -225,6 +225,7 @@ class OraDBVectorStore:
     
     def query_pdf_collection(self, query: str, n_results: int = 3) -> List[Dict[str, Any]]:
         """Query the PDF documents collection"""
+        print("🔍 [Oracle DB] Querying PDF Collection")
         # Generate Embeddings
         embeddings = self.encoder.encode(query, batch_size=32, show_progress_bar=True)
         new_vector = array.array("f", embeddings)
@@ -250,10 +251,12 @@ class OraDBVectorStore:
             }
             formatted_results.append(result)
         
+        print(f"🔍 [Oracle DB] Retrieved {len(formatted_results)} chunks from PDF Collection")
         return formatted_results
     
     def query_web_collection(self, query: str, n_results: int = 3) -> List[Dict[str, Any]]:
         """Query the web documents collection"""
+        print("🔍 [Oracle DB] Querying Web Collection")
         # Generate Embeddings
         embeddings = self.encoder.encode(query, batch_size=32, show_progress_bar=True)
         new_vector = array.array("f", embeddings)
@@ -279,10 +282,12 @@ class OraDBVectorStore:
             }
             formatted_results.append(result)
         
+        print(f"🔍 [Oracle DB] Retrieved {len(formatted_results)} chunks from Web Collection")
         return formatted_results
     
     def query_general_collection(self, query: str, n_results: int = 3) -> List[Dict[str, Any]]:
         """Query the general knowledge collection"""
+        print("🔍 [Oracle DB] Querying General Knowledge Collection")
         # Generate Embeddings
         embeddings = self.encoder.encode(query, batch_size=32, show_progress_bar=True)
         new_vector = array.array("f", embeddings)
@@ -308,10 +313,12 @@ class OraDBVectorStore:
             }
             formatted_results.append(result)
         
+        print(f"🔍 [Oracle DB] Retrieved {len(formatted_results)} chunks from General Knowledge Collection")
         return formatted_results
     
     def query_repo_collection(self, query: str, n_results: int = 3) -> List[Dict[str, Any]]:
         """Query the repository documents collection"""
+        print("🔍 [Oracle DB] Querying Repository Collection")
         # Generate Embeddings
         embeddings = self.encoder.encode(query, batch_size=32, show_progress_bar=True)
         new_vector = array.array("f", embeddings)
@@ -337,6 +344,7 @@ class OraDBVectorStore:
             }
             formatted_results.append(result)
         
+        print(f"🔍 [Oracle DB] Retrieved {len(formatted_results)} chunks from Repository Collection")
         return formatted_results
         
     def get_collection_count(self, collection_name: str) -> int:

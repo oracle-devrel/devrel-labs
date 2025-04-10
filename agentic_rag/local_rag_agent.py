@@ -292,10 +292,16 @@ class LocalRAGAgent:
         try:
             # Get context based on collection type
             if self.collection == "PDF Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving PDF Collection context")
                 context = self.vector_store.query_pdf_collection(query)
             elif self.collection == "Repository Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Repository Collection context")
                 context = self.vector_store.query_repo_collection(query)
             elif self.collection == "Web Knowledge Base":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Web Knowledge Base context")
                 context = self.vector_store.query_web_collection(query)
             else:
                 context = []
@@ -389,10 +395,16 @@ class LocalRAGAgent:
         try:
             # Get context based on collection type
             if self.collection == "PDF Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving PDF Collection context")
                 context = self.vector_store.query_pdf_collection(query)
             elif self.collection == "Repository Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Repository Collection context")
                 context = self.vector_store.query_repo_collection(query)
             elif self.collection == "Web Knowledge Base":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Web Knowledge Base context")
                 context = self.vector_store.query_web_collection(query)
             else:
                 context = []
