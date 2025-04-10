@@ -12,6 +12,14 @@ from pdf_processor import PDFProcessor
 from web_processor import WebProcessor
 from repo_processor import RepoProcessor
 from store import VectorStore
+
+# Try to import OraDBVectorStore
+try:
+    from OraDBVectorStore import OraDBVectorStore
+    ORACLE_DB_AVAILABLE = True
+except ImportError:
+    ORACLE_DB_AVAILABLE = False
+
 from local_rag_agent import LocalRAGAgent
 from rag_agent import RAGAgent
 
@@ -32,7 +40,19 @@ def load_config():
 pdf_processor = PDFProcessor()
 web_processor = WebProcessor()
 repo_processor = RepoProcessor()
-vector_store = VectorStore()
+
+# Initialize vector store (prefer Oracle DB if available)
+if ORACLE_DB_AVAILABLE:
+    try:
+        vector_store = OraDBVectorStore()
+        print("Using Oracle DB 23ai for vector storage")
+    except Exception as e:
+        print(f"Error initializing Oracle DB: {str(e)}")
+        print("Falling back to ChromaDB")
+        vector_store = VectorStore()
+else:
+    vector_store = VectorStore()
+    print("Using ChromaDB for vector storage (Oracle DB not available)")
 
 # Initialize agents
 hf_token = load_config()
@@ -260,6 +280,20 @@ def create_interface():
         
         > **Note on Performance**: When using the Local (Mistral) model, initial loading can take 1-5 minutes, and each query may take 30-60 seconds to process depending on your hardware. OpenAI queries are typically much faster.
         """)
+        
+        # Show Oracle DB status
+        if ORACLE_DB_AVAILABLE and hasattr(vector_store, 'connection'):
+            gr.Markdown("""
+            <div style="padding: 10px; background-color: #d4edda; color: #155724; border-radius: 5px; margin-bottom: 15px;">
+            ✅ <strong>Oracle DB 23ai</strong> is active and being used for vector storage.
+            </div>
+            """)
+        else:
+            gr.Markdown("""
+            <div style="padding: 10px; background-color: #f8d7da; color: #721c24; border-radius: 5px; margin-bottom: 15px;">
+            ⚠️ <strong>ChromaDB</strong> is being used for vector storage. Oracle DB 23ai is not available.
+            </div>
+            """)
         
         # Create model choices list for reuse
         model_choices = []
