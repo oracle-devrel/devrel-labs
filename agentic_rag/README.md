@@ -358,7 +358,7 @@ The system consists of several key components:
 1. **PDF Processor**: we use `docling` to extract and chunk text from PDF documents
 2. **Web Processor**: we use `trafilatura` to extract and chunk text from websites
 3. **GitHub Repository Processor**: we use `gitingest` to extract and chunk text from repositories
-4. **Vector Store**: Manages document embeddings and similarity search using `ChromaDB` and `Oracle Database 23ai`
+4. **Vector Store**: Manages document embeddings and similarity search using `Oracle Database 23ai` (default) or `ChromaDB` (fallback)
 5. **RAG Agent**: Makes intelligent decisions about query routing and response generation
    - OpenAI Agent: Uses `gpt-4-turbo-preview` for high-quality responses, but requires an OpenAI API key
    - Local Agent: Uses `Mistral-7B` as an open-source alternative
@@ -372,6 +372,50 @@ The RAG Agent flow is the following:
 3. If PDF context is found, use it to generate a response.
 4. If no PDF context is found OR if it's a general knowledge query, use the pre-trained LLM directly
 5. Fall back to a "no information" response only in edge cases.
+
+## Annex: Command Line Usage
+
+You can run the system from the command line using:
+
+```bash
+python local_rag_agent.py --query "Your question here" [options]
+```
+
+### Command Line Arguments
+
+| Argument | Description | Default |
+| --- | --- | --- |
+| `--query` | The query to process | *Required* |
+| `--embeddings` | Select embeddings backend (`oracle` or `chromadb`) | `oracle` |
+| `--model` | Model to use for inference | `mistralai/Mistral-7B-Instruct-v0.2` |
+| `--collection` | Collection to query (PDF, Repository, Web, General) | Auto-determined |
+| `--use-cot` | Enable Chain of Thought reasoning | `False` |
+| `--store-path` | Path to ChromaDB store (if using ChromaDB) | `embeddings` |
+| `--skip-analysis` | Skip query analysis step | `False` |
+| `--verbose` | Show full content of sources | `False` |
+| `--quiet` | Disable verbose logging | `False` |
+
+### Examples
+
+Query using Oracle DB (default):
+```bash
+python local_rag_agent.py --query "How does vector search work?"
+```
+
+Force using ChromaDB:
+```bash
+python local_rag_agent.py --query "How does vector search work?" --embeddings chromadb
+```
+
+Query with Chain of Thought reasoning:
+```bash
+python local_rag_agent.py --query "Explain the difference between RAG and fine-tuning" --use-cot
+```
+
+Query a specific collection:
+```bash
+python local_rag_agent.py --query "How to implement a queue?" --collection "Repository Collection"
+```
 
 ## Contributing
 

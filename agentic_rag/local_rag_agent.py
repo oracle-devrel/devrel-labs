@@ -510,6 +510,8 @@ def main():
                         help="Specify which collection to query")
     parser.add_argument("--skip-analysis", action="store_true", help="Skip query analysis step")
     parser.add_argument("--verbose", action="store_true", help="Show full content of sources")
+    parser.add_argument("--embeddings", choices=["oracle", "chromadb"], default="oracle", 
+                        help="Select embeddings backend (default: oracle)")
     
     args = parser.parse_args()
     
@@ -523,15 +525,37 @@ def main():
     print("=" * 50)
     
     try:
-        logger.info(f"Initializing vector store from: {args.store_path}")
-        store = VectorStore(persist_directory=args.store_path)
+        # Determine which vector store to use based on args.embeddings
+        if args.embeddings == "oracle" and ORACLE_DB_AVAILABLE:
+            try:
+                logger.info("Initializing Oracle DB vector store")
+                store = OraDBVectorStore()
+                print("✓ Using Oracle DB for vector storage")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Oracle DB: {str(e)}")
+                logger.info(f"Falling back to ChromaDB from: {args.store_path}")
+                store = VectorStore(persist_directory=args.store_path)
+                print("⚠ Oracle DB initialization failed, using ChromaDB instead")
+        else:
+            if args.embeddings == "oracle" and not ORACLE_DB_AVAILABLE:
+                logger.warning("Oracle DB support not available")
+                print("⚠ Oracle DB support not available (missing dependencies)")
+                
+            logger.info(f"Initializing ChromaDB vector store from: {args.store_path}")
+            store = VectorStore(persist_directory=args.store_path)
+            print("✓ Using ChromaDB for vector storage")
+        
         logger.info("Initializing local RAG agent...")
+        # Set use_oracle_db based on the actual store type
+        use_oracle_db = args.embeddings == "oracle" and isinstance(store, OraDBVectorStore)
+        
         agent = LocalRAGAgent(
             store, 
             model_name=args.model, 
             use_cot=args.use_cot, 
             collection=args.collection,
-            skip_analysis=args.skip_analysis
+            skip_analysis=args.skip_analysis,
+            use_oracle_db=use_oracle_db
         )
         
         print(f"\nProcessing query: {args.query}")
