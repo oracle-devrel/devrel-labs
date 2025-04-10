@@ -10,7 +10,7 @@ The system has the following features:
 
 - Intelligent query routing
 - PDF processing using Docling for accurate text extraction and chunking
-- Persistent vector storage with ChromaDB and Oracle Database 23ai (PDF and Websites)
+- Persistent vector storage with Oracle Database 23ai (PDF and Websites)
 - Smart context retrieval and response generation
 - FastAPI-based REST API for document upload and querying
 - Support for both OpenAI-based agents or local, transformer-based agents (`Mistral-7B` by default)
