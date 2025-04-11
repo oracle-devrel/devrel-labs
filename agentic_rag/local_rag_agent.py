@@ -57,6 +57,10 @@ class OllamaModelHandler:
         Args:
             model_name: Name of the Ollama model to use
         """
+        # Remove 'ollama:' prefix if present
+        if model_name and model_name.startswith("ollama:"):
+            model_name = model_name.replace("ollama:", "")
+        
         self.model_name = model_name
         self._check_ollama_running()
     
@@ -170,6 +174,10 @@ class LocalRAGAgent:
         self.is_ollama = not (model_name and "mistral" in model_name.lower())
         
         if self.is_ollama:
+            # Remove 'ollama:' prefix if present
+            if model_name and model_name.startswith("ollama:"):
+                model_name = model_name.replace("ollama:", "")
+            
             # Load Ollama model
             print("\nLoading Ollama model...")
             print(f"Model: {model_name}")
