@@ -18,3 +18,5 @@ langchain
 gitingest
 bitsandbytes
 ollama
+oracledb
+sentence-transformers

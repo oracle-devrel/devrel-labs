@@ -10,6 +10,12 @@ import logging
 import time
 import json
 from pathlib import Path
+try:
+    from OraDBVectorStore import OraDBVectorStore
+    ORACLE_DB_AVAILABLE = True
+except ImportError:
+    ORACLE_DB_AVAILABLE = False
+    print("Oracle DB support not available. Install with: pip install oracledb sentence-transformers")
 
 # Configure logging
 logging.basicConfig(
@@ -108,20 +114,50 @@ class OllamaModelHandler:
             raise Exception(f"Failed to generate text with Ollama: {str(e)}")
 
 class LocalRAGAgent:
-    def __init__(self, vector_store: VectorStore, model_name: str = "mistralai/Mistral-7B-Instruct-v0.2", 
+    def __init__(self, vector_store: VectorStore = None, model_name: str = "mistralai/Mistral-7B-Instruct-v0.2", 
                  use_cot: bool = False, collection: str = None, skip_analysis: bool = False,
-                 quantization: str = None):
+                 quantization: str = None, use_oracle_db: bool = True):
         """Initialize local RAG agent with vector store and local LLM
         
         Args:
-            vector_store: Vector store for retrieving context
+            vector_store: Vector store for retrieving context (if None, will create one)
             model_name: HuggingFace model name/path or Ollama model name
             use_cot: Whether to use Chain of Thought reasoning
             collection: Collection to search in (PDF, Repository, or General Knowledge)
             skip_analysis: Whether to skip query analysis (kept for backward compatibility)
             quantization: Quantization method to use (None, '4bit', '8bit')
+            use_oracle_db: Whether to use Oracle DB for vector storage (if False, uses ChromaDB)
         """
-        self.vector_store = vector_store
+        # Initialize vector store if not provided
+        self.use_oracle_db = use_oracle_db and ORACLE_DB_AVAILABLE
+        
+        if vector_store is None:
+            if self.use_oracle_db:
+                try:
+                    self.vector_store = OraDBVectorStore()
+                    print("Using Oracle DB for vector storage")
+                except ValueError as ve:
+                    if "credentials not found" in str(ve):
+                        print(f"Oracle DB credentials not found in config.yaml: {str(ve)}")
+                        print("Falling back to ChromaDB")
+                    else:
+                        print(f"Oracle DB initialization error: {str(ve)}")
+                        print("Falling back to ChromaDB")
+                    self.vector_store = VectorStore(persist_directory="embeddings")
+                    self.use_oracle_db = False
+                except Exception as e:
+                    print(f"Error initializing Oracle DB: {str(e)}")
+                    print("Falling back to ChromaDB")
+                    self.vector_store = VectorStore(persist_directory="embeddings")
+                    self.use_oracle_db = False
+            else:
+                self.vector_store = VectorStore(persist_directory="embeddings")
+                print("Using ChromaDB for vector storage")
+        else:
+            self.vector_store = vector_store
+            # Determine type of vector store
+            self.use_oracle_db = hasattr(vector_store, 'connection') and hasattr(vector_store, 'cursor')
+        
         self.use_cot = use_cot
         self.collection = collection
         self.quantization = quantization
@@ -231,7 +267,7 @@ class LocalRAGAgent:
         self.llm = LocalLLM(self.pipeline)
         
         # Initialize specialized agents if CoT is enabled
-        self.agents = create_agents(self.llm, vector_store) if use_cot else None
+        self.agents = create_agents(self.llm, self.vector_store) if use_cot else None
     
     def process_query(self, query: str) -> Dict[str, Any]:
         """Process a user query using the agentic RAG pipeline"""
@@ -256,10 +292,16 @@ class LocalRAGAgent:
         try:
             # Get context based on collection type
             if self.collection == "PDF Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving PDF Collection context")
                 context = self.vector_store.query_pdf_collection(query)
             elif self.collection == "Repository Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Repository Collection context")
                 context = self.vector_store.query_repo_collection(query)
             elif self.collection == "Web Knowledge Base":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Web Knowledge Base context")
                 context = self.vector_store.query_web_collection(query)
             else:
                 context = []
@@ -353,10 +395,16 @@ class LocalRAGAgent:
         try:
             # Get context based on collection type
             if self.collection == "PDF Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving PDF Collection context")
                 context = self.vector_store.query_pdf_collection(query)
             elif self.collection == "Repository Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Repository Collection context")
                 context = self.vector_store.query_repo_collection(query)
             elif self.collection == "Web Knowledge Base":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Web Knowledge Base context")
                 context = self.vector_store.query_web_collection(query)
             else:
                 context = []
@@ -416,16 +464,24 @@ Answer:"""
         if context:
             # Group sources by document
             for item in context:
-                source = item['metadata'].get('source', 'Unknown')
+                # Handle metadata which could be a string (from Oracle DB) or a dict (from ChromaDB)
+                metadata = item['metadata']
+                if isinstance(metadata, str):
+                    try:
+                        metadata = json.loads(metadata)
+                    except json.JSONDecodeError:
+                        metadata = {"source": "Unknown"}
+                
+                source = metadata.get('source', 'Unknown')
                 if source not in sources:
                     sources[source] = set()
                 
                 # Add page number if available
-                if 'page' in item['metadata']:
-                    sources[source].add(str(item['metadata']['page']))
+                if 'page' in metadata:
+                    sources[source].add(str(metadata['page']))
                 # Add file path if available for code
-                if 'file_path' in item['metadata']:
-                    sources[source] = item['metadata']['file_path']
+                if 'file_path' in metadata:
+                    sources[source] = metadata['file_path']
             
             # Print concise source information
             print("\nSources detected:")
@@ -456,17 +512,18 @@ Answer:"""
         }
 
 def main():
-    parser = argparse.ArgumentParser(description="Query documents using local Mistral model")
-    parser.add_argument("--query", required=True, help="Query to process")
-    parser.add_argument("--store-path", default="embeddings", help="Path to the vector store")
-    parser.add_argument("--model", default="mistralai/Mistral-7B-Instruct-v0.2", help="Model to use")
-    parser.add_argument("--quiet", action="store_true", help="Disable verbose logging")
-    parser.add_argument("--use-cot", action="store_true", help="Enable Chain of Thought reasoning")
-    parser.add_argument("--collection", choices=["PDF Collection", "Repository Collection", "General Knowledge", "Web Knowledge Base"], 
-                        help="Specify which collection to query")
-    parser.add_argument("--skip-analysis", action="store_true", help="Skip query analysis step")
+    parser = argparse.ArgumentParser(description="Query documents using local LLM")
+    parser.add_argument("--query", required=True, help="Query to search for")
+    parser.add_argument("--embeddings", default="oracle", choices=["oracle", "chromadb"], help="Embeddings backend to use")
+    parser.add_argument("--model", default="ollama:qwen2", help="Model to use (default: ollama:qwen2)")
+    parser.add_argument("--collection", help="Collection to search (PDF, Repository, General Knowledge)")
+    parser.add_argument("--use-cot", action="store_true", help="Use Chain of Thought reasoning")
+    parser.add_argument("--store-path", default="embeddings", help="Path to ChromaDB store")
+    parser.add_argument("--skip-analysis", action="store_true", help="Skip query analysis (not recommended)")
     parser.add_argument("--verbose", action="store_true", help="Show full content of sources")
-    
+    parser.add_argument("--quiet", action="store_true", help="Disable verbose logging")
+    parser.add_argument("--quantization", choices=["4bit", "8bit"], help="Quantization method (4bit or 8bit)")
+        
     args = parser.parse_args()
     
     # Set logging level based on quiet flag
@@ -479,15 +536,37 @@ def main():
     print("=" * 50)
     
     try:
-        logger.info(f"Initializing vector store from: {args.store_path}")
-        store = VectorStore(persist_directory=args.store_path)
+        # Determine which vector store to use based on args.embeddings
+        if args.embeddings == "oracle" and ORACLE_DB_AVAILABLE:
+            try:
+                logger.info("Initializing Oracle DB vector store")
+                store = OraDBVectorStore()
+                print("✓ Using Oracle DB for vector storage")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Oracle DB: {str(e)}")
+                logger.info(f"Falling back to ChromaDB from: {args.store_path}")
+                store = VectorStore(persist_directory=args.store_path)
+                print("⚠ Oracle DB initialization failed, using ChromaDB instead")
+        else:
+            if args.embeddings == "oracle" and not ORACLE_DB_AVAILABLE:
+                logger.warning("Oracle DB support not available")
+                print("⚠ Oracle DB support not available (missing dependencies)")
+                
+            logger.info(f"Initializing ChromaDB vector store from: {args.store_path}")
+            store = VectorStore(persist_directory=args.store_path)
+            print("✓ Using ChromaDB for vector storage")
+        
         logger.info("Initializing local RAG agent...")
+        # Set use_oracle_db based on the actual store type
+        use_oracle_db = args.embeddings == "oracle" and isinstance(store, OraDBVectorStore)
+        
         agent = LocalRAGAgent(
             store, 
             model_name=args.model, 
             use_cot=args.use_cot, 
             collection=args.collection,
-            skip_analysis=args.skip_analysis
+            skip_analysis=args.skip_analysis,
+            use_oracle_db=use_oracle_db
         )
         
         print(f"\nProcessing query: {args.query}")
