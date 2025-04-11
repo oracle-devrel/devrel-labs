@@ -434,9 +434,6 @@ def create_interface():
         url_button.click(process_url, inputs=[url_input], outputs=[url_output])
         repo_button.click(process_repo, inputs=[repo_input], outputs=[repo_output])
         
-        # Model download event handler
-        download_button.click(download_model, inputs=[model_dropdown], outputs=[model_status])
-        
         # Standard chat handlers
         standard_msg.submit(
             chat,
