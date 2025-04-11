@@ -168,6 +168,7 @@ class LocalRAGAgent:
         self.collection = collection
         self.quantization = quantization
         self.model_name = model_name
+        print('Model Name pre-check:', model_name)
         # skip_analysis parameter kept for backward compatibility but no longer used
         
         # Check if this is an Ollama model (anything not Mistral is considered Ollama)
