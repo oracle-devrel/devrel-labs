@@ -319,12 +319,20 @@ def create_interface():
             Choose your preferred model for the conversation.
             """)
             
-            model_dropdown = gr.Dropdown(
-                choices=model_choices,
-                value=default_model,
-                label="Select Model",
-                info="Choose the model to use for the conversation"
-            )
+            with gr.Row():
+                with gr.Column():
+                    model_dropdown = gr.Dropdown(
+                        choices=model_choices,
+                        value=default_model,
+                        label="Select Model",
+                        info="Choose the model to use for the conversation"
+                    )
+                    download_button = gr.Button("Download Selected Model")
+                    model_status = gr.Textbox(
+                        label="Download Status",
+                        placeholder="Select a model and click Download to begin...",
+                        interactive=False
+                    )
             
             # Add model FAQ section
             gr.Markdown("""
@@ -332,14 +340,14 @@ def create_interface():
             
             | Model | Parameters | Size | Download Command |
             |-------|------------|------|------------------|
-            | qwq | 7B | 4.1GB | qwq:latest |
-            | gemma3 | 7B | 4.1GB | gemma3:latest |
-            | llama3.3 | 7B | 4.1GB | llama3.3:latest |
-            | phi4 | 7B | 4.1GB | phi4:latest |
+            | qwq | 32B | 20GB | qwq:latest |
+            | gemma3 | 4B | 3.3GB | gemma3:latest |
+            | llama3.3 | 70B | 43GB | llama3.3:latest |
+            | phi4 | 14B | 9.1GB | phi4:latest |
             | mistral | 7B | 4.1GB | mistral:latest |
-            | llava | 7B | 4.1GB | llava:latest |
-            | phi3 | 7B | 4.1GB | phi3:latest |
-            | deepseek-r1 | 7B | 4.1GB | deepseek-r1:latest |
+            | llava | 7B | 4.5GB | llava:latest |
+            | phi3 | 4B | 4.0GB | phi3:latest |
+            | deepseek-r1 | 7B | 4.7GB | deepseek-r1:latest |
             
             Note: All models are available through Ollama. Make sure Ollama is running on your system.
             """)
@@ -433,6 +441,9 @@ def create_interface():
         pdf_button.click(process_pdf, inputs=[pdf_file], outputs=[pdf_output])
         url_button.click(process_url, inputs=[url_input], outputs=[url_output])
         repo_button.click(process_repo, inputs=[repo_input], outputs=[repo_output])
+        
+        # Model download event handler
+        download_button.click(download_model, inputs=[model_dropdown], outputs=[model_status])
         
         # Standard chat handlers
         standard_msg.submit(
