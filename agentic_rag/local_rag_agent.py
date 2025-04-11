@@ -170,35 +170,25 @@ class LocalRAGAgent:
         self.model_name = model_name
         # skip_analysis parameter kept for backward compatibility but no longer used
         
-        # Check if this is an Ollama model
-        self.is_ollama = model_name and (model_name.startswith("ollama:") or "Ollama - " in model_name)
+        # Check if this is an Ollama model (anything not Mistral is considered Ollama)
+        self.is_ollama = not (model_name and "mistral" in model_name.lower())
         
         if self.is_ollama:
-            # Extract the actual model name from the prefix
-            # If model_name contains 'ollama:' prefix, remove it
-            # If model_name is from gradio interface (e.g., "Ollama - llama3"), extract just the model name
-            if model_name.startswith("ollama:"):
-                ollama_model_name = model_name.replace("ollama:", "")
-            elif "Ollama - " in model_name:
-                ollama_model_name = model_name.replace("Ollama - ", "").strip()
-            else:
-                ollama_model_name = model_name
-            
             # Add :latest suffix if not present
-            if not ollama_model_name.endswith(":latest"):
-                ollama_model_name = f"{ollama_model_name}:latest"
+            if not model_name.endswith(":latest"):
+                model_name = f"{model_name}:latest"
             
             # Load Ollama model
             print("\nLoading Ollama model...")
-            print(f"Model: {ollama_model_name}")
+            print(f"Model: {model_name}")
             print("Note: Make sure Ollama is running on your system.")
             
             # Initialize Ollama model handler
-            self.ollama_handler = OllamaModelHandler(ollama_model_name)
+            self.ollama_handler = OllamaModelHandler(model_name)
             
             # Create pipeline-like interface
             self.pipeline = self.ollama_handler
-            print(f"Using Ollama model: {ollama_model_name}")
+            print(f"Using Ollama model: {model_name}")
         else:
             # Only initialize Mistral if no model is specified
             if not model_name:

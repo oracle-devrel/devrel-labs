@@ -298,46 +298,46 @@ def create_interface():
         # HF models first if token is available
         if hf_token:
             model_choices.extend([
-                "Local (Mistral)", 
-                "Local (Mistral) - 4-bit Quantized",
-                "Local (Mistral) - 8-bit Quantized",
+                "mistral", 
+                "mistral-4bit",
+                "mistral-8bit",
             ])
         # Then Ollama models (don't require HF token)
         model_choices.extend([
-            "Ollama - llama3",
-            "Ollama - phi-3",
-            "Ollama - qwen2",
+            "llama3",
+            "phi-3",
+            "qwen2",
             # New Ollama models
-            "Ollama - gemma3:1b",
-            "Ollama - gemma3",
-            "Ollama - gemma3:12b", 
-            "Ollama - gemma3:27b",
-            "Ollama - qwq",
-            "Ollama - deepseek-r1",
-            "Ollama - deepseek-r1:671b",
-            "Ollama - llama3.3",
-            "Ollama - llama3.2",
-            "Ollama - llama3.2:1b",
-            "Ollama - llama3.2-vision",
-            "Ollama - llama3.2-vision:90b",
-            "Ollama - llama3.1",
-            "Ollama - llama3.1:405b",
-            "Ollama - phi4",
-            "Ollama - phi4-mini",
-            "Ollama - mistral",
-            "Ollama - moondream",
-            "Ollama - neural-chat",
-            "Ollama - starling-lm",
-            "Ollama - codellama",
-            "Ollama - llama2-uncensored",
-            "Ollama - llava",
-            "Ollama - granite3.2"
+            "gemma3:1b",
+            "gemma3",
+            "gemma3:12b", 
+            "gemma3:27b",
+            "qwq",
+            "deepseek-r1",
+            "deepseek-r1:671b",
+            "llama3.3",
+            "llama3.2",
+            "llama3.2:1b",
+            "llama3.2-vision",
+            "llama3.2-vision:90b",
+            "llama3.1",
+            "llama3.1:405b",
+            "phi4",
+            "phi4-mini",
+            "mistral",
+            "moondream",
+            "neural-chat",
+            "starling-lm",
+            "codellama",
+            "llama2-uncensored",
+            "llava",
+            "granite3.2"
         ])
         if openai_key:
-            model_choices.append("OpenAI")
+            model_choices.append("openai")
         
-        # Set default model to Ollama - qwen2
-        default_model = "Ollama - qwen2"
+        # Set default model to qwen2
+        default_model = "qwen2"
         
         # Model Management Tab (First Tab)
         with gr.Tab("Model Management"):
