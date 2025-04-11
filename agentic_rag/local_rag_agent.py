@@ -57,10 +57,6 @@ class OllamaModelHandler:
         Args:
             model_name: Name of the Ollama model to use
         """
-        # Ensure model name has :latest suffix
-        if not model_name.endswith(":latest"):
-            model_name = f"{model_name}:latest"
-        
         self.model_name = model_name
         self._check_ollama_running()
     
@@ -174,10 +170,6 @@ class LocalRAGAgent:
         self.is_ollama = not (model_name and "mistral" in model_name.lower())
         
         if self.is_ollama:
-            # Add :latest suffix if not present
-            if not model_name.endswith(":latest"):
-                model_name = f"{model_name}:latest"
-            
             # Load Ollama model
             print("\nLoading Ollama model...")
             print(f"Model: {model_name}")
