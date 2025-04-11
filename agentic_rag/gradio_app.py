@@ -141,8 +141,9 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
             quantization = "8bit"
             model_type = "Local (Mistral)"
         elif "Ollama" in agent_type:
+            # Extract model name from agent_type (e.g., "Ollama - deepseek-r1" -> "deepseek-r1")
+            model_name = agent_type.replace("Ollama - ", "").strip()
             model_type = "Ollama"
-            # Model name will be extracted later
         else:
             model_type = agent_type
         
@@ -156,10 +157,7 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
             agent = LocalRAGAgent(vector_store, use_cot=use_cot, collection=collection, 
                                  skip_analysis=skip_analysis, quantization=quantization)
         elif "Ollama" in model_type:
-            # For Ollama models
-            # Extract model name directly from the model_type
-            model_name = model_type.replace("Ollama - ", "").strip()
-            
+            # For Ollama models, use the extracted model_name directly
             try:
                 agent = LocalRAGAgent(vector_store, model_name=model_name, use_cot=use_cot, 
                                      collection=collection, skip_analysis=skip_analysis)
