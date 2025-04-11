@@ -134,6 +134,13 @@ class LocalRAGAgent:
             quantization: Quantization method to use (None, '4bit', '8bit')
             use_oracle_db: Whether to use Oracle DB for vector storage (if False, uses ChromaDB)
         """
+        print(f"LocalRAGAgent init - model_name: {model_name}")
+        
+        # Set default model if none provided
+        if model_name is None:
+            model_name = "qwen2"
+            print(f"Using default model: {model_name}")
+        
         # Initialize vector store if not provided
         self.use_oracle_db = use_oracle_db and ORACLE_DB_AVAILABLE
         
@@ -168,7 +175,7 @@ class LocalRAGAgent:
         self.collection = collection
         self.quantization = quantization
         self.model_name = model_name
-        print('Model Name pre-check:', model_name)
+        print('Model Name after assignment:', self.model_name)
         # skip_analysis parameter kept for backward compatibility but no longer used
         
         # Check if this is an Ollama model (anything not Mistral is considered Ollama)
@@ -501,6 +508,7 @@ def main():
     
     print("\nInitializing RAG agent...")
     print("=" * 50)
+    print(f"Using model: {args.model}")
     
     try:
         # Determine which vector store to use based on args.embeddings
@@ -527,6 +535,7 @@ def main():
         # Set use_oracle_db based on the actual store type
         use_oracle_db = args.embeddings == "oracle" and isinstance(store, OraDBVectorStore)
         
+        print(f"Creating LocalRAGAgent with model: {args.model}")
         agent = LocalRAGAgent(
             store, 
             model_name=args.model, 
