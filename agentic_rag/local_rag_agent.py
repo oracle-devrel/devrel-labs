@@ -165,7 +165,7 @@ class LocalRAGAgent:
         # skip_analysis parameter kept for backward compatibility but no longer used
         
         # Check if this is an Ollama model
-        self.is_ollama = model_name.startswith("ollama:") or "ollama" in model_name.lower()
+        self.is_ollama = model_name.startswith("ollama:") or "Ollama - " in model_name
         
         if self.is_ollama:
             # Extract the actual model name from the prefix

@@ -430,33 +430,33 @@ def create_interface():
             
             | Model | Parameters | Size | Download Command |
             |-------|------------|------|-----------------|
-            | Gemma 3 | 1B | 815MB | ollama run gemma3:1b |
-            | Gemma 3 | 4B | 3.3GB | ollama run gemma3 |
-            | Gemma 3 | 12B | 8.1GB | ollama run gemma3:12b |
-            | Gemma 3 | 27B | 17GB | ollama run gemma3:27b |
-            | QwQ | 32B | 20GB | ollama run qwq |
-            | DeepSeek-R1 | 7B | 4.7GB | ollama run deepseek-r1 |
-            | DeepSeek-R1 | 671B | 404GB | ollama run deepseek-r1:671b |
-            | Llama 3.3 | 70B | 43GB | ollama run llama3.3 |
-            | Llama 3.2 | 3B | 2.0GB | ollama run llama3.2 |
-            | Llama 3.2 | 1B | 1.3GB | ollama run llama3.2:1b |
-            | Llama 3.2 Vision | 11B | 7.9GB | ollama run llama3.2-vision |
-            | Llama 3.2 Vision | 90B | 55GB | ollama run llama3.2-vision:90b |
-            | Llama 3.1 | 8B | 4.7GB | ollama run llama3.1 |
-            | Llama 3.1 | 405B | 231GB | ollama run llama3.1:405b |
-            | Phi 4 | 14B | 9.1GB | ollama run phi4 |
-            | Phi 4 Mini | 3.8B | 2.5GB | ollama run phi4-mini |
-            | Mistral | 7B | 4.1GB | ollama run mistral |
-            | Moondream 2 | 1.4B | 829MB | ollama run moondream |
-            | Neural Chat | 7B | 4.1GB | ollama run neural-chat |
-            | Starling | 7B | 4.1GB | ollama run starling-lm |
-            | Code Llama | 7B | 3.8GB | ollama run codellama |
-            | Llama 2 Uncensored | 7B | 3.8GB | ollama run llama2-uncensored |
-            | LLaVA | 7B | 4.5GB | ollama run llava |
-            | Granite-3.2 | 8B | 4.9GB | ollama run granite3.2 |
-            | Llama 3 | 8B | 4.7GB | ollama run llama3 |
-            | Phi 3 | 4B | 4.0GB | ollama run phi3 |
-            | Qwen 2 | 7B | 4.1GB | ollama run qwen2 |
+            | Gemma 3 | 1B | 815MB | gemma3:1b |
+            | Gemma 3 | 4B | 3.3GB | gemma3 |
+            | Gemma 3 | 12B | 8.1GB | gemma3:12b |
+            | Gemma 3 | 27B | 17GB | gemma3:27b |
+            | QwQ | 32B | 20GB | qwq |
+            | DeepSeek-R1 | 7B | 4.7GB | deepseek-r1 |
+            | DeepSeek-R1 | 671B | 404GB | deepseek-r1:671b |
+            | Llama 3.3 | 70B | 43GB | llama3.3 |
+            | Llama 3.2 | 3B | 2.0GB | llama3.2 |
+            | Llama 3.2 | 1B | 1.3GB | llama3.2:1b |
+            | Llama 3.2 Vision | 11B | 7.9GB | llama3.2-vision |
+            | Llama 3.2 Vision | 90B | 55GB | llama3.2-vision:90b |
+            | Llama 3.1 | 8B | 4.7GB | llama3.1 |
+            | Llama 3.1 | 405B | 231GB | llama3.1:405b |
+            | Phi 4 | 14B | 9.1GB | phi4 |
+            | Phi 4 Mini | 3.8B | 2.5GB | phi4-mini |
+            | Mistral | 7B | 4.1GB | mistral |
+            | Moondream 2 | 1.4B | 829MB | moondream |
+            | Neural Chat | 7B | 4.1GB | neural-chat |
+            | Starling | 7B | 4.1GB | starling-lm |
+            | Code Llama | 7B | 3.8GB | codellama |
+            | Llama 2 Uncensored | 7B | 3.8GB | llama2-uncensored |
+            | LLaVA | 7B | 4.5GB | llava |
+            | Granite-3.2 | 8B | 4.9GB | granite3.2 |
+            | Llama 3 | 8B | 4.7GB | llama3 |
+            | Phi 3 | 4B | 4.0GB | phi3 |
+            | Qwen 2 | 7B | 4.1GB | qwen2 |
             
             ### HuggingFace Models
             
