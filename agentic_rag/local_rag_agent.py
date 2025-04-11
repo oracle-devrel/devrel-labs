@@ -57,7 +57,10 @@ class OllamaModelHandler:
         Args:
             model_name: Name of the Ollama model to use
         """
-        # Use the model name directly without any transformation
+        # Ensure model name has :latest suffix
+        if not model_name.endswith(":latest"):
+            model_name = f"{model_name}:latest"
+        
         self.model_name = model_name
         self._check_ollama_running()
     
@@ -74,13 +77,11 @@ class OllamaModelHandler:
                 
                 # Check if the requested model is available
                 if self.model_name not in available_models:
-                    # Try with :latest suffix
-                    if f"{self.model_name}:latest" in available_models:
-                        self.model_name = f"{self.model_name}:latest"
-                        print(f"Using model with :latest suffix: {self.model_name}")
-                    else:
-                        print(f"Model '{self.model_name}' not found in Ollama. Available models: {', '.join(available_models)}")
-                        print(f"You can pull it with: ollama pull {self.model_name}")
+                    print(f"Model '{self.model_name}' not found in Ollama. Available models: {', '.join(available_models)}")
+                    print(f"You can pull it with: ollama pull {self.model_name}")
+                    raise ValueError(f"Model '{self.model_name}' not found in Ollama")
+                else:
+                    print(f"Using Ollama model: {self.model_name}")
             except Exception as e:
                 raise ConnectionError(f"Failed to connect to Ollama. Please make sure Ollama is running. Error: {str(e)}")
                 
@@ -91,6 +92,9 @@ class OllamaModelHandler:
         """Generate text using the Ollama model"""
         try:
             import ollama
+            
+            print(f"\nGenerating response with Ollama model: {self.model_name}")
+            print(f"Prompt: {prompt[:100]}...")  # Print first 100 chars of prompt
             
             # Generate text
             response = ollama.generate(
@@ -103,6 +107,8 @@ class OllamaModelHandler:
                 }
             )
             
+            print(f"Response generated successfully with {self.model_name}")
+            
             # Format result to match transformers pipeline output
             formatted_result = [{
                 "generated_text": response["response"]
@@ -114,7 +120,7 @@ class OllamaModelHandler:
             raise Exception(f"Failed to generate text with Ollama: {str(e)}")
 
 class LocalRAGAgent:
-    def __init__(self, vector_store: VectorStore = None, model_name: str = "mistralai/Mistral-7B-Instruct-v0.2", 
+    def __init__(self, vector_store: VectorStore = None, model_name: str = None, 
                  use_cot: bool = False, collection: str = None, skip_analysis: bool = False,
                  quantization: str = None, use_oracle_db: bool = True):
         """Initialize local RAG agent with vector store and local LLM
@@ -165,7 +171,7 @@ class LocalRAGAgent:
         # skip_analysis parameter kept for backward compatibility but no longer used
         
         # Check if this is an Ollama model
-        self.is_ollama = model_name.startswith("ollama:") or "Ollama - " in model_name
+        self.is_ollama = model_name and (model_name.startswith("ollama:") or "Ollama - " in model_name)
         
         if self.is_ollama:
             # Extract the actual model name from the prefix
@@ -178,6 +184,10 @@ class LocalRAGAgent:
             else:
                 ollama_model_name = model_name
             
+            # Add :latest suffix if not present
+            if not ollama_model_name.endswith(":latest"):
+                ollama_model_name = f"{ollama_model_name}:latest"
+            
             # Load Ollama model
             print("\nLoading Ollama model...")
             print(f"Model: {ollama_model_name}")
@@ -188,87 +198,46 @@ class LocalRAGAgent:
             
             # Create pipeline-like interface
             self.pipeline = self.ollama_handler
-            
+            print(f"Using Ollama model: {ollama_model_name}")
         else:
-            # Load HuggingFace token from config
-            try:
-                with open('config.yaml', 'r') as f:
-                    config = yaml.safe_load(f)
-                token = config.get('HUGGING_FACE_HUB_TOKEN')
-                if not token:
-                    raise ValueError("HUGGING_FACE_HUB_TOKEN not found in config.yaml")
-            except Exception as e:
-                raise Exception(f"Failed to load HuggingFace token from config.yaml: {str(e)}")
-            
-            # Load model and tokenizer
-            print("\nLoading model and tokenizer...")
-            print(f"Model: {model_name}")
-            if quantization:
-                print(f"Quantization: {quantization}")
-            print("Note: Initial loading and inference can take 1-5 minutes depending on your hardware.")
-            print("Subsequent queries will be faster but may still take 30-60 seconds per response.")
-            
-            # Check if CUDA is available and set appropriate dtype
-            if torch.cuda.is_available():
-                print("CUDA is available. Using GPU acceleration.")
-                dtype = torch.float16
+            # Only initialize Mistral if no model is specified
+            if not model_name:
+                print("\nLoading default model and tokenizer...")
+                print("Model: mistralai/Mistral-7B-Instruct-v0.2")
+                self.model_name = "mistralai/Mistral-7B-Instruct-v0.2"
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name,
+                    device_map="auto",
+                    torch_dtype=torch.float16,
+                    load_in_8bit=quantization == "8bit",
+                    load_in_4bit=quantization == "4bit"
+                )
+                self.pipeline = pipeline(
+                    "text-generation",
+                    model=self.model,
+                    tokenizer=self.tokenizer,
+                    device_map="auto"
+                )
+                print(f"Using default model: {self.model_name}")
             else:
-                print("CUDA is not available. Using CPU only (this will be slow).")
-                dtype = torch.float32
-            
-            # Set up model loading parameters
-            model_kwargs = {
-                "torch_dtype": dtype,
-                "device_map": "auto",
-                "token": token,
-                "low_cpu_mem_usage": True,
-                "offload_folder": "offload"
-            }
-            
-            # Apply quantization if specified
-            if quantization == '4bit':
-                try:
-                    from transformers import BitsAndBytesConfig
-                    quantization_config = BitsAndBytesConfig(
-                        load_in_4bit=True,
-                        bnb_4bit_compute_dtype=torch.float16,
-                        bnb_4bit_use_double_quant=True,
-                        bnb_4bit_quant_type="nf4"
-                    )
-                    model_kwargs["quantization_config"] = quantization_config
-                    print("Using 4-bit quantization with bitsandbytes")
-                except ImportError:
-                    print("Warning: bitsandbytes not installed. Falling back to standard loading.")
-                    print("To use 4-bit quantization, install bitsandbytes: pip install bitsandbytes")
-            elif quantization == '8bit':
-                try:
-                    from transformers import BitsAndBytesConfig
-                    quantization_config = BitsAndBytesConfig(load_in_8bit=True)
-                    model_kwargs["quantization_config"] = quantization_config
-                    print("Using 8-bit quantization with bitsandbytes")
-                except ImportError:
-                    print("Warning: bitsandbytes not installed. Falling back to standard loading.")
-                    print("To use 8-bit quantization, install bitsandbytes: pip install bitsandbytes")
-            
-            # Load model with appropriate settings
-            self.model = AutoModelForCausalLM.from_pretrained(
-                model_name,
-                **model_kwargs
-            )
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
-            
-            # Create text generation pipeline with optimized settings
-            self.pipeline = pipeline(
-                "text-generation",
-                model=self.model,
-                tokenizer=self.tokenizer,
-                max_new_tokens=512,
-                do_sample=True,
-                temperature=0.1,
-                top_p=0.95,
-                device_map="auto"
-            )
-            print("✓ Model loaded successfully")
+                print(f"\nUsing specified model: {model_name}")
+                self.model_name = model_name
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name,
+                    device_map="auto",
+                    torch_dtype=torch.float16,
+                    load_in_8bit=quantization == "8bit",
+                    load_in_4bit=quantization == "4bit"
+                )
+                self.pipeline = pipeline(
+                    "text-generation",
+                    model=self.model,
+                    tokenizer=self.tokenizer,
+                    device_map="auto"
+                )
+                print(f"Using specified model: {self.model_name}")
         
         # Create LLM wrapper
         self.llm = LocalLLM(self.pipeline)
