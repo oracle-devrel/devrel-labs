@@ -481,7 +481,7 @@ def main():
     parser = argparse.ArgumentParser(description="Query documents using local LLM")
     parser.add_argument("--query", required=True, help="Query to search for")
     parser.add_argument("--embeddings", default="oracle", choices=["oracle", "chromadb"], help="Embeddings backend to use")
-    parser.add_argument("--model", default="ollama:qwen2", help="Model to use (default: ollama:qwen2)")
+    parser.add_argument("--model", default="qwen2", help="Model to use (default: qwen2)")
     parser.add_argument("--collection", help="Collection to search (PDF, Repository, General Knowledge)")
     parser.add_argument("--use-cot", action="store_true", help="Use Chain of Thought reasoning")
     parser.add_argument("--store-path", default="embeddings", help="Path to ChromaDB store")
