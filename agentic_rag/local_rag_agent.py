@@ -180,7 +180,7 @@ class LocalRAGAgent:
             if model_name.startswith("ollama:"):
                 ollama_model_name = model_name.replace("ollama:", "")
             elif "Ollama - " in model_name:
-                ollama_model_name = model_name.replace("Ollama - ", "")
+                ollama_model_name = model_name.replace("Ollama - ", "").strip()
             else:
                 ollama_model_name = model_name
             

@@ -428,35 +428,35 @@ def create_interface():
             
             ### Ollama Models
             
-            | Model | Parameters | Size | Download Command |
-            |-------|------------|------|-----------------|
-            | Gemma 3 | 1B | 815MB | gemma3:1b |
-            | Gemma 3 | 4B | 3.3GB | gemma3 |
-            | Gemma 3 | 12B | 8.1GB | gemma3:12b |
-            | Gemma 3 | 27B | 17GB | gemma3:27b |
-            | QwQ | 32B | 20GB | qwq |
-            | DeepSeek-R1 | 7B | 4.7GB | deepseek-r1 |
-            | DeepSeek-R1 | 671B | 404GB | deepseek-r1:671b |
-            | Llama 3.3 | 70B | 43GB | llama3.3 |
-            | Llama 3.2 | 3B | 2.0GB | llama3.2 |
-            | Llama 3.2 | 1B | 1.3GB | llama3.2:1b |
-            | Llama 3.2 Vision | 11B | 7.9GB | llama3.2-vision |
-            | Llama 3.2 Vision | 90B | 55GB | llama3.2-vision:90b |
-            | Llama 3.1 | 8B | 4.7GB | llama3.1 |
-            | Llama 3.1 | 405B | 231GB | llama3.1:405b |
-            | Phi 4 | 14B | 9.1GB | phi4 |
-            | Phi 4 Mini | 3.8B | 2.5GB | phi4-mini |
-            | Mistral | 7B | 4.1GB | mistral |
-            | Moondream 2 | 1.4B | 829MB | moondream |
-            | Neural Chat | 7B | 4.1GB | neural-chat |
-            | Starling | 7B | 4.1GB | starling-lm |
-            | Code Llama | 7B | 3.8GB | codellama |
-            | Llama 2 Uncensored | 7B | 3.8GB | llama2-uncensored |
-            | LLaVA | 7B | 4.5GB | llava |
-            | Granite-3.2 | 8B | 4.9GB | granite3.2 |
-            | Llama 3 | 8B | 4.7GB | llama3 |
-            | Phi 3 | 4B | 4.0GB | phi3 |
-            | Qwen 2 | 7B | 4.1GB | qwen2 |
+            | Model | Parameters | Size | Download Command | Description | Pulls | Tags | Last Updated |
+            |-------|------------|------|-----------------|-------------|-------|------|--------------|
+            | Gemma 3 | 1B | 815MB | gemma3:1b | The current, most capable model that runs on a single GPU | 3.4M | 17 | 2 weeks ago |
+            | Gemma 3 | 4B | 3.3GB | gemma3 | The current, most capable model that runs on a single GPU | 3.4M | 17 | 2 weeks ago |
+            | Gemma 3 | 12B | 8.1GB | gemma3:12b | The current, most capable model that runs on a single GPU | 3.4M | 17 | 2 weeks ago |
+            | Gemma 3 | 27B | 17GB | gemma3:27b | The current, most capable model that runs on a single GPU | 3.4M | 17 | 2 weeks ago |
+            | QwQ | 32B | 20GB | qwq | QwQ is the reasoning model of the Qwen series | 1.2M | 8 | 4 weeks ago |
+            | DeepSeek-R1 | 7B | 4.7GB | deepseek-r1 | DeepSeek's first-generation of reasoning models with comparable performance to OpenAI-o1 | 35.5M | 29 | 2 months ago |
+            | DeepSeek-R1 | 671B | 404GB | deepseek-r1:671b | DeepSeek's first-generation of reasoning models with comparable performance to OpenAI-o1 | 35.5M | 29 | 2 months ago |
+            | Llama 3.3 | 70B | 43GB | llama3.3 | New state of the art 70B model. Llama 3.3 70B offers similar performance compared to the Llama 3.1 405B model | 1.7M | 14 | 4 months ago |
+            | Llama 3.2 | 3B | 2.0GB | llama3.2 | Meta's Llama 3.2 goes small with 1B and 3B models | 12.8M | 63 | 6 months ago |
+            | Llama 3.2 | 1B | 1.3GB | llama3.2:1b | Meta's Llama 3.2 goes small with 1B and 3B models | 12.8M | 63 | 6 months ago |
+            | Llama 3.2 Vision | 11B | 7.9GB | llama3.2-vision | Llama 3.2 Vision is a collection of instruction-tuned image reasoning generative models | 1.8M | 9 | 5 months ago |
+            | Llama 3.2 Vision | 90B | 55GB | llama3.2-vision:90b | Llama 3.2 Vision is a collection of instruction-tuned image reasoning generative models | 1.8M | 9 | 5 months ago |
+            | Llama 3.1 | 8B | 4.7GB | llama3.1 | Llama 3.1 is a new state-of-the-art model from Meta | 89.6M | 93 | 4 months ago |
+            | Llama 3.1 | 405B | 231GB | llama3.1:405b | Llama 3.1 is a new state-of-the-art model from Meta | 89.6M | 93 | 4 months ago |
+            | Phi 4 | 14B | 9.1GB | phi4 | Phi-4 is a 14B parameter, state-of-the-art open model from Microsoft | 1.5M | 5 | 3 months ago |
+            | Phi 4 Mini | 3.8B | 2.5GB | phi4-mini | Phi-4 is a 14B parameter, state-of-the-art open model from Microsoft | 1.5M | 5 | 3 months ago |
+            | Mistral | 7B | 4.1GB | mistral | The 7B model released by Mistral AI, updated to version 0.3 | 11.6M | 84 | 8 months ago |
+            | Moondream 2 | 1.4B | 829MB | moondream | A series of multimodal LLMs (MLLMs) designed for vision-language understanding | 946.6K | 17 | 4 months ago |
+            | Neural Chat | 7B | 4.1GB | neural-chat | A state-of-the-art 12B model with 128k context length | 1.5M | 17 | 8 months ago |
+            | Starling | 7B | 4.1GB | starling-lm | A state-of-the-art 12B model with 128k context length | 1.5M | 17 | 8 months ago |
+            | Code Llama | 7B | 3.8GB | codellama | A large language model that can use text prompts to generate and discuss code | 1.9M | 199 | 8 months ago |
+            | Llama 2 Uncensored | 7B | 3.8GB | llama2-uncensored | Uncensored Llama 2 model by George Sung and Jarrad Hope | 913.2K | 34 | 17 months ago |
+            | LLaVA | 7B | 4.5GB | llava | LLaVA is a novel end-to-end trained large multimodal model for visual and language understanding | 4.8M | 98 | 14 months ago |
+            | Granite-3.2 | 8B | 4.9GB | granite3.2 | A high-performing and efficient model | 3.9M | 94 | 8 months ago |
+            | Llama 3 | 8B | 4.7GB | llama3 | Meta Llama 3: The most capable openly available LLM to date | 7.8M | 68 | 10 months ago |
+            | Phi 3 | 4B | 4.0GB | phi3 | Phi-3 is a family of lightweight 3B (Mini) and 14B (Medium) state-of-the-art open models | 3M | 72 | 8 months ago |
+            | Qwen 2 | 7B | 4.1GB | qwen2 | Qwen2 is a new series of large language models from Alibaba group | 4.2M | 97 | 7 months ago |
             
             ### HuggingFace Models
             
