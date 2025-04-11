@@ -186,6 +186,10 @@ class LocalRAGAgent:
             if model_name and model_name.startswith("ollama:"):
                 model_name = model_name.replace("ollama:", "")
             
+            # Always append :latest to Ollama model names
+            if not model_name.endswith(":latest"):
+                model_name = f"{model_name}:latest"
+            
             # Load Ollama model
             print("\nLoading Ollama model...")
             print(f"Model: {model_name}")

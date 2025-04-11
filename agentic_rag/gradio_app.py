@@ -295,196 +295,53 @@ def create_interface():
         
         # Create model choices list for reuse
         model_choices = []
-        # HF models first if token is available
-        if hf_token:
-            model_choices.extend([
-                "mistral", 
-                "mistral-4bit",
-                "mistral-8bit",
-            ])
-        # Then Ollama models (don't require HF token)
+        # Only Ollama models (no more local Mistral deployments)
         model_choices.extend([
-            "llama3",
-            "phi-3",
-            "qwen2",
-            # New Ollama models
-            "gemma3:1b",
-            "gemma3",
-            "gemma3:12b", 
-            "gemma3:27b",
             "qwq",
-            "deepseek-r1",
-            "deepseek-r1:671b",
+            "gemma3",
             "llama3.3",
-            "llama3.2",
-            "llama3.2:1b",
-            "llama3.2-vision",
-            "llama3.2-vision:90b",
-            "llama3.1",
-            "llama3.1:405b",
             "phi4",
-            "phi4-mini",
             "mistral",
-            "moondream",
-            "neural-chat",
-            "starling-lm",
-            "codellama",
-            "llama2-uncensored",
             "llava",
-            "granite3.2"
+            "phi3",
+            "deepseek-r1"
         ])
         if openai_key:
             model_choices.append("openai")
         
-        # Set default model to qwen2
-        default_model = "qwen2"
+        # Set default model to qwq
+        default_model = "qwq"
         
         # Model Management Tab (First Tab)
         with gr.Tab("Model Management"):
             gr.Markdown("""
-            ## Model Management
-            
-            Download models in advance to prepare them for use in the chat interface.
-            
-            ### Hugging Face Models
-            
-            For Hugging Face models (Mistral), you'll need a Hugging Face token in your config.yaml file.
-            
-            ### Ollama Models (Default)
-            
-            Ollama models are used by default. For Ollama models, this will pull the model using the Ollama client.
-            Make sure Ollama is installed and running on your system.
-            You can download Ollama from [ollama.com/download](https://ollama.com/download)
+            ## Model Selection
+            Choose your preferred model for the conversation.
             """)
             
-            with gr.Row():
-                with gr.Column():
-                    model_dropdown = gr.Dropdown(
-                        choices=model_choices,
-                        value=default_model if default_model in model_choices else model_choices[0] if model_choices else None,
-                        label="Select Model to Download",
-                        interactive=True
-                    )
-                    download_button = gr.Button("Download Selected Model")
-                    model_status = gr.Textbox(
-                        label="Download Status",
-                        placeholder="Select a model and click Download to begin...",
-                        interactive=False
-                    )
-                
-                with gr.Column():
-                    gr.Markdown("""
-                    ### Model Information
-                    
-                    **Ollama - qwen2** (DEFAULT): Alibaba's Qwen2 model via Ollama.
-                    - Size: ~4GB
-                    - Requires Ollama to be installed and running
-                    - High-quality model with good performance
-                    
-                    **Ollama - llama3**: Meta's Llama 3 model via Ollama.
-                    - Size: ~4GB
-                    - Requires Ollama to be installed and running
-                    - Excellent performance and quality
-                    
-                    **Ollama - phi-3**: Microsoft's Phi-3 model via Ollama.
-                    - Size: ~4GB
-                    - Requires Ollama to be installed and running
-                    - Efficient small model with good performance
-                    
-                    **Local (Mistral)**: The default Mistral-7B-Instruct-v0.2 model.
-                    - Size: ~14GB
-                    - VRAM Required: ~8GB
-                    - Good balance of quality and speed
-                    
-                    **Local (Mistral) - 4-bit Quantized**: 4-bit quantized version of Mistral-7B.
-                    - Size: ~4GB
-                    - VRAM Required: ~4GB
-                    - Faster inference with minimal quality loss
-                    
-                    **Local (Mistral) - 8-bit Quantized**: 8-bit quantized version of Mistral-7B.
-                    - Size: ~7GB
-                    - VRAM Required: ~6GB
-                    - Balance between quality and memory usage
-                    
-                    For a complete list of supported models and specifications, see the **Model FAQ** tab.
-                    """)
-        
-        # Model FAQ Tab
-        with gr.Tab("Model FAQ"):
+            model_dropdown = gr.Dropdown(
+                choices=model_choices,
+                value=default_model,
+                label="Select Model",
+                info="Choose the model to use for the conversation"
+            )
+            
+            # Add model FAQ section
             gr.Markdown("""
-            ## Model Information & Technical Requirements
+            ## Model FAQ
             
-            This page provides detailed information about all supported models, including size, parameter count, and hardware requirements.
+            | Model | Parameters | Size | Download Command |
+            |-------|------------|------|------------------|
+            | qwq | 7B | 4.1GB | qwq:latest |
+            | gemma3 | 7B | 4.1GB | gemma3:latest |
+            | llama3.3 | 7B | 4.1GB | llama3.3:latest |
+            | phi4 | 7B | 4.1GB | phi4:latest |
+            | mistral | 7B | 4.1GB | mistral:latest |
+            | llava | 7B | 4.1GB | llava:latest |
+            | phi3 | 7B | 4.1GB | phi3:latest |
+            | deepseek-r1 | 7B | 4.1GB | deepseek-r1:latest |
             
-            ### Memory Requirements
-            
-            As a general guideline:
-            - You should have at least 8 GB of RAM available to run 7B parameter models
-            - You should have at least 16 GB of RAM available to run 13B parameter models
-            - You should have at least 32 GB of RAM available to run 33B+ parameter models
-            - For vision models, additional memory is required for image processing
-            
-            ### Ollama Models
-            
-            | Model | Parameters | Size | Download Command | Description | Pulls | Tags | Last Updated |
-            |-------|------------|------|-----------------|-------------|-------|------|--------------|
-            | Gemma 3 | 1B | 815MB | gemma3:1b | The current, most capable model that runs on a single GPU | 3.4M | 17 | 2 weeks ago |
-            | Gemma 3 | 4B | 3.3GB | gemma3 | The current, most capable model that runs on a single GPU | 3.4M | 17 | 2 weeks ago |
-            | Gemma 3 | 12B | 8.1GB | gemma3:12b | The current, most capable model that runs on a single GPU | 3.4M | 17 | 2 weeks ago |
-            | Gemma 3 | 27B | 17GB | gemma3:27b | The current, most capable model that runs on a single GPU | 3.4M | 17 | 2 weeks ago |
-            | QwQ | 32B | 20GB | qwq | QwQ is the reasoning model of the Qwen series | 1.2M | 8 | 4 weeks ago |
-            | DeepSeek-R1 | 7B | 4.7GB | deepseek-r1 | DeepSeek's first-generation of reasoning models with comparable performance to OpenAI-o1 | 35.5M | 29 | 2 months ago |
-            | DeepSeek-R1 | 671B | 404GB | deepseek-r1:671b | DeepSeek's first-generation of reasoning models with comparable performance to OpenAI-o1 | 35.5M | 29 | 2 months ago |
-            | Llama 3.3 | 70B | 43GB | llama3.3 | New state of the art 70B model. Llama 3.3 70B offers similar performance compared to the Llama 3.1 405B model | 1.7M | 14 | 4 months ago |
-            | Llama 3.2 | 3B | 2.0GB | llama3.2 | Meta's Llama 3.2 goes small with 1B and 3B models | 12.8M | 63 | 6 months ago |
-            | Llama 3.2 | 1B | 1.3GB | llama3.2:1b | Meta's Llama 3.2 goes small with 1B and 3B models | 12.8M | 63 | 6 months ago |
-            | Llama 3.2 Vision | 11B | 7.9GB | llama3.2-vision | Llama 3.2 Vision is a collection of instruction-tuned image reasoning generative models | 1.8M | 9 | 5 months ago |
-            | Llama 3.2 Vision | 90B | 55GB | llama3.2-vision:90b | Llama 3.2 Vision is a collection of instruction-tuned image reasoning generative models | 1.8M | 9 | 5 months ago |
-            | Llama 3.1 | 8B | 4.7GB | llama3.1 | Llama 3.1 is a new state-of-the-art model from Meta | 89.6M | 93 | 4 months ago |
-            | Llama 3.1 | 405B | 231GB | llama3.1:405b | Llama 3.1 is a new state-of-the-art model from Meta | 89.6M | 93 | 4 months ago |
-            | Phi 4 | 14B | 9.1GB | phi4 | Phi-4 is a 14B parameter, state-of-the-art open model from Microsoft | 1.5M | 5 | 3 months ago |
-            | Phi 4 Mini | 3.8B | 2.5GB | phi4-mini | Phi-4 is a 14B parameter, state-of-the-art open model from Microsoft | 1.5M | 5 | 3 months ago |
-            | Mistral | 7B | 4.1GB | mistral | The 7B model released by Mistral AI, updated to version 0.3 | 11.6M | 84 | 8 months ago |
-            | Moondream 2 | 1.4B | 829MB | moondream | A series of multimodal LLMs (MLLMs) designed for vision-language understanding | 946.6K | 17 | 4 months ago |
-            | Neural Chat | 7B | 4.1GB | neural-chat | A state-of-the-art 12B model with 128k context length | 1.5M | 17 | 8 months ago |
-            | Starling | 7B | 4.1GB | starling-lm | A state-of-the-art 12B model with 128k context length | 1.5M | 17 | 8 months ago |
-            | Code Llama | 7B | 3.8GB | codellama | A large language model that can use text prompts to generate and discuss code | 1.9M | 199 | 8 months ago |
-            | Llama 2 Uncensored | 7B | 3.8GB | llama2-uncensored | Uncensored Llama 2 model by George Sung and Jarrad Hope | 913.2K | 34 | 17 months ago |
-            | LLaVA | 7B | 4.5GB | llava | LLaVA is a novel end-to-end trained large multimodal model for visual and language understanding | 4.8M | 98 | 14 months ago |
-            | Granite-3.2 | 8B | 4.9GB | granite3.2 | A high-performing and efficient model | 3.9M | 94 | 8 months ago |
-            | Llama 3 | 8B | 4.7GB | llama3 | Meta Llama 3: The most capable openly available LLM to date | 7.8M | 68 | 10 months ago |
-            | Phi 3 | 4B | 4.0GB | phi3 | Phi-3 is a family of lightweight 3B (Mini) and 14B (Medium) state-of-the-art open models | 3M | 72 | 8 months ago |
-            | Qwen 2 | 7B | 4.1GB | qwen2 | Qwen2 is a new series of large language models from Alibaba group | 4.2M | 97 | 7 months ago |
-            
-            ### HuggingFace Models
-            
-            | Model | Parameters | Size | Quantization | VRAM Required |
-            |-------|------------|------|--------------|---------------|
-            | Mistral | 7B | 14GB | None | 8GB |
-            | Mistral | 7B | 4GB | 4-bit | 4GB |
-            | Mistral | 7B | 7GB | 8-bit | 6GB |
-            
-            ### Recommended Models
-            
-            **Best Overall Performance**:
-            - Ollama - llama3
-            - Ollama - llama3.2-vision (for image processing)
-            - Ollama - phi4
-            
-            **Best for Limited Hardware (8GB RAM)**:
-            - Ollama - llama3.2:1b
-            - Ollama - gemma3:1b
-            - Ollama - phi4-mini
-            - Ollama - moondream
-            
-            **Best for Code Tasks**:
-            - Ollama - codellama
-            - Ollama - deepseek-r1
-            
-            **Best for Enterprise Use**:
-            - Ollama - qwen2
-            - Ollama - granite3.2
-            - Ollama - neural-chat
+            Note: All models are available through Ollama. Make sure Ollama is running on your system.
             """)
         
         # Document Processing Tab
