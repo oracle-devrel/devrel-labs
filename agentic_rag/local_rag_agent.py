@@ -57,8 +57,8 @@ class OllamaModelHandler:
         Args:
             model_name: Name of the Ollama model to use
         """
-        # Remove the 'ollama:' prefix if present
-        self.model_name = model_name.replace("ollama:", "") if model_name.startswith("ollama:") else model_name
+        # Use the model name directly without any transformation
+        self.model_name = model_name
         self._check_ollama_running()
     
     def _check_ollama_running(self):
@@ -165,11 +165,18 @@ class LocalRAGAgent:
         # skip_analysis parameter kept for backward compatibility but no longer used
         
         # Check if this is an Ollama model
-        self.is_ollama = model_name.startswith("ollama:")
+        self.is_ollama = model_name.startswith("ollama:") or "ollama" in model_name.lower()
         
         if self.is_ollama:
             # Extract the actual model name from the prefix
-            ollama_model_name = model_name.replace("ollama:", "")
+            # If model_name contains 'ollama:' prefix, remove it
+            # If model_name is from gradio interface (e.g., "Ollama - llama3"), extract just the model name
+            if model_name.startswith("ollama:"):
+                ollama_model_name = model_name.replace("ollama:", "")
+            elif "Ollama - " in model_name:
+                ollama_model_name = model_name.replace("Ollama - ", "")
+            else:
+                ollama_model_name = model_name
             
             # Load Ollama model
             print("\nLoading Ollama model...")

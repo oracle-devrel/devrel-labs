@@ -142,13 +142,7 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
             model_type = "Local (Mistral)"
         elif "Ollama" in agent_type:
             model_type = "Ollama"
-            # Extract model name from agent_type and use correct Ollama model names
-            if "llama3" in agent_type.lower():
-                model_name = "ollama:llama3"
-            elif "phi-3" in agent_type.lower():
-                model_name = "ollama:phi3"
-            elif "qwen2" in agent_type.lower():
-                model_name = "ollama:qwen2"
+            # Model name will be extracted later
         else:
             model_type = agent_type
         
@@ -161,28 +155,26 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
                 return history + [[message, response_text]]
             agent = LocalRAGAgent(vector_store, use_cot=use_cot, collection=collection, 
                                  skip_analysis=skip_analysis, quantization=quantization)
-        elif model_type == "Ollama":
+        elif "Ollama" in model_type:
             # For Ollama models
-            if model_name:
-                try:
-                    agent = LocalRAGAgent(vector_store, model_name=model_name, use_cot=use_cot, 
-                                         collection=collection, skip_analysis=skip_analysis)
-                except Exception as e:
-                    response_text = f"Error initializing Ollama model: {str(e)}. Falling back to Local Mistral."
-                    print(f"Error: {response_text}")
-                    # Fall back to Mistral if Ollama fails
-                    if hf_token:
-                        agent = LocalRAGAgent(vector_store, use_cot=use_cot, collection=collection, 
-                                             skip_analysis=skip_analysis)
-                    else:
-                        return history + [[message, "Local Mistral agent not available for fallback. Please check your HuggingFace token configuration."]]
-            else:
-                response_text = "Ollama model not specified correctly."
+            # Extract model name directly from the model_type
+            model_name = model_type.replace("Ollama - ", "").strip()
+            
+            try:
+                agent = LocalRAGAgent(vector_store, model_name=model_name, use_cot=use_cot, 
+                                     collection=collection, skip_analysis=skip_analysis)
+            except Exception as e:
+                response_text = f"Error initializing Ollama model: {str(e)}. Falling back to Local Mistral."
                 print(f"Error: {response_text}")
-                return history + [[message, response_text]]
+                # Fall back to Mistral if Ollama fails
+                if hf_token:
+                    agent = LocalRAGAgent(vector_store, use_cot=use_cot, collection=collection, 
+                                         skip_analysis=skip_analysis)
+                else:
+                    return history + [[message, "Local Mistral agent not available for fallback. Please check your HuggingFace token configuration."]]
         else:
             if not openai_key:
-                response_text = "OpenAI agent not available. Please check your OpenAI API key configuration."
+                response_text = "OpenAI key not found. Please check your config."
                 print(f"Error: {response_text}")
                 return history + [[message, response_text]]
             agent = RAGAgent(vector_store, openai_api_key=openai_key, use_cot=use_cot, 
@@ -316,7 +308,32 @@ def create_interface():
         model_choices.extend([
             "Ollama - llama3",
             "Ollama - phi-3",
-            "Ollama - qwen2"
+            "Ollama - qwen2",
+            # New Ollama models
+            "Ollama - gemma3:1b",
+            "Ollama - gemma3",
+            "Ollama - gemma3:12b", 
+            "Ollama - gemma3:27b",
+            "Ollama - qwq",
+            "Ollama - deepseek-r1",
+            "Ollama - deepseek-r1:671b",
+            "Ollama - llama3.3",
+            "Ollama - llama3.2",
+            "Ollama - llama3.2:1b",
+            "Ollama - llama3.2-vision",
+            "Ollama - llama3.2-vision:90b",
+            "Ollama - llama3.1",
+            "Ollama - llama3.1:405b",
+            "Ollama - phi4",
+            "Ollama - phi4-mini",
+            "Ollama - mistral",
+            "Ollama - moondream",
+            "Ollama - neural-chat",
+            "Ollama - starling-lm",
+            "Ollama - codellama",
+            "Ollama - llama2-uncensored",
+            "Ollama - llava",
+            "Ollama - granite3.2"
         ])
         if openai_key:
             model_choices.append("OpenAI")
@@ -390,7 +407,87 @@ def create_interface():
                     - Size: ~7GB
                     - VRAM Required: ~6GB
                     - Balance between quality and memory usage
+                    
+                    For a complete list of supported models and specifications, see the **Model FAQ** tab.
                     """)
+        
+        # Model FAQ Tab
+        with gr.Tab("Model FAQ"):
+            gr.Markdown("""
+            ## Model Information & Technical Requirements
+            
+            This page provides detailed information about all supported models, including size, parameter count, and hardware requirements.
+            
+            ### Memory Requirements
+            
+            As a general guideline:
+            - You should have at least 8 GB of RAM available to run 7B parameter models
+            - You should have at least 16 GB of RAM available to run 13B parameter models
+            - You should have at least 32 GB of RAM available to run 33B+ parameter models
+            - For vision models, additional memory is required for image processing
+            
+            ### Ollama Models
+            
+            | Model | Parameters | Size | Download Command |
+            |-------|------------|------|-----------------|
+            | Gemma 3 | 1B | 815MB | ollama run gemma3:1b |
+            | Gemma 3 | 4B | 3.3GB | ollama run gemma3 |
+            | Gemma 3 | 12B | 8.1GB | ollama run gemma3:12b |
+            | Gemma 3 | 27B | 17GB | ollama run gemma3:27b |
+            | QwQ | 32B | 20GB | ollama run qwq |
+            | DeepSeek-R1 | 7B | 4.7GB | ollama run deepseek-r1 |
+            | DeepSeek-R1 | 671B | 404GB | ollama run deepseek-r1:671b |
+            | Llama 3.3 | 70B | 43GB | ollama run llama3.3 |
+            | Llama 3.2 | 3B | 2.0GB | ollama run llama3.2 |
+            | Llama 3.2 | 1B | 1.3GB | ollama run llama3.2:1b |
+            | Llama 3.2 Vision | 11B | 7.9GB | ollama run llama3.2-vision |
+            | Llama 3.2 Vision | 90B | 55GB | ollama run llama3.2-vision:90b |
+            | Llama 3.1 | 8B | 4.7GB | ollama run llama3.1 |
+            | Llama 3.1 | 405B | 231GB | ollama run llama3.1:405b |
+            | Phi 4 | 14B | 9.1GB | ollama run phi4 |
+            | Phi 4 Mini | 3.8B | 2.5GB | ollama run phi4-mini |
+            | Mistral | 7B | 4.1GB | ollama run mistral |
+            | Moondream 2 | 1.4B | 829MB | ollama run moondream |
+            | Neural Chat | 7B | 4.1GB | ollama run neural-chat |
+            | Starling | 7B | 4.1GB | ollama run starling-lm |
+            | Code Llama | 7B | 3.8GB | ollama run codellama |
+            | Llama 2 Uncensored | 7B | 3.8GB | ollama run llama2-uncensored |
+            | LLaVA | 7B | 4.5GB | ollama run llava |
+            | Granite-3.2 | 8B | 4.9GB | ollama run granite3.2 |
+            | Llama 3 | 8B | 4.7GB | ollama run llama3 |
+            | Phi 3 | 4B | 4.0GB | ollama run phi3 |
+            | Qwen 2 | 7B | 4.1GB | ollama run qwen2 |
+            
+            ### HuggingFace Models
+            
+            | Model | Parameters | Size | Quantization | VRAM Required |
+            |-------|------------|------|--------------|---------------|
+            | Mistral | 7B | 14GB | None | 8GB |
+            | Mistral | 7B | 4GB | 4-bit | 4GB |
+            | Mistral | 7B | 7GB | 8-bit | 6GB |
+            
+            ### Recommended Models
+            
+            **Best Overall Performance**:
+            - Ollama - llama3
+            - Ollama - llama3.2-vision (for image processing)
+            - Ollama - phi4
+            
+            **Best for Limited Hardware (8GB RAM)**:
+            - Ollama - llama3.2:1b
+            - Ollama - gemma3:1b
+            - Ollama - phi4-mini
+            - Ollama - moondream
+            
+            **Best for Code Tasks**:
+            - Ollama - codellama
+            - Ollama - deepseek-r1
+            
+            **Best for Enterprise Use**:
+            - Ollama - qwen2
+            - Ollama - granite3.2
+            - Ollama - neural-chat
+            """)
         
         # Document Processing Tab
         with gr.Tab("Document Processing"):
@@ -580,13 +677,30 @@ def main():
     try:
         import ollama
         try:
-            # Check if Ollama is running and qwen2 is available
+            # Check if Ollama is running and list available models
             models = ollama.list().models
             available_models = [model.model for model in models]
-            if "qwen2" not in available_models and "qwen2:latest" not in available_models:
-                print("⚠️ Warning: Ollama is running but qwen2 model is not available. Please run 'ollama pull qwen2' or download through the interface.")
-        except Exception:
-            print("⚠️ Warning: Ollama is installed but not running or encountered an error. The default model may not work.")
+            
+            # Check if any default models are available
+            if "qwen2" not in available_models and "qwen2:latest" not in available_models and \
+               "llama3" not in available_models and "llama3:latest" not in available_models and \
+               "phi3" not in available_models and "phi3:latest" not in available_models:
+                print("⚠️ Warning: Ollama is running but no default models (qwen2, llama3, phi3) are available.")
+                print("Please download a model through the Model Management tab or run:")
+                print("    ollama pull qwen2")
+                print("    ollama pull llama3")
+                print("    ollama pull phi3")
+            else:
+                available_default_models = []
+                for model in ["qwen2", "llama3", "phi3"]:
+                    if model in available_models or f"{model}:latest" in available_models:
+                        available_default_models.append(model)
+                
+                print(f"✅ Ollama is running with available default models: {', '.join(available_default_models)}")
+                print(f"All available models: {', '.join(available_models)}")
+        except Exception as e:
+            print(f"⚠️ Warning: Ollama is installed but not running or encountered an error: {str(e)}")
+            print("Please start Ollama before using the interface.")
     except ImportError:
         print("⚠️ Warning: Ollama package not installed. Please install with: pip install ollama")
         
@@ -677,14 +791,8 @@ def download_model(model_type: str) -> str:
                 
         elif "Ollama" in model_type:
             # Extract model name from model_type
-            if "llama3" in model_type.lower():
-                model_name = "llama3"
-            elif "phi-3" in model_type.lower():
-                model_name = "phi3"
-            elif "qwen2" in model_type.lower():
-                model_name = "qwen2"
-            else:
-                return "❌ Error: Unknown Ollama model type"
+            # Remove the 'Ollama - ' prefix and any leading/trailing whitespace
+            model_name = model_type.replace("Ollama - ", "").strip()
             
             # Use Ollama to pull the model
             try:
