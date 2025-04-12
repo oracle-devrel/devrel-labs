@@ -140,15 +140,22 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
         elif "8-bit" in agent_type:
             quantization = "8bit"
             model_type = "Local (Mistral)"
-        elif "Ollama" in agent_type:
-            # Extract model name from agent_type (e.g., "Ollama - deepseek-r1" -> "deepseek-r1")
-            model_name = agent_type.replace("Ollama - ", "").strip()
-            model_type = "Ollama"
+        elif agent_type == "openai":
+            model_type = "OpenAI"
         else:
-            model_type = agent_type
+            # All other models are treated as Ollama models
+            model_type = "Ollama"
+            model_name = agent_type
         
         # Select appropriate agent and reinitialize with correct settings
-        if "Local" in model_type:
+        if model_type == "OpenAI":
+            if not openai_key:
+                response_text = "OpenAI key not found. Please check your config."
+                print(f"Error: {response_text}")
+                return history + [[message, response_text]]
+            agent = RAGAgent(vector_store, openai_api_key=openai_key, use_cot=use_cot, 
+                            collection=collection, skip_analysis=skip_analysis)
+        elif model_type == "Local (Mistral)":
             # For HF models, we need the token
             if not hf_token:
                 response_text = "Local agent not available. Please check your HuggingFace token configuration."
@@ -156,27 +163,14 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
                 return history + [[message, response_text]]
             agent = LocalRAGAgent(vector_store, use_cot=use_cot, collection=collection, 
                                  skip_analysis=skip_analysis, quantization=quantization)
-        elif "Ollama" in model_type:
-            # For Ollama models, use the extracted model_name directly
+        else:  # Ollama models
             try:
                 agent = LocalRAGAgent(vector_store, model_name=model_name, use_cot=use_cot, 
                                      collection=collection, skip_analysis=skip_analysis)
             except Exception as e:
-                response_text = f"Error initializing Ollama model: {str(e)}. Falling back to Local Mistral."
-                print(f"Error: {response_text}")
-                # Fall back to Mistral if Ollama fails
-                if hf_token:
-                    agent = LocalRAGAgent(vector_store, use_cot=use_cot, collection=collection, 
-                                         skip_analysis=skip_analysis)
-                else:
-                    return history + [[message, "Local Mistral agent not available for fallback. Please check your HuggingFace token configuration."]]
-        else:
-            if not openai_key:
-                response_text = "OpenAI key not found. Please check your config."
+                response_text = f"Error initializing Ollama model: {str(e)}"
                 print(f"Error: {response_text}")
                 return history + [[message, response_text]]
-            agent = RAGAgent(vector_store, openai_api_key=openai_key, use_cot=use_cot, 
-                            collection=collection, skip_analysis=skip_analysis)
         
         # Process query and get response
         print("Processing query...")
