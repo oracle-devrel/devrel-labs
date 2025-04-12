@@ -651,8 +651,8 @@ def download_model(model_type: str) -> str:
                 
             except Exception as e:
                 return f"❌ Error downloading model: {str(e)}"
-                
-        elif "Ollama" in model_type:
+        # all ollama models
+        else:
             # Extract model name from model_type
             # Remove the 'Ollama - ' prefix and any leading/trailing whitespace
             model_name = model_type.replace("Ollama - ", "").strip()
@@ -703,8 +703,6 @@ def download_model(model_type: str) -> str:
                 return "❌ Error: Could not connect to Ollama. Please make sure Ollama is installed and running."
             except Exception as e:
                 return f"❌ Error pulling Ollama model: {str(e)}"
-        else:
-            return "❌ Error: Unknown model type"
     
     except Exception as e:
         return f"❌ Error: {str(e)}"
