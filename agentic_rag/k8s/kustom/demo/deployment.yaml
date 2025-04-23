@@ -101,7 +101,7 @@ spec:
           
           # Clone and set up the application
           cd /app
-          git clone https://github.com/vmleon/devrel-labs.git
+          git clone -b agentic_rag_automation https://github.com/vmleon/devrel-labs.git
           cd devrel-labs/agentic_rag
           pip install -r requirements.txt
           
