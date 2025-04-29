@@ -5,9 +5,7 @@
 - Hugging face token should be a secret
 - PVCs and deployments in separate files
 - multiple deployments/pods for different functions
-- Consider include installation of driver on Kustomize https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.14.0/nvidia-device-plugin.yml
 - Hugging Face Token optional
-- Autonomous for Vector Search
 
 ## Deploy Infrastructure
 
@@ -64,7 +62,7 @@ kubectl apply -k k8s/kustom/overlays/prod
 Check all pods are Ready:
 
 ```bash
-kubectl wait pod --all --for=condition=Ready --namespace=agentic-rag
+kubectl get po --namespace=agentic-rag
 ```
 
 Get Gradio Live URL:
@@ -81,6 +79,12 @@ Also, you could get the Load Balancer Public IP address:
 echo "http://$(kubectl get service \
   -n agentic-rag \
   -o jsonpath='{.items[?(@.spec.type=="LoadBalancer")].status.loadBalancer.ingress[0].ip}')"
+```
+
+To troubleshoot connect to the container
+
+```bash
+kubectl exec -it $(kubectl get po -n agentic-rag -l app=agentic-rag -o name) -n agentic-rag -- sh
 ```
 
 ## Clean up

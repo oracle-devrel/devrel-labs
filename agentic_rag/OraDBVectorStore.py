@@ -31,10 +31,12 @@ class OraDBVectorStore:
         # Connect to the database
         try:
             if not wallet_path:
+                print(f'Connecting (no wallet) to dsn {dsn} and user {username}')
                 conn23c = oracledb.connect(user=username, password=password, dsn=dsn)
             else:
+                print(f'Connecting (with wallet) to dsn {dsn} and user {username}')
                 conn23c = oracledb.connect(user=username, password=password, dsn=dsn, 
-                                           wallet_location=wallet_path, wallet_password=wallet_password)
+                                           config_dir=wallet_path, wallet_location=wallet_path, wallet_password=wallet_password)
             print("Oracle DB Connection successful!")
         except Exception as e:
             print("Oracle DB Connection failed!", e)
