@@ -2,10 +2,14 @@
 
 ## TODOS
 
+- Multiple containers for different functions
+  - Gradio
+  - Agents / Inference
+  - Database Access
 - Hugging face token should be a secret
-- PVCs and deployments in separate files
-- multiple deployments/pods for different functions
-- Hugging Face Token optional
+- Liveness and Readiness
+- Use Load balancer instead of Gradio Live
+- Autoscaling
 
 ## Deploy Infrastructure
 
