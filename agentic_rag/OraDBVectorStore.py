@@ -22,13 +22,21 @@ class OraDBVectorStore:
         username = credentials.get("ORACLE_DB_USERNAME", "ADMIN")
         password = credentials.get("ORACLE_DB_PASSWORD", "")
         dsn = credentials.get("ORACLE_DB_DSN", "")
+        wallet_path = credentials.get("ORACLE_DB_WALLET_LOCATION")
+        wallet_password = credentials.get("ORACLE_DB_WALLET_PASSWORD")
         
         if not password or not dsn:
             raise ValueError("Oracle DB credentials not found in config.yaml. Please set ORACLE_DB_USERNAME, ORACLE_DB_PASSWORD, and ORACLE_DB_DSN.")
 
         # Connect to the database
         try:
-            conn23c = oracledb.connect(user=username, password=password, dsn=dsn)
+            if not wallet_path:
+                print(f'Connecting (no wallet) to dsn {dsn} and user {username}')
+                conn23c = oracledb.connect(user=username, password=password, dsn=dsn)
+            else:
+                print(f'Connecting (with wallet) to dsn {dsn} and user {username}')
+                conn23c = oracledb.connect(user=username, password=password, dsn=dsn, 
+                                           config_dir=wallet_path, wallet_location=wallet_path, wallet_password=wallet_password)
             print("Oracle DB Connection successful!")
         except Exception as e:
             print("Oracle DB Connection failed!", e)
