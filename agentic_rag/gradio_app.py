@@ -178,7 +178,7 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
         print("Query processed successfully")
         
         # Format response with reasoning steps if CoT is enabled
-        if use_cot and "reasoning_steps" in response:
+        if use_cot and isinstance(response, dict) and "reasoning_steps" in response:
             formatted_response = "🤔 Let me think about this step by step:\n\n"
             print("\nChain of Thought Reasoning Steps:")
             print("-" * 50)
@@ -195,7 +195,7 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
             # Add final answer
             print("\nFinal Answer:")
             print("-" * 50)
-            final_answer = "\n🎯 Final Answer:\n" + response["answer"]
+            final_answer = "\n🎯 Final Answer:\n" + response.get("answer", "No answer provided")
             formatted_response += final_answer
             print(final_answer)
             
@@ -208,27 +208,28 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
                 print(sources_text)
                 
                 for ctx in response["context"]:
-                    source = ctx["metadata"].get("source", "Unknown")
-                    if "page_numbers" in ctx["metadata"]:
-                        pages = ctx["metadata"].get("page_numbers", [])
-                        source_line = f"- {source} (pages: {pages})\n"
-                    else:
-                        file_path = ctx["metadata"].get("file_path", "Unknown")
-                        source_line = f"- {source} (file: {file_path})\n"
-                    formatted_response += source_line
-                    print(source_line)
+                    if isinstance(ctx, dict) and "metadata" in ctx:
+                        source = ctx["metadata"].get("source", "Unknown")
+                        if "page_numbers" in ctx["metadata"]:
+                            pages = ctx["metadata"].get("page_numbers", [])
+                            source_line = f"- {source} (pages: {pages})\n"
+                        else:
+                            file_path = ctx["metadata"].get("file_path", "Unknown")
+                            source_line = f"- {source} (file: {file_path})\n"
+                        formatted_response += source_line
+                        print(source_line)
             
             # Add final formatted response to history
             history.append([message, formatted_response])
         else:
             # For standard response (no CoT)
-            formatted_response = response["answer"]
+            formatted_response = response.get("answer", "No answer provided") if isinstance(response, dict) else str(response)
             print("\nStandard Response:")
             print("-" * 50)
             print(formatted_response)
             
             # Add sources if available
-            if response.get("context"):
+            if isinstance(response, dict) and response.get("context"):
                 print("\nSources Used:")
                 print("-" * 50)
                 sources_text = "\n\n📚 Sources used:\n"
@@ -236,15 +237,16 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
                 print(sources_text)
                 
                 for ctx in response["context"]:
-                    source = ctx["metadata"].get("source", "Unknown")
-                    if "page_numbers" in ctx["metadata"]:
-                        pages = ctx["metadata"].get("page_numbers", [])
-                        source_line = f"- {source} (pages: {pages})\n"
-                    else:
-                        file_path = ctx["metadata"].get("file_path", "Unknown")
-                        source_line = f"- {source} (file: {file_path})\n"
-                    formatted_response += source_line
-                    print(source_line)
+                    if isinstance(ctx, dict) and "metadata" in ctx:
+                        source = ctx["metadata"].get("source", "Unknown")
+                        if "page_numbers" in ctx["metadata"]:
+                            pages = ctx["metadata"].get("page_numbers", [])
+                            source_line = f"- {source} (pages: {pages})\n"
+                        else:
+                            file_path = ctx["metadata"].get("file_path", "Unknown")
+                            source_line = f"- {source} (file: {file_path})\n"
+                        formatted_response += source_line
+                        print(source_line)
             
             history.append([message, formatted_response])
         
