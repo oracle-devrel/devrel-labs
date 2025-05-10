@@ -140,20 +140,22 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
         elif "8-bit" in agent_type:
             quantization = "8bit"
             model_type = "Local (Mistral)"
-        elif "Ollama" in agent_type:
-            model_type = "Ollama"
-            # Extract model name from agent_type and use correct Ollama model names
-            if "llama3" in agent_type.lower():
-                model_name = "ollama:llama3"
-            elif "phi-3" in agent_type.lower():
-                model_name = "ollama:phi3"
-            elif "qwen2" in agent_type.lower():
-                model_name = "ollama:qwen2"
+        elif agent_type == "openai":
+            model_type = "OpenAI"
         else:
-            model_type = agent_type
+            # All other models are treated as Ollama models
+            model_type = "Ollama"
+            model_name = agent_type
         
         # Select appropriate agent and reinitialize with correct settings
-        if "Local" in model_type:
+        if model_type == "OpenAI":
+            if not openai_key:
+                response_text = "OpenAI key not found. Please check your config."
+                print(f"Error: {response_text}")
+                return history + [[message, response_text]]
+            agent = RAGAgent(vector_store, openai_api_key=openai_key, use_cot=use_cot, 
+                            collection=collection, skip_analysis=skip_analysis)
+        elif model_type == "Local (Mistral)":
             # For HF models, we need the token
             if not hf_token:
                 response_text = "Local agent not available. Please check your HuggingFace token configuration."
@@ -161,32 +163,14 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
                 return history + [[message, response_text]]
             agent = LocalRAGAgent(vector_store, use_cot=use_cot, collection=collection, 
                                  skip_analysis=skip_analysis, quantization=quantization)
-        elif model_type == "Ollama":
-            # For Ollama models
-            if model_name:
-                try:
-                    agent = LocalRAGAgent(vector_store, model_name=model_name, use_cot=use_cot, 
-                                         collection=collection, skip_analysis=skip_analysis)
-                except Exception as e:
-                    response_text = f"Error initializing Ollama model: {str(e)}. Falling back to Local Mistral."
-                    print(f"Error: {response_text}")
-                    # Fall back to Mistral if Ollama fails
-                    if hf_token:
-                        agent = LocalRAGAgent(vector_store, use_cot=use_cot, collection=collection, 
-                                             skip_analysis=skip_analysis)
-                    else:
-                        return history + [[message, "Local Mistral agent not available for fallback. Please check your HuggingFace token configuration."]]
-            else:
-                response_text = "Ollama model not specified correctly."
+        else:  # Ollama models
+            try:
+                agent = LocalRAGAgent(vector_store, model_name=model_name, use_cot=use_cot, 
+                                     collection=collection, skip_analysis=skip_analysis)
+            except Exception as e:
+                response_text = f"Error initializing Ollama model: {str(e)}"
                 print(f"Error: {response_text}")
                 return history + [[message, response_text]]
-        else:
-            if not openai_key:
-                response_text = "OpenAI agent not available. Please check your OpenAI API key configuration."
-                print(f"Error: {response_text}")
-                return history + [[message, response_text]]
-            agent = RAGAgent(vector_store, openai_api_key=openai_key, use_cot=use_cot, 
-                            collection=collection, skip_analysis=skip_analysis)
         
         # Process query and get response
         print("Processing query...")
@@ -305,50 +289,37 @@ def create_interface():
         
         # Create model choices list for reuse
         model_choices = []
-        # HF models first if token is available
-        if hf_token:
-            model_choices.extend([
-                "Local (Mistral)", 
-                "Local (Mistral) - 4-bit Quantized",
-                "Local (Mistral) - 8-bit Quantized",
-            ])
-        # Then Ollama models (don't require HF token)
+        # Only Ollama models (no more local Mistral deployments)
         model_choices.extend([
-            "Ollama - llama3",
-            "Ollama - phi-3",
-            "Ollama - qwen2"
+            "qwq",
+            "gemma3",
+            "llama3.3",
+            "phi4",
+            "mistral",
+            "llava",
+            "phi3",
+            "deepseek-r1"
         ])
         if openai_key:
-            model_choices.append("OpenAI")
+            model_choices.append("openai")
         
-        # Set default model to Ollama - qwen2
-        default_model = "Ollama - qwen2"
+        # Set default model to qwq
+        default_model = "qwq"
         
         # Model Management Tab (First Tab)
         with gr.Tab("Model Management"):
             gr.Markdown("""
-            ## Model Management
-            
-            Download models in advance to prepare them for use in the chat interface.
-            
-            ### Hugging Face Models
-            
-            For Hugging Face models (Mistral), you'll need a Hugging Face token in your config.yaml file.
-            
-            ### Ollama Models (Default)
-            
-            Ollama models are used by default. For Ollama models, this will pull the model using the Ollama client.
-            Make sure Ollama is installed and running on your system.
-            You can download Ollama from [ollama.com/download](https://ollama.com/download)
+            ## Model Selection
+            Choose your preferred model for the conversation.
             """)
             
             with gr.Row():
                 with gr.Column():
                     model_dropdown = gr.Dropdown(
                         choices=model_choices,
-                        value=default_model if default_model in model_choices else model_choices[0] if model_choices else None,
-                        label="Select Model to Download",
-                        interactive=True
+                        value=default_model,
+                        label="Select Model",
+                        info="Choose the model to use for the conversation"
                     )
                     download_button = gr.Button("Download Selected Model")
                     model_status = gr.Textbox(
@@ -356,41 +327,24 @@ def create_interface():
                         placeholder="Select a model and click Download to begin...",
                         interactive=False
                     )
-                
-                with gr.Column():
-                    gr.Markdown("""
-                    ### Model Information
-                    
-                    **Ollama - qwen2** (DEFAULT): Alibaba's Qwen2 model via Ollama.
-                    - Size: ~4GB
-                    - Requires Ollama to be installed and running
-                    - High-quality model with good performance
-                    
-                    **Ollama - llama3**: Meta's Llama 3 model via Ollama.
-                    - Size: ~4GB
-                    - Requires Ollama to be installed and running
-                    - Excellent performance and quality
-                    
-                    **Ollama - phi-3**: Microsoft's Phi-3 model via Ollama.
-                    - Size: ~4GB
-                    - Requires Ollama to be installed and running
-                    - Efficient small model with good performance
-                    
-                    **Local (Mistral)**: The default Mistral-7B-Instruct-v0.2 model.
-                    - Size: ~14GB
-                    - VRAM Required: ~8GB
-                    - Good balance of quality and speed
-                    
-                    **Local (Mistral) - 4-bit Quantized**: 4-bit quantized version of Mistral-7B.
-                    - Size: ~4GB
-                    - VRAM Required: ~4GB
-                    - Faster inference with minimal quality loss
-                    
-                    **Local (Mistral) - 8-bit Quantized**: 8-bit quantized version of Mistral-7B.
-                    - Size: ~7GB
-                    - VRAM Required: ~6GB
-                    - Balance between quality and memory usage
-                    """)
+            
+            # Add model FAQ section
+            gr.Markdown("""
+            ## Model FAQ
+            
+            | Model | Parameters | Size | Download Command |
+            |-------|------------|------|------------------|
+            | qwq | 32B | 20GB | qwq:latest |
+            | gemma3 | 4B | 3.3GB | gemma3:latest |
+            | llama3.3 | 70B | 43GB | llama3.3:latest |
+            | phi4 | 14B | 9.1GB | phi4:latest |
+            | mistral | 7B | 4.1GB | mistral:latest |
+            | llava | 7B | 4.5GB | llava:latest |
+            | phi3 | 4B | 4.0GB | phi3:latest |
+            | deepseek-r1 | 7B | 4.7GB | deepseek-r1:latest |
+            
+            Note: All models are available through Ollama. Make sure Ollama is running on your system.
+            """)
         
         # Document Processing Tab
         with gr.Tab("Document Processing"):
@@ -580,13 +534,30 @@ def main():
     try:
         import ollama
         try:
-            # Check if Ollama is running and qwen2 is available
+            # Check if Ollama is running and list available models
             models = ollama.list().models
             available_models = [model.model for model in models]
-            if "qwen2" not in available_models and "qwen2:latest" not in available_models:
-                print("⚠️ Warning: Ollama is running but qwen2 model is not available. Please run 'ollama pull qwen2' or download through the interface.")
-        except Exception:
-            print("⚠️ Warning: Ollama is installed but not running or encountered an error. The default model may not work.")
+            
+            # Check if any default models are available
+            if "qwen2" not in available_models and "qwen2:latest" not in available_models and \
+               "llama3" not in available_models and "llama3:latest" not in available_models and \
+               "phi3" not in available_models and "phi3:latest" not in available_models:
+                print("⚠️ Warning: Ollama is running but no default models (qwen2, llama3, phi3) are available.")
+                print("Please download a model through the Model Management tab or run:")
+                print("    ollama pull qwen2")
+                print("    ollama pull llama3")
+                print("    ollama pull phi3")
+            else:
+                available_default_models = []
+                for model in ["qwen2", "llama3", "phi3"]:
+                    if model in available_models or f"{model}:latest" in available_models:
+                        available_default_models.append(model)
+                
+                print(f"✅ Ollama is running with available default models: {', '.join(available_default_models)}")
+                print(f"All available models: {', '.join(available_models)}")
+        except Exception as e:
+            print(f"⚠️ Warning: Ollama is installed but not running or encountered an error: {str(e)}")
+            print("Please start Ollama before using the interface.")
     except ImportError:
         print("⚠️ Warning: Ollama package not installed. Please install with: pip install ollama")
         
@@ -674,17 +645,11 @@ def download_model(model_type: str) -> str:
                 
             except Exception as e:
                 return f"❌ Error downloading model: {str(e)}"
-                
-        elif "Ollama" in model_type:
+        # all ollama models
+        else:
             # Extract model name from model_type
-            if "llama3" in model_type.lower():
-                model_name = "llama3"
-            elif "phi-3" in model_type.lower():
-                model_name = "phi3"
-            elif "qwen2" in model_type.lower():
-                model_name = "qwen2"
-            else:
-                return "❌ Error: Unknown Ollama model type"
+            # Remove the 'Ollama - ' prefix and any leading/trailing whitespace
+            model_name = model_type.replace("Ollama - ", "").strip()
             
             # Use Ollama to pull the model
             try:
@@ -732,8 +697,6 @@ def download_model(model_type: str) -> str:
                 return "❌ Error: Could not connect to Ollama. Please make sure Ollama is installed and running."
             except Exception as e:
                 return f"❌ Error pulling Ollama model: {str(e)}"
-        else:
-            return "❌ Error: Unknown model type"
     
     except Exception as e:
         return f"❌ Error: {str(e)}"

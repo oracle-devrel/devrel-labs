@@ -57,8 +57,11 @@ class OllamaModelHandler:
         Args:
             model_name: Name of the Ollama model to use
         """
-        # Remove the 'ollama:' prefix if present
-        self.model_name = model_name.replace("ollama:", "") if model_name.startswith("ollama:") else model_name
+        # Remove 'ollama:' prefix if present
+        if model_name and model_name.startswith("ollama:"):
+            model_name = model_name.replace("ollama:", "")
+        
+        self.model_name = model_name
         self._check_ollama_running()
     
     def _check_ollama_running(self):
@@ -74,13 +77,11 @@ class OllamaModelHandler:
                 
                 # Check if the requested model is available
                 if self.model_name not in available_models:
-                    # Try with :latest suffix
-                    if f"{self.model_name}:latest" in available_models:
-                        self.model_name = f"{self.model_name}:latest"
-                        print(f"Using model with :latest suffix: {self.model_name}")
-                    else:
-                        print(f"Model '{self.model_name}' not found in Ollama. Available models: {', '.join(available_models)}")
-                        print(f"You can pull it with: ollama pull {self.model_name}")
+                    print(f"Model '{self.model_name}' not found in Ollama. Available models: {', '.join(available_models)}")
+                    print(f"You can pull it with: ollama pull {self.model_name}")
+                    raise ValueError(f"Model '{self.model_name}' not found in Ollama")
+                else:
+                    print(f"Using Ollama model: {self.model_name}")
             except Exception as e:
                 raise ConnectionError(f"Failed to connect to Ollama. Please make sure Ollama is running. Error: {str(e)}")
                 
@@ -91,6 +92,9 @@ class OllamaModelHandler:
         """Generate text using the Ollama model"""
         try:
             import ollama
+            
+            print(f"\nGenerating response with Ollama model: {self.model_name}")
+            print(f"Prompt: {prompt[:100]}...")  # Print first 100 chars of prompt
             
             # Generate text
             response = ollama.generate(
@@ -103,6 +107,8 @@ class OllamaModelHandler:
                 }
             )
             
+            print(f"Response generated successfully with {self.model_name}")
+            
             # Format result to match transformers pipeline output
             formatted_result = [{
                 "generated_text": response["response"]
@@ -114,7 +120,7 @@ class OllamaModelHandler:
             raise Exception(f"Failed to generate text with Ollama: {str(e)}")
 
 class LocalRAGAgent:
-    def __init__(self, vector_store: VectorStore = None, model_name: str = "mistralai/Mistral-7B-Instruct-v0.2", 
+    def __init__(self, vector_store: VectorStore = None, model_name: str = None, 
                  use_cot: bool = False, collection: str = None, skip_analysis: bool = False,
                  quantization: str = None, use_oracle_db: bool = True):
         """Initialize local RAG agent with vector store and local LLM
@@ -128,6 +134,13 @@ class LocalRAGAgent:
             quantization: Quantization method to use (None, '4bit', '8bit')
             use_oracle_db: Whether to use Oracle DB for vector storage (if False, uses ChromaDB)
         """
+        print(f"LocalRAGAgent init - model_name: {model_name}")
+        
+        # Set default model if none provided
+        if model_name is None:
+            model_name = "qwen2"
+            print(f"Using default model: {model_name}")
+        
         # Initialize vector store if not provided
         self.use_oracle_db = use_oracle_db and ORACLE_DB_AVAILABLE
         
@@ -162,106 +175,71 @@ class LocalRAGAgent:
         self.collection = collection
         self.quantization = quantization
         self.model_name = model_name
+        print('Model Name after assignment:', self.model_name)
         # skip_analysis parameter kept for backward compatibility but no longer used
         
-        # Check if this is an Ollama model
-        self.is_ollama = model_name.startswith("ollama:")
+        # Check if this is an Ollama model (anything not Mistral is considered Ollama)
+        self.is_ollama = not (model_name and "mistral" in model_name.lower())
         
         if self.is_ollama:
-            # Extract the actual model name from the prefix
-            ollama_model_name = model_name.replace("ollama:", "")
+            # Remove 'ollama:' prefix if present
+            if model_name and model_name.startswith("ollama:"):
+                model_name = model_name.replace("ollama:", "")
+            
+            # Always append :latest to Ollama model names
+            if not model_name.endswith(":latest"):
+                model_name = f"{model_name}:latest"
             
             # Load Ollama model
             print("\nLoading Ollama model...")
-            print(f"Model: {ollama_model_name}")
+            print(f"Model: {model_name}")
             print("Note: Make sure Ollama is running on your system.")
             
             # Initialize Ollama model handler
-            self.ollama_handler = OllamaModelHandler(ollama_model_name)
+            self.ollama_handler = OllamaModelHandler(model_name)
             
             # Create pipeline-like interface
             self.pipeline = self.ollama_handler
-            
+            print(f"Using Ollama model: {model_name}")
         else:
-            # Load HuggingFace token from config
-            try:
-                with open('config.yaml', 'r') as f:
-                    config = yaml.safe_load(f)
-                token = config.get('HUGGING_FACE_HUB_TOKEN')
-                if not token:
-                    raise ValueError("HUGGING_FACE_HUB_TOKEN not found in config.yaml")
-            except Exception as e:
-                raise Exception(f"Failed to load HuggingFace token from config.yaml: {str(e)}")
-            
-            # Load model and tokenizer
-            print("\nLoading model and tokenizer...")
-            print(f"Model: {model_name}")
-            if quantization:
-                print(f"Quantization: {quantization}")
-            print("Note: Initial loading and inference can take 1-5 minutes depending on your hardware.")
-            print("Subsequent queries will be faster but may still take 30-60 seconds per response.")
-            
-            # Check if CUDA is available and set appropriate dtype
-            if torch.cuda.is_available():
-                print("CUDA is available. Using GPU acceleration.")
-                dtype = torch.float16
+            # Only initialize Mistral if no model is specified
+            if not model_name:
+                print("\nLoading default model and tokenizer...")
+                print("Model: mistralai/Mistral-7B-Instruct-v0.2")
+                self.model_name = "mistralai/Mistral-7B-Instruct-v0.2"
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name,
+                    device_map="auto",
+                    torch_dtype=torch.float16,
+                    load_in_8bit=quantization == "8bit",
+                    load_in_4bit=quantization == "4bit"
+                )
+                self.pipeline = pipeline(
+                    "text-generation",
+                    model=self.model,
+                    tokenizer=self.tokenizer,
+                    device_map="auto"
+                )
+                print(f"Using default model: {self.model_name}")
             else:
-                print("CUDA is not available. Using CPU only (this will be slow).")
-                dtype = torch.float32
-            
-            # Set up model loading parameters
-            model_kwargs = {
-                "torch_dtype": dtype,
-                "device_map": "auto",
-                "token": token,
-                "low_cpu_mem_usage": True,
-                "offload_folder": "offload"
-            }
-            
-            # Apply quantization if specified
-            if quantization == '4bit':
-                try:
-                    from transformers import BitsAndBytesConfig
-                    quantization_config = BitsAndBytesConfig(
-                        load_in_4bit=True,
-                        bnb_4bit_compute_dtype=torch.float16,
-                        bnb_4bit_use_double_quant=True,
-                        bnb_4bit_quant_type="nf4"
-                    )
-                    model_kwargs["quantization_config"] = quantization_config
-                    print("Using 4-bit quantization with bitsandbytes")
-                except ImportError:
-                    print("Warning: bitsandbytes not installed. Falling back to standard loading.")
-                    print("To use 4-bit quantization, install bitsandbytes: pip install bitsandbytes")
-            elif quantization == '8bit':
-                try:
-                    from transformers import BitsAndBytesConfig
-                    quantization_config = BitsAndBytesConfig(load_in_8bit=True)
-                    model_kwargs["quantization_config"] = quantization_config
-                    print("Using 8-bit quantization with bitsandbytes")
-                except ImportError:
-                    print("Warning: bitsandbytes not installed. Falling back to standard loading.")
-                    print("To use 8-bit quantization, install bitsandbytes: pip install bitsandbytes")
-            
-            # Load model with appropriate settings
-            self.model = AutoModelForCausalLM.from_pretrained(
-                model_name,
-                **model_kwargs
-            )
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
-            
-            # Create text generation pipeline with optimized settings
-            self.pipeline = pipeline(
-                "text-generation",
-                model=self.model,
-                tokenizer=self.tokenizer,
-                max_new_tokens=512,
-                do_sample=True,
-                temperature=0.1,
-                top_p=0.95,
-                device_map="auto"
-            )
-            print("✓ Model loaded successfully")
+                print(f"\nUsing specified model: {model_name}")
+                self.model_name = model_name
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name,
+                    device_map="auto",
+                    torch_dtype=torch.float16,
+                    load_in_8bit=quantization == "8bit",
+                    load_in_4bit=quantization == "4bit"
+                )
+                self.pipeline = pipeline(
+                    "text-generation",
+                    model=self.model,
+                    tokenizer=self.tokenizer,
+                    device_map="auto"
+                )
+                print(f"Using specified model: {self.model_name}")
         
         # Create LLM wrapper
         self.llm = LocalLLM(self.pipeline)
@@ -515,7 +493,7 @@ def main():
     parser = argparse.ArgumentParser(description="Query documents using local LLM")
     parser.add_argument("--query", required=True, help="Query to search for")
     parser.add_argument("--embeddings", default="oracle", choices=["oracle", "chromadb"], help="Embeddings backend to use")
-    parser.add_argument("--model", default="ollama:qwen2", help="Model to use (default: ollama:qwen2)")
+    parser.add_argument("--model", default="qwen2", help="Model to use (default: qwen2)")
     parser.add_argument("--collection", help="Collection to search (PDF, Repository, General Knowledge)")
     parser.add_argument("--use-cot", action="store_true", help="Use Chain of Thought reasoning")
     parser.add_argument("--store-path", default="embeddings", help="Path to ChromaDB store")
@@ -534,6 +512,7 @@ def main():
     
     print("\nInitializing RAG agent...")
     print("=" * 50)
+    print(f"Using model: {args.model}")
     
     try:
         # Determine which vector store to use based on args.embeddings
@@ -560,6 +539,7 @@ def main():
         # Set use_oracle_db based on the actual store type
         use_oracle_db = args.embeddings == "oracle" and isinstance(store, OraDBVectorStore)
         
+        print(f"Creating LocalRAGAgent with model: {args.model}")
         agent = LocalRAGAgent(
             store, 
             model_name=args.model, 
