@@ -177,6 +177,14 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
         response = agent.process_query(message)
         print("Query processed successfully")
         
+        # Handle string responses from Ollama models
+        if isinstance(response, str):
+            response = {
+                "answer": response,
+                "reasoning_steps": [response] if use_cot else [],
+                "context": []
+            }
+        
         # Format response with reasoning steps if CoT is enabled
         if use_cot and isinstance(response, dict) and "reasoning_steps" in response:
             formatted_response = "🤔 Let me think about this step by step:\n\n"
