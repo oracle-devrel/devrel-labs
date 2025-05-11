@@ -67,6 +67,17 @@ def test_cot_chat():
             logger.info("Raw response received")
             debug_response_structure(raw_response, "Raw response: ")
             
+            # Verify response structure
+            if not isinstance(raw_response, dict):
+                logger.error(f"Unexpected response type: {type(raw_response)}")
+                raise TypeError(f"Expected dict response, got {type(raw_response)}")
+            
+            required_keys = ["answer", "reasoning_steps", "context"]
+            missing_keys = [key for key in required_keys if key not in raw_response]
+            if missing_keys:
+                logger.error(f"Missing required keys in response: {missing_keys}")
+                raise KeyError(f"Response missing required keys: {missing_keys}")
+            
             # Process through chat function
             logger.info("Processing through chat function...")
             result = chat(
@@ -91,9 +102,21 @@ def test_cot_chat():
         # Save debug information to file
         debug_info = {
             "test_message": test_message,
-            "raw_response": str(raw_response),
-            "final_result": str(result),
-            "history": str(history)
+            "raw_response": {
+                "type": str(type(raw_response)),
+                "keys": list(raw_response.keys()) if isinstance(raw_response, dict) else None,
+                "content": str(raw_response)
+            },
+            "final_result": {
+                "type": str(type(result)),
+                "length": len(result) if isinstance(result, list) else None,
+                "content": str(result)
+            },
+            "history": {
+                "type": str(type(history)),
+                "length": len(history),
+                "content": str(history)
+            }
         }
         
         with open("cot_chat_debug.json", "w") as f:
