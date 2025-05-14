@@ -117,6 +117,7 @@ class VectorStore:
     
     def query_pdf_collection(self, query: str, n_results: int = 3) -> List[Dict[str, Any]]:
         """Query the PDF documents collection"""
+        print("📊 [ChromaDB] Querying PDF Collection")
         results = self.pdf_collection.query(
             query_texts=[query],
             n_results=n_results
@@ -131,10 +132,12 @@ class VectorStore:
             }
             formatted_results.append(result)
         
+        print(f"📊 [ChromaDB] Retrieved {len(formatted_results)} chunks from PDF Collection")
         return formatted_results
     
     def query_web_collection(self, query: str, n_results: int = 3) -> List[Dict[str, Any]]:
         """Query the web documents collection"""
+        print("📊 [ChromaDB] Querying Web Collection")
         results = self.web_collection.query(
             query_texts=[query],
             n_results=n_results
@@ -149,10 +152,12 @@ class VectorStore:
             }
             formatted_results.append(result)
         
+        print(f"📊 [ChromaDB] Retrieved {len(formatted_results)} chunks from Web Collection")
         return formatted_results
     
     def query_general_collection(self, query: str, n_results: int = 3) -> List[Dict[str, Any]]:
         """Query the general knowledge collection"""
+        print("📊 [ChromaDB] Querying General Knowledge Collection")
         results = self.general_collection.query(
             query_texts=[query],
             n_results=n_results
@@ -167,10 +172,12 @@ class VectorStore:
             }
             formatted_results.append(result)
         
+        print(f"📊 [ChromaDB] Retrieved {len(formatted_results)} chunks from General Knowledge Collection")
         return formatted_results
     
     def query_repo_collection(self, query: str, n_results: int = 3) -> List[Dict[str, Any]]:
         """Query the repository documents collection"""
+        print("📊 [ChromaDB] Querying Repository Collection")
         results = self.repo_collection.query(
             query_texts=[query],
             n_results=n_results
@@ -185,6 +192,7 @@ class VectorStore:
             }
             formatted_results.append(result)
         
+        print(f"📊 [ChromaDB] Retrieved {len(formatted_results)} chunks from Repository Collection")
         return formatted_results
 
 def main():

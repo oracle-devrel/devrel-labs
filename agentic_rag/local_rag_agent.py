@@ -10,6 +10,12 @@ import logging
 import time
 import json
 from pathlib import Path
+try:
+    from OraDBVectorStore import OraDBVectorStore
+    ORACLE_DB_AVAILABLE = True
+except ImportError:
+    ORACLE_DB_AVAILABLE = False
+    print("Oracle DB support not available. Install with: pip install oracledb sentence-transformers")
 
 # Configure logging
 logging.basicConfig(
@@ -51,8 +57,11 @@ class OllamaModelHandler:
         Args:
             model_name: Name of the Ollama model to use
         """
-        # Remove the 'ollama:' prefix if present
-        self.model_name = model_name.replace("ollama:", "") if model_name.startswith("ollama:") else model_name
+        # Remove 'ollama:' prefix if present
+        if model_name and model_name.startswith("ollama:"):
+            model_name = model_name.replace("ollama:", "")
+        
+        self.model_name = model_name
         self._check_ollama_running()
     
     def _check_ollama_running(self):
@@ -68,13 +77,11 @@ class OllamaModelHandler:
                 
                 # Check if the requested model is available
                 if self.model_name not in available_models:
-                    # Try with :latest suffix
-                    if f"{self.model_name}:latest" in available_models:
-                        self.model_name = f"{self.model_name}:latest"
-                        print(f"Using model with :latest suffix: {self.model_name}")
-                    else:
-                        print(f"Model '{self.model_name}' not found in Ollama. Available models: {', '.join(available_models)}")
-                        print(f"You can pull it with: ollama pull {self.model_name}")
+                    print(f"Model '{self.model_name}' not found in Ollama. Available models: {', '.join(available_models)}")
+                    print(f"You can pull it with: ollama pull {self.model_name}")
+                    raise ValueError(f"Model '{self.model_name}' not found in Ollama")
+                else:
+                    print(f"Using Ollama model: {self.model_name}")
             except Exception as e:
                 raise ConnectionError(f"Failed to connect to Ollama. Please make sure Ollama is running. Error: {str(e)}")
                 
@@ -85,6 +92,9 @@ class OllamaModelHandler:
         """Generate text using the Ollama model"""
         try:
             import ollama
+            
+            print(f"\nGenerating response with Ollama model: {self.model_name}")
+            print(f"Prompt: {prompt[:100]}...")  # Print first 100 chars of prompt
             
             # Generate text
             response = ollama.generate(
@@ -97,6 +107,8 @@ class OllamaModelHandler:
                 }
             )
             
+            print(f"Response generated successfully with {self.model_name}")
+            
             # Format result to match transformers pipeline output
             formatted_result = [{
                 "generated_text": response["response"]
@@ -108,130 +120,132 @@ class OllamaModelHandler:
             raise Exception(f"Failed to generate text with Ollama: {str(e)}")
 
 class LocalRAGAgent:
-    def __init__(self, vector_store: VectorStore, model_name: str = "mistralai/Mistral-7B-Instruct-v0.2", 
+    def __init__(self, vector_store: VectorStore = None, model_name: str = None, 
                  use_cot: bool = False, collection: str = None, skip_analysis: bool = False,
-                 quantization: str = None):
+                 quantization: str = None, use_oracle_db: bool = True):
         """Initialize local RAG agent with vector store and local LLM
         
         Args:
-            vector_store: Vector store for retrieving context
+            vector_store: Vector store for retrieving context (if None, will create one)
             model_name: HuggingFace model name/path or Ollama model name
             use_cot: Whether to use Chain of Thought reasoning
             collection: Collection to search in (PDF, Repository, or General Knowledge)
             skip_analysis: Whether to skip query analysis (kept for backward compatibility)
             quantization: Quantization method to use (None, '4bit', '8bit')
+            use_oracle_db: Whether to use Oracle DB for vector storage (if False, uses ChromaDB)
         """
-        self.vector_store = vector_store
+        print(f"LocalRAGAgent init - model_name: {model_name}")
+        
+        # Set default model if none provided
+        if model_name is None:
+            model_name = "qwen2"
+            print(f"Using default model: {model_name}")
+        
+        # Initialize vector store if not provided
+        self.use_oracle_db = use_oracle_db and ORACLE_DB_AVAILABLE
+        
+        if vector_store is None:
+            if self.use_oracle_db:
+                try:
+                    self.vector_store = OraDBVectorStore()
+                    print("Using Oracle DB for vector storage")
+                except ValueError as ve:
+                    if "credentials not found" in str(ve):
+                        print(f"Oracle DB credentials not found in config.yaml: {str(ve)}")
+                        print("Falling back to ChromaDB")
+                    else:
+                        print(f"Oracle DB initialization error: {str(ve)}")
+                        print("Falling back to ChromaDB")
+                    self.vector_store = VectorStore(persist_directory="embeddings")
+                    self.use_oracle_db = False
+                except Exception as e:
+                    print(f"Error initializing Oracle DB: {str(e)}")
+                    print("Falling back to ChromaDB")
+                    self.vector_store = VectorStore(persist_directory="embeddings")
+                    self.use_oracle_db = False
+            else:
+                self.vector_store = VectorStore(persist_directory="embeddings")
+                print("Using ChromaDB for vector storage")
+        else:
+            self.vector_store = vector_store
+            # Determine type of vector store
+            self.use_oracle_db = hasattr(vector_store, 'connection') and hasattr(vector_store, 'cursor')
+        
         self.use_cot = use_cot
         self.collection = collection
         self.quantization = quantization
         self.model_name = model_name
+        print('Model Name after assignment:', self.model_name)
         # skip_analysis parameter kept for backward compatibility but no longer used
         
-        # Check if this is an Ollama model
-        self.is_ollama = model_name.startswith("ollama:")
+        # Check if this is an Ollama model (anything not Mistral is considered Ollama)
+        self.is_ollama = not (model_name and "mistral" in model_name.lower())
         
         if self.is_ollama:
-            # Extract the actual model name from the prefix
-            ollama_model_name = model_name.replace("ollama:", "")
+            # Remove 'ollama:' prefix if present
+            if model_name and model_name.startswith("ollama:"):
+                model_name = model_name.replace("ollama:", "")
+            
+            # Always append :latest to Ollama model names
+            if not model_name.endswith(":latest"):
+                model_name = f"{model_name}:latest"
             
             # Load Ollama model
             print("\nLoading Ollama model...")
-            print(f"Model: {ollama_model_name}")
+            print(f"Model: {model_name}")
             print("Note: Make sure Ollama is running on your system.")
             
             # Initialize Ollama model handler
-            self.ollama_handler = OllamaModelHandler(ollama_model_name)
+            self.ollama_handler = OllamaModelHandler(model_name)
             
             # Create pipeline-like interface
             self.pipeline = self.ollama_handler
-            
+            print(f"Using Ollama model: {model_name}")
         else:
-            # Load HuggingFace token from config
-            try:
-                with open('config.yaml', 'r') as f:
-                    config = yaml.safe_load(f)
-                token = config.get('HUGGING_FACE_HUB_TOKEN')
-                if not token:
-                    raise ValueError("HUGGING_FACE_HUB_TOKEN not found in config.yaml")
-            except Exception as e:
-                raise Exception(f"Failed to load HuggingFace token from config.yaml: {str(e)}")
-            
-            # Load model and tokenizer
-            print("\nLoading model and tokenizer...")
-            print(f"Model: {model_name}")
-            if quantization:
-                print(f"Quantization: {quantization}")
-            print("Note: Initial loading and inference can take 1-5 minutes depending on your hardware.")
-            print("Subsequent queries will be faster but may still take 30-60 seconds per response.")
-            
-            # Check if CUDA is available and set appropriate dtype
-            if torch.cuda.is_available():
-                print("CUDA is available. Using GPU acceleration.")
-                dtype = torch.float16
+            # Only initialize Mistral if no model is specified
+            if not model_name:
+                print("\nLoading default model and tokenizer...")
+                print("Model: mistralai/Mistral-7B-Instruct-v0.2")
+                self.model_name = "mistralai/Mistral-7B-Instruct-v0.2"
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name,
+                    device_map="auto",
+                    torch_dtype=torch.float16,
+                    load_in_8bit=quantization == "8bit",
+                    load_in_4bit=quantization == "4bit"
+                )
+                self.pipeline = pipeline(
+                    "text-generation",
+                    model=self.model,
+                    tokenizer=self.tokenizer,
+                    device_map="auto"
+                )
+                print(f"Using default model: {self.model_name}")
             else:
-                print("CUDA is not available. Using CPU only (this will be slow).")
-                dtype = torch.float32
-            
-            # Set up model loading parameters
-            model_kwargs = {
-                "torch_dtype": dtype,
-                "device_map": "auto",
-                "token": token,
-                "low_cpu_mem_usage": True,
-                "offload_folder": "offload"
-            }
-            
-            # Apply quantization if specified
-            if quantization == '4bit':
-                try:
-                    from transformers import BitsAndBytesConfig
-                    quantization_config = BitsAndBytesConfig(
-                        load_in_4bit=True,
-                        bnb_4bit_compute_dtype=torch.float16,
-                        bnb_4bit_use_double_quant=True,
-                        bnb_4bit_quant_type="nf4"
-                    )
-                    model_kwargs["quantization_config"] = quantization_config
-                    print("Using 4-bit quantization with bitsandbytes")
-                except ImportError:
-                    print("Warning: bitsandbytes not installed. Falling back to standard loading.")
-                    print("To use 4-bit quantization, install bitsandbytes: pip install bitsandbytes")
-            elif quantization == '8bit':
-                try:
-                    from transformers import BitsAndBytesConfig
-                    quantization_config = BitsAndBytesConfig(load_in_8bit=True)
-                    model_kwargs["quantization_config"] = quantization_config
-                    print("Using 8-bit quantization with bitsandbytes")
-                except ImportError:
-                    print("Warning: bitsandbytes not installed. Falling back to standard loading.")
-                    print("To use 8-bit quantization, install bitsandbytes: pip install bitsandbytes")
-            
-            # Load model with appropriate settings
-            self.model = AutoModelForCausalLM.from_pretrained(
-                model_name,
-                **model_kwargs
-            )
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=token)
-            
-            # Create text generation pipeline with optimized settings
-            self.pipeline = pipeline(
-                "text-generation",
-                model=self.model,
-                tokenizer=self.tokenizer,
-                max_new_tokens=512,
-                do_sample=True,
-                temperature=0.1,
-                top_p=0.95,
-                device_map="auto"
-            )
-            print("✓ Model loaded successfully")
+                print(f"\nUsing specified model: {model_name}")
+                self.model_name = model_name
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name,
+                    device_map="auto",
+                    torch_dtype=torch.float16,
+                    load_in_8bit=quantization == "8bit",
+                    load_in_4bit=quantization == "4bit"
+                )
+                self.pipeline = pipeline(
+                    "text-generation",
+                    model=self.model,
+                    tokenizer=self.tokenizer,
+                    device_map="auto"
+                )
+                print(f"Using specified model: {self.model_name}")
         
         # Create LLM wrapper
         self.llm = LocalLLM(self.pipeline)
         
         # Initialize specialized agents if CoT is enabled
-        self.agents = create_agents(self.llm, vector_store) if use_cot else None
+        self.agents = create_agents(self.llm, self.vector_store) if use_cot else None
     
     def process_query(self, query: str) -> Dict[str, Any]:
         """Process a user query using the agentic RAG pipeline"""
@@ -245,126 +259,144 @@ class LocalRAGAgent:
             else:
                 return self._generate_general_response(query)
         else:
-            # For PDF or Repository collections, use context-based processing
+            # For PDF, Repository, or Web collections, use context-based processing
             if self.use_cot:
                 return self._process_query_with_cot(query)
             else:
                 return self._process_query_standard(query)
     
     def _process_query_with_cot(self, query: str) -> Dict[str, Any]:
-        """Process query using Chain of Thought reasoning with multiple agents"""
-        logger.info("Processing query with Chain of Thought reasoning")
-        
-        # Get initial context based on selected collection
-        initial_context = []
-        if self.collection == "PDF Collection":
-            logger.info(f"Retrieving context from PDF Collection for query: '{query}'")
-            pdf_context = self.vector_store.query_pdf_collection(query)
-            initial_context.extend(pdf_context)
-            logger.info(f"Retrieved {len(pdf_context)} chunks from PDF Collection")
-            # Don't log individual sources to keep console clean
-        elif self.collection == "Repository Collection":
-            logger.info(f"Retrieving context from Repository Collection for query: '{query}'")
-            repo_context = self.vector_store.query_repo_collection(query)
-            initial_context.extend(repo_context)
-            logger.info(f"Retrieved {len(repo_context)} chunks from Repository Collection")
-            # Don't log individual sources to keep console clean
-        # For General Knowledge, no context is needed
-        else:
-            logger.info("Using General Knowledge collection, no context retrieval needed")
-        
+        """Process query using Chain of Thought reasoning"""
         try:
-            # Step 1: Planning
-            logger.info("Step 1: Planning")
-            if not self.agents or "planner" not in self.agents:
-                logger.warning("No planner agent available, using direct response")
+            # Get context based on collection type
+            if self.collection == "PDF Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving PDF Collection context")
+                context = self.vector_store.query_pdf_collection(query)
+            elif self.collection == "Repository Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Repository Collection context")
+                context = self.vector_store.query_repo_collection(query)
+            elif self.collection == "Web Knowledge Base":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Web Knowledge Base context")
+                context = self.vector_store.query_web_collection(query)
+            else:
+                context = []
+            
+            # Log number of chunks retrieved
+            logger.info(f"Retrieved {len(context)} chunks from {self.collection}")
+            
+            # Create agents if not already created
+            if not self.agents:
+                self.agents = create_agents(self.llm, self.vector_store)
+            
+            # Get planning step
+            try:
+                planning_result = self.agents["planner"].plan(query, context)
+                logger.info("Planning step completed")
+            except Exception as e:
+                logger.error(f"Error in planning step: {str(e)}")
+                logger.info("Falling back to general response")
                 return self._generate_general_response(query)
             
-            plan = self.agents["planner"].plan(query, initial_context)
-            logger.info(f"Generated plan:\n{plan}")
-            
-            # Step 2: Research each step (if researcher is available)
-            logger.info("Step 2: Research")
+            # Get research step
             research_results = []
-            if self.agents.get("researcher") is not None and initial_context:
-                for step in plan.split("\n"):
+            if self.agents.get("researcher") is not None and context:
+                for step in planning_result.split("\n"):
                     if not step.strip():
                         continue
-                    step_research = self.agents["researcher"].research(query, step)
-                    research_results.append({"step": step, "findings": step_research})
-                    # Don't log source indices to keep console clean
-                    logger.info(f"Research for step: {step}")
+                    try:
+                        step_research = self.agents["researcher"].research(query, step)
+                        # Extract findings from research result
+                        findings = step_research.get("findings", []) if isinstance(step_research, dict) else []
+                        research_results.append({"step": step, "findings": findings})
+                        
+                        # Log which sources were used for this step
+                        try:
+                            source_indices = [context.index(finding) + 1 for finding in findings if finding in context]
+                            logger.info(f"Research for step: {step}\nUsing sources: {source_indices}")
+                        except ValueError as ve:
+                            logger.warning(f"Could not find some findings in initial context: {str(ve)}")
+                    except Exception as e:
+                        logger.error(f"Error during research for step '{step}': {str(e)}")
+                        research_results.append({"step": step, "findings": []})
             else:
                 # If no researcher or no context, use the steps directly
-                research_results = [{"step": step, "findings": []} for step in plan.split("\n") if step.strip()]
+                research_results = [{"step": step, "findings": []} for step in planning_result.split("\n") if step.strip()]
                 logger.info("No research performed (no researcher agent or no context available)")
             
-            # Step 3: Reasoning about each step
-            logger.info("Step 3: Reasoning")
+            # Get reasoning step
+            reasoning_steps = []
             if not self.agents.get("reasoner"):
                 logger.warning("No reasoner agent available, using direct response")
                 return self._generate_general_response(query)
             
-            reasoning_steps = []
             for result in research_results:
-                step_reasoning = self.agents["reasoner"].reason(
-                    query,
-                    result["step"],
-                    result["findings"] if result["findings"] else [{"content": "Using general knowledge", "metadata": {"source": "General Knowledge"}}]
-                )
-                reasoning_steps.append(step_reasoning)
-                # Log just the step, not the full reasoning
-                logger.info(f"Reasoning for step: {result['step']}")
+                try:
+                    step_reasoning = self.agents["reasoner"].reason(
+                        query,
+                        result["step"],
+                        result["findings"] if result["findings"] else [{"content": "Using general knowledge", "metadata": {"source": "General Knowledge"}}]
+                    )
+                    reasoning_steps.append(step_reasoning)
+                    logger.info(f"Reasoning for step: {result['step']}\n{step_reasoning}")
+                except Exception as e:
+                    logger.error(f"Error in reasoning for step '{result['step']}': {str(e)}")
+                    reasoning_steps.append(f"Error in reasoning for this step: {str(e)}")
             
-            # Step 4: Synthesize final answer
-            logger.info("Step 4: Synthesis")
+            # Get synthesis step
             if not self.agents.get("synthesizer"):
                 logger.warning("No synthesizer agent available, using direct response")
                 return self._generate_general_response(query)
             
-            final_answer = self.agents["synthesizer"].synthesize(query, reasoning_steps)
-            logger.info("Final answer synthesized successfully")
+            try:
+                synthesis_result = self.agents["synthesizer"].synthesize(query, reasoning_steps)
+                logger.info("Synthesis step completed")
+            except Exception as e:
+                logger.error(f"Error in synthesis step: {str(e)}")
+                logger.info("Falling back to general response")
+                return self._generate_general_response(query)
             
             return {
-                "answer": final_answer,
-                "context": initial_context,
-                "reasoning_steps": reasoning_steps
+                "answer": synthesis_result["answer"],
+                "reasoning_steps": reasoning_steps,
+                "context": context
             }
+            
         except Exception as e:
             logger.error(f"Error in CoT processing: {str(e)}")
-            logger.info("Falling back to general response")
-            return self._generate_general_response(query)
+            raise
     
     def _process_query_standard(self, query: str) -> Dict[str, Any]:
-        """Process query using standard approach without Chain of Thought"""
-        # Initialize context variables
-        pdf_context = []
-        repo_context = []
-        
-        # Get context based on selected collection
-        if self.collection == "PDF Collection":
-            logger.info(f"Retrieving context from PDF Collection for query: '{query}'")
-            pdf_context = self.vector_store.query_pdf_collection(query)
-            logger.info(f"Retrieved {len(pdf_context)} chunks from PDF Collection")
-            # Don't log individual sources to keep console clean
-        elif self.collection == "Repository Collection":
-            logger.info(f"Retrieving context from Repository Collection for query: '{query}'")
-            repo_context = self.vector_store.query_repo_collection(query)
-            logger.info(f"Retrieved {len(repo_context)} chunks from Repository Collection")
-            # Don't log individual sources to keep console clean
-        
-        # Combine all context
-        all_context = pdf_context + repo_context
-        
-        # Generate response using context if available, otherwise use general knowledge
-        if all_context:
-            logger.info(f"Generating response using {len(all_context)} context chunks")
-            response = self._generate_response(query, all_context)
-        else:
-            logger.info("No context found, using general knowledge")
-            response = self._generate_general_response(query)
-        
-        return response
+        """Process query using standard RAG approach"""
+        try:
+            # Get context based on collection type
+            if self.collection == "PDF Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving PDF Collection context")
+                context = self.vector_store.query_pdf_collection(query)
+            elif self.collection == "Repository Collection":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Repository Collection context")
+                context = self.vector_store.query_repo_collection(query)
+            elif self.collection == "Web Knowledge Base":
+                db_type = "Oracle DB" if self.use_oracle_db else "ChromaDB"
+                print(f"🔄 Using {db_type} for retrieving Web Knowledge Base context")
+                context = self.vector_store.query_web_collection(query)
+            else:
+                context = []
+            
+            # Log number of chunks retrieved
+            logger.info(f"Retrieved {len(context)} chunks from {self.collection}")
+            
+            # Generate response using context
+            response = self._generate_response(query, context)
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error in standard processing: {str(e)}")
+            raise
     
     def _generate_text(self, prompt: str, max_length: int = 512) -> str:
         """Generate text using the local model"""
@@ -410,16 +442,24 @@ Answer:"""
         if context:
             # Group sources by document
             for item in context:
-                source = item['metadata'].get('source', 'Unknown')
+                # Handle metadata which could be a string (from Oracle DB) or a dict (from ChromaDB)
+                metadata = item['metadata']
+                if isinstance(metadata, str):
+                    try:
+                        metadata = json.loads(metadata)
+                    except json.JSONDecodeError:
+                        metadata = {"source": "Unknown"}
+                
+                source = metadata.get('source', 'Unknown')
                 if source not in sources:
                     sources[source] = set()
                 
                 # Add page number if available
-                if 'page' in item['metadata']:
-                    sources[source].add(str(item['metadata']['page']))
+                if 'page' in metadata:
+                    sources[source].add(str(metadata['page']))
                 # Add file path if available for code
-                if 'file_path' in item['metadata']:
-                    sources[source] = item['metadata']['file_path']
+                if 'file_path' in metadata:
+                    sources[source] = metadata['file_path']
             
             # Print concise source information
             print("\nSources detected:")
@@ -450,17 +490,18 @@ Answer:"""
         }
 
 def main():
-    parser = argparse.ArgumentParser(description="Query documents using local Mistral model")
-    parser.add_argument("--query", required=True, help="Query to process")
-    parser.add_argument("--store-path", default="embeddings", help="Path to the vector store")
-    parser.add_argument("--model", default="mistralai/Mistral-7B-Instruct-v0.2", help="Model to use")
-    parser.add_argument("--quiet", action="store_true", help="Disable verbose logging")
-    parser.add_argument("--use-cot", action="store_true", help="Enable Chain of Thought reasoning")
-    parser.add_argument("--collection", choices=["PDF Collection", "Repository Collection", "General Knowledge"], 
-                        help="Specify which collection to query")
-    parser.add_argument("--skip-analysis", action="store_true", help="Skip query analysis step")
+    parser = argparse.ArgumentParser(description="Query documents using local LLM")
+    parser.add_argument("--query", required=True, help="Query to search for")
+    parser.add_argument("--embeddings", default="oracle", choices=["oracle", "chromadb"], help="Embeddings backend to use")
+    parser.add_argument("--model", default="qwen2", help="Model to use (default: qwen2)")
+    parser.add_argument("--collection", help="Collection to search (PDF, Repository, General Knowledge)")
+    parser.add_argument("--use-cot", action="store_true", help="Use Chain of Thought reasoning")
+    parser.add_argument("--store-path", default="embeddings", help="Path to ChromaDB store")
+    parser.add_argument("--skip-analysis", action="store_true", help="Skip query analysis (not recommended)")
     parser.add_argument("--verbose", action="store_true", help="Show full content of sources")
-    
+    parser.add_argument("--quiet", action="store_true", help="Disable verbose logging")
+    parser.add_argument("--quantization", choices=["4bit", "8bit"], help="Quantization method (4bit or 8bit)")
+        
     args = parser.parse_args()
     
     # Set logging level based on quiet flag
@@ -471,17 +512,41 @@ def main():
     
     print("\nInitializing RAG agent...")
     print("=" * 50)
+    print(f"Using model: {args.model}")
     
     try:
-        logger.info(f"Initializing vector store from: {args.store_path}")
-        store = VectorStore(persist_directory=args.store_path)
+        # Determine which vector store to use based on args.embeddings
+        if args.embeddings == "oracle" and ORACLE_DB_AVAILABLE:
+            try:
+                logger.info("Initializing Oracle DB vector store")
+                store = OraDBVectorStore()
+                print("✓ Using Oracle DB for vector storage")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Oracle DB: {str(e)}")
+                logger.info(f"Falling back to ChromaDB from: {args.store_path}")
+                store = VectorStore(persist_directory=args.store_path)
+                print("⚠ Oracle DB initialization failed, using ChromaDB instead")
+        else:
+            if args.embeddings == "oracle" and not ORACLE_DB_AVAILABLE:
+                logger.warning("Oracle DB support not available")
+                print("⚠ Oracle DB support not available (missing dependencies)")
+                
+            logger.info(f"Initializing ChromaDB vector store from: {args.store_path}")
+            store = VectorStore(persist_directory=args.store_path)
+            print("✓ Using ChromaDB for vector storage")
+        
         logger.info("Initializing local RAG agent...")
+        # Set use_oracle_db based on the actual store type
+        use_oracle_db = args.embeddings == "oracle" and isinstance(store, OraDBVectorStore)
+        
+        print(f"Creating LocalRAGAgent with model: {args.model}")
         agent = LocalRAGAgent(
             store, 
             model_name=args.model, 
             use_cot=args.use_cot, 
             collection=args.collection,
-            skip_analysis=args.skip_analysis
+            skip_analysis=args.skip_analysis,
+            use_oracle_db=use_oracle_db
         )
         
         print(f"\nProcessing query: {args.query}")
