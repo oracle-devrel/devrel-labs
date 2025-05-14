@@ -1,0 +1,161 @@
+## Copyright © 2021, Oracle and/or its affiliates. 
+## All rights reserved. The Universal Permissive License (UPL), Version 1.0 as shown at http://oss.oracle.com/licenses/upl
+
+title: "Deploy NVIDIA Holoscan on a Compute with GPU"
+stackDescription: "Deploy NVIDIA Holoscan on a Compute with GPU"
+schemaVersion: 1.1.0
+version: "20190404"
+locale: "en"
+
+variableGroups:
+- title: General Configuration
+  visible: false
+  variables:
+  - tenancy_ocid
+  - region
+    
+
+- title: Compute configuration
+  visible: true  
+  variables:
+  - compartment_ocid
+  - vm_display_name
+  - shape
+  - ssh_public_key
+  - ad
+  - use_existent_vcn
+  - nvidia_api_key
+
+
+- title: Existent VCN
+  visible: use_existent_vcn
+  variables:
+  - vcn_id
+  - subnet_id
+
+- title: Create new VCN
+  visible: 
+    not:
+      - ${use_existent_vcn}
+  variables:
+    - vcn_name
+    - vcn_cidr
+    - dns_label
+    - allow_ingress_from
+  
+variables:
+
+  # gpu_tag_val:
+  #   type: string
+  #   required: true
+  #   visibile: true
+  #   title: "Value for freeform tag GPU_TAG"
+  #   description: "Choose a value for freeform tag GPU_TAG"
+
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    required: true
+    visibile: true
+    title: "Compartment"
+    description: "Choose compartment where you want to deploy the GPU VM"
+
+  use_existent_vcn:
+    type: boolean
+    required: true
+    visibile: true
+    default: true
+    title: "Use existent VPN"
+    description: "Choose if a VCN will be created or not"
+
+  vcn_id:
+    type: oci:core:vcn:id
+    title: "VCN"
+    description: "The VCN where will deploy the resources"
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+    required: true
+
+  subnet_id:
+    type: oci:core:subnet:id
+    title: "Subnet"
+    description: "The Subnet where will deploy the resource"
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+      vcnId: ${vcn_id}
+    required: true
+
+  vm_display_name:
+    type: string
+    required: true
+    visibile: true
+    title: "vm display name"
+    description: "VM display name"
+
+  shape:
+    title: "Shape"
+    description: "Select a shape"
+    type: enum
+    # enumerated values
+    enum:
+    - VM.GPU.A10.1
+    - VM.GPU.A10.2
+    - VM.GPU.GU1.1
+    - VM.GPU.GU1.2
+    - VM.GPU2.1
+    - VM.GPU3.1
+    - VM.GPU3.2
+    - VM.GPU3.4
+    - BM.GPU4.8
+    - BM.GPU.B4.8
+    - BM.GPU.A100-v2.8
+    - BM.GPU.H100.8
+    - BM.GPU2.2
+    - BM.GPU3.8
+    - BM.GPU.T1.2
+    - BM.GPU.A10.4
+    - BM.GPU.T1-2.4
+    default: VM.GPU.A10.1
+    required: true
+
+  ssh_public_key:
+    type: oci:core:ssh:publickey
+    title: "Public SSH Key"
+    description: "Choose public SSH Key to be uploaded into compute instances."
+    required: true
+
+  ad:
+    type: oci:identity:availabilitydomain:name
+    title: "availability domain"
+    description: "Choose availability domain"
+    dependsOn:
+      compartmentId: ${compartment_ocid}
+    required: true
+
+  vcn_name:
+    type: string
+    title: VCN name
+    default: "gpu_vcn"
+    required: true
+
+  vcn_cidr:
+    type: string
+    title: VCN cidr
+    default: "10.20.0.0/16"
+    required: true
+
+  dns_label:
+    type: string
+    title: DNS label
+    default: "gpuvcn"
+    required: true
+
+  allow_ingress_from:
+    type: string
+    title: Allow ingress to VM from
+    default: "0.0.0.0/0"
+    description: "Allow ingress to VM from"
+
+  nvidia_api_key:
+    type: string
+    required: true
+    title: NVIDIA API Key

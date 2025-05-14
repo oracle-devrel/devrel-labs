@@ -1,0 +1,7 @@
+# Language Translation Service Configuration
+language_translation:
+  compartment_id: "ocid1.compartment.oc1..aaaaaaaauyfykbiauv4nntvl3b57ydx3wcrqsnax7bbbvhov4vmdvqo2nqca"
+  source_bucket: "bucket-translation"
+  target_bucket: "bucket-translated"
+  source_language: "ja"  # ISO language code
+  target_language: "es"  # ISO language code

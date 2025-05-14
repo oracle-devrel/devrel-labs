@@ -1,0 +1,184 @@
+{
+  "pets": [
+    {
+      "id": 1,
+      "name": "Pochi",
+      "species": "dog",
+      "age": 5,
+      "healthStatus": "Healthy",
+      "nextVisit": "2024-02-15",
+      "comments": "次の訪問で血液検査を実施する予定。"
+    },
+    {
+      "id": 2,
+      "name": "Taro",
+      "species": "dog",
+      "age": 8,
+      "healthStatus": "Needs Monitoring",
+      "nextVisit": "2024-01-20",
+      "comments": "胃肠不調が常識化しているため、追加検査が必要。"
+    },
+    {
+      "id": 3,
+      "name": "Momo",
+      "species": "dog",
+      "age": 3,
+      "healthStatus": "Healthy",
+      "nextVisit": "2024-03-01",
+      "comments": "狂犬病ワクチン接種完了。来年の更新を忘れずに。"
+    },
+    {
+      "id": 4,
+      "name": "Hachi",
+      "species": "dog",
+      "age": 12,
+      "healthStatus": "Needs Monitoring",
+      "nextVisit": "2024-01-25",
+      "comments": "関節炎の症状あり。痛み止めの投与を継続中。"
+    },
+    {
+      "id": 5,
+      "name": "Koro",
+      "species": "dog",
+      "age": 2,
+      "healthStatus": "Healthy",
+      "nextVisit": "2024-04-10",
+      "comments": "予防接種はすべて完了。とても元気な状態。"
+    },
+    {
+      "id": 6,
+      "name": "Shiro",
+      "species": "dog",
+      "age": 6,
+      "healthStatus": "Treatment Required",
+      "nextVisit": "2024-01-18",
+      "comments": "歯石の除去が必要。歯肉炎の初期症状あり。"
+    },
+    {
+      "id": 7,
+      "name": "Luna",
+      "species": "dog",
+      "age": 4,
+      "healthStatus": "Healthy",
+      "nextVisit": "2024-03-20",
+      "comments": "フィラリア予防薬の処方済み。定期投与を継続。"
+    },
+    {
+      "id": 8,
+      "name": "Buddy",
+      "species": "dog",
+      "age": 9,
+      "healthStatus": "Needs Monitoring",
+      "nextVisit": "2024-02-01",
+      "comments": "心臓の検査結果要注意。投薬開始を検討。"
+    },
+    {
+      "id": 9,
+      "name": "Riki",
+      "species": "dog",
+      "age": 1,
+      "healthStatus": "Healthy",
+      "nextVisit": "2024-02-28",
+      "comments": "初回ワクチン接種完了。発育状態良好。"
+    },
+    {
+      "id": 10,
+      "name": "Mei",
+      "species": "dog",
+      "age": 7,
+      "healthStatus": "Treatment Required",
+      "nextVisit": "2024-01-22",
+      "comments": "皮膚アレルギーの治療中。食事制限継続。"
+    },
+    {
+      "id": 11,
+      "name": "Kenta",
+      "species": "dog",
+      "age": 5,
+      "healthStatus": "Healthy",
+      "nextVisit": "2024-04-05",
+      "comments": "年次健康診断済み。特に問題なし。"
+    },
+    {
+      "id": 12,
+      "name": "Sora",
+      "species": "dog",
+      "age": 10,
+      "healthStatus": "Needs Monitoring",
+      "nextVisit": "2024-02-10",
+      "comments": "甲状腺機能の検査値が境界線。経過観察必要。"
+    },
+    {
+      "id": 13,
+      "name": "Hana",
+      "species": "dog",
+      "age": 3,
+      "healthStatus": "Healthy",
+      "nextVisit": "2024-03-15",
+      "comments": "混合ワクチン接種完了。体重管理順調。"
+    },
+    {
+      "id": 14,
+      "name": "Rocky",
+      "species": "dog",
+      "age": 8,
+      "healthStatus": "Treatment Required",
+      "nextVisit": "2024-01-30",
+      "comments": "耳の感染症治療中。清潔維持の指導実施。"
+    },
+    {
+      "id": 15,
+      "name": "Goro",
+      "species": "dog",
+      "age": 4,
+      "healthStatus": "Healthy",
+      "nextVisit": "2024-04-20",
+      "comments": "予防接種とフィラリア予防を定期的に実施中。"
+    },
+    {
+      "id": 16,
+      "name": "Sakura",
+      "species": "dog",
+      "age": 6,
+      "healthStatus": "Needs Monitoring",
+      "nextVisit": "2024-02-05",
+      "comments": "軽度の貧血あり。食事療法開始。"
+    },
+    {
+      "id": 17,
+      "name": "Chibi",
+      "species": "dog",
+      "age": 2,
+      "healthStatus": "Healthy",
+      "nextVisit": "2024-03-10",
+      "comments": "すべての予防接種完了。成長は順調。"
+    },
+    {
+      "id": 18,
+      "name": "Max",
+      "species": "dog",
+      "age": 11,
+      "healthStatus": "Treatment Required",
+      "nextVisit": "2024-01-28",
+      "comments": "白内障の初期症状。点眼薬処方中。"
+    },
+    {
+      "id": 19,
+      "name": "Yuki",
+      "species": "dog",
+      "age": 5,
+      "healthStatus": "Healthy",
+      "nextVisit": "2024-04-15",
+      "comments": "定期検診済み。予防接種も完了。"
+    },
+    {
+      "id": 20,
+      "name": "Kiki",
+      "species": "dog",
+      "age": 7,
+      "healthStatus": "Needs Monitoring",
+      "nextVisit": "2024-02-20",
+      "comments": "体重過多。食事制限と運動療法を開始。"
+    }
+  ]
+}

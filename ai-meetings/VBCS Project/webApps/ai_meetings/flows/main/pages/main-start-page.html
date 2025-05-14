@@ -1,0 +1,515 @@
+<div class="oj-flex oj-sm-justify-content-center" style="margin-top:30px;">
+  <div class="oj-panel oj-flex-item oj-panel-shadow-lg oj-sm-flex-initial" style="width:100%;max-width:1000px;">
+    <div class="oj-flex oj-sm-justify-content-flex-end">
+   <!--   <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial oj-sm-align-items-flex-end"
+          on-click="[[$listeners.flexClick2]]">
+            <span class="oj-flex-item oj-sm-flex-initial oj-ux-ico-document-gear" style="cursor:pointer;"></span>
+        </div>-->
+        <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial oj-sm-align-items-flex-end"
+          on-click="[[$listeners.flexClick]]" style="margin-left:10px;">
+            <span class="oj-flex-item oj-sm-flex-initial oj-ux-ico-veryhappy-outline" style="cursor:pointer;"></span>
+        </div>
+    </div>
+    <div class="oj-flex oj-sm-flex-direction-column oj-sm-align-items-center">
+        <div class="oj-flex-item oj-sm-flex-initial">
+            <oj-bind-if test="[[ true]]">
+                <h4 class="oj-header">AI Meetings</h4>
+            </oj-bind-if>
+        </div>
+        <div>
+            <oj-bind-if test="[[ !$variables.loading ]]">
+                <img :src="[[ $flow.path + 'resources/images/artificial-intelligence-ai-icon.png' ]]" width="100"
+                  style="margin-left:30px;margin-right:30px;">
+            </oj-bind-if>
+        </div>
+        <div class="oj-flex-item oj-sm-flex-initial">
+            <oj-bind-if test="[[ !$variables.uploadSuccess && !$variables.loading ]]">
+                <h4 class="oj-header">Share your audio or video</h4>
+            </oj-bind-if>
+        </div>
+        
+        <div class="oj-flex-item oj-sm-flex-initial">
+            <oj-bind-if test="[[ !$variables.uploadSuccess && !$variables.loading ]]">
+                <div class="oj-flex oj-sm-flex-direction-column">
+                    <oj-c-file-picker class="oj-flex-item oj-sm-flex-initial" selection-mode="single"
+                      accept='["audio/aac","audio/ogg","audio/mpeg","audio/mp4","video/mpeg","audio/x-m4a","video/mp4"]'
+                      on-oj-select="[[$listeners.filePickerSelect]]"></oj-c-file-picker>
+                    <div class="oj-flex-item oj-sm-flex-initial" style="font-size:8pt;padding-top:10px;">
+                        <oj-bind-text value="*The maximum file size is 2 GB."></oj-bind-text>
+                    </div>
+                    <div class="oj-flex-item oj-sm-flex-initial" style="font-size:8pt;">
+                        <oj-bind-text value="**File duration is a maximum of 4 hours."></oj-bind-text>
+                    </div>
+                    <div style="font-size:8pt;" class="oj-flex-item oj-sm-flex-initial">
+                        <oj-bind-text value="***Estimated processing time is one third of the duration of the meeting."></oj-bind-text>
+                    </div>
+                </div>
+            </oj-bind-if>
+        </div>
+        <div class="oj-flex-item oj-sm-flex-initial">
+            <oj-bind-if test="[[ $variables.loading ]]">
+                <div class="oj-flex oj-sm-flex-direction-column oj-sm-align-items-center oj-sm-justify-content-center"
+                  style="margin-top:20px;margin-bottom:20px;">
+                    <div class="oj-flex-item oj-sm-flex-initial">
+                        <img :src="[[ $flow.path + 'resources/images/3dgifmaker67460.gif' ]]"
+                          width="100">
+                    </div>
+                    <div class="oj-flex-item oj-sm-flex-initial">
+                        <oj-bind-text value="Loading..."></oj-bind-text>
+                    </div>
+                    <div class="oj-flex-item oj-sm-flex-initial" style="font-size:8pt;margin-top:5px;">
+                        <oj-bind-if test="[[ $variables.spareTime ]]">
+                        <oj-bind-text value="Estimated processing time is one third of the duration of the meeting"></oj-bind-text>
+                        </oj-bind-if>
+                    </div>
+                </div>
+            </oj-bind-if>
+        </div>
+        <div class="oj-flex-item oj-sm-flex-initial" style="padding-top:20px;">
+            <oj-bind-if test="[[ !$variables.meetingCreated && $variables.uploadSuccess ]]">
+                <oj-validation-group id="oj-validation-group-upload" style="padding-top:20px;">
+                    <div class="oj-flex oj-sm-justify-content-center oj-sm-align-items-flex-start">
+                        <oj-input-text label-hint="Meeting name" required="true" value="{{ $variables.meetingName }}"
+                          style="margin-bottom:20px;"></oj-input-text>
+                        <oj-button chroming="danger" display="icons" class="" label="Making magic"
+                          style="min-width:100px;margin-bottom:30px;" on-oj-action="[[$listeners.buttonAction8]]">
+                            <span class="oj-ux-ico-chart-auto" slot="startIcon"></span>
+                        </oj-button>
+                    </div>
+                </oj-validation-group>
+            </oj-bind-if>
+        </div>
+                  <div>
+                        <oj-bind-if
+                          test="[[ !$variables.transcriptionTask && $variables.meetingCreated && $variables.uploadSuccess ]]">
+                            <oj-button label="Refresh" chroming="callToAction" class="oj-button-sm"
+                              on-oj-action="[[$listeners.buttonAction2]]" style="margin-bottom:20px;">
+                                <span class="oj-ux-ico-refresh" slot="startIcon"></span>
+                            </oj-button>
+                        </oj-bind-if>
+                    </div>
+
+        <div class="oj-flex-item oj-sm-flex-initial" style="width:100%;">
+            <oj-bind-if
+              test="[[ $variables.uploadSuccess && $variables.meetingCreated && $variables.transcriptionTask ]]">
+                <div class="oj-flex oj-sm-justify-content-center oj-sm-flex-direction-column oj-sm-align-items-center">
+                    <div
+                      class="oj-flex-item oj-sm-flex-initial oj-flex oj-sm-justify-content-center oj-sm-flex-direction-column">
+                           <div class="oj-flex-item oj-flex oj-sm-justify-content-center"
+                             style="margin-top:20px;margin-bottom:40px;">
+                      <oj-button label="Back to meetings list" chroming="callToAction" class="oj-button-sm"
+                          on-oj-action="[[$listeners.buttonAction7]]">
+                        <span class="oj-ux-ico-batch-view" slot="startIcon"></span>
+                        </oj-button>
+               
+                    </div>
+                        <div class="oj-flex-item oj-sm-flex-initial">
+                        <oj-bind-if test="[[ $application.responsive.mdUp ]]">
+                        <oj-input-text label-hint="Meeting Name"
+                          class="oj-form-control-max-width-sm oj-form-control-width-sm" readonly="true"
+                          value="{{ $variables.meetingName }}"
+                          style="padding-bottom:20px;padding-left:20px;padding-right:20px;font-size:15pt;"></oj-input-text>
+                        </oj-bind-if>
+                        </div>
+                        <div class="oj-flex-item oj-sm-flex-initial">
+                        <oj-bind-if test="[[ $application.responsive.smOnly ]]">
+                        <oj-input-text label-hint="Meeting Name"
+                          class="oj-form-control-max-width-sm oj-form-control-width-sm" readonly="true"
+                          value="{{ $variables.meetingName }}"
+                          style="padding-bottom:20px;padding-left:20px;padding-right:20px;"></oj-input-text>
+                        </oj-bind-if>
+                        </div>
+                        <div class="oj-flex-item oj-sm-align-self-flex-start oj-sm-flex-initial" style="width:40%;">
+                        <oj-bind-if test="[[ $variables.nParticipants>0 ]]">
+                        <oj-input-text label-hint="Speakers in the meeting" readonly="true"
+                          value="{{ $variables.nParticipants }}"
+                          style="padding-left:20px;padding-right:20px;font-size:15pt;"
+                          class="oj-form-control-width-sm oj-form-control-max-width-sm"></oj-input-text>
+                        </oj-bind-if>
+                        </div>
+                    </div>
+                    <div>
+                        <oj-bind-if
+                          test="[[true ]]">
+                        <div class="oj-sm-justify-content-center oj-flex oj-sm-align-items-flex-end">
+                        <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-flex-end"
+                          style="margin-right:5px;font-weight: bold;padding-top:20px;">
+                            <oj-bind-text value="People mentions: "></oj-bind-text>
+                        </div>
+                        <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-flex-end">
+                            <oj-bind-for-each data="[[ $variables.arrayMention ]]">
+                              <template>
+                                <!--  <oj-bind-text value='[[ $current.data+", " ]]'></oj-bind-text>--></template>
+                              <template slot="noData">
+                                <oj-bind-text value=" We have not detected individuals on this meeting"></oj-bind-text>
+                              </template>
+                            </oj-bind-for-each>
+                            <oj-bind-text value='[[ $variables.arrayMention.join(", ") ]]'></oj-bind-text>
+                        </div>
+                        </div>
+                        </oj-bind-if>
+                    </div>
+                    <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial"
+                      style="margin-top:20px;margin-bottom:20px;width:100%;max-width:100%;">
+                        <h6 class="oj-header oj-flex-item oj-sm-flex-initial">Meeting Summary</h6>
+                        <oj-accordion class="oj-flex-item" id="accordionSummary">
+                        <oj-collapsible id="oj-collapsible--311209415-3" style="max-width:100%;"
+                          expanded="{{ $variables.summaryStatus }}">
+                        <div class="oj-flex oj-sm-justify-content-center">
+                            <div data-bind="html: [[ $functions.processText($variables.summaryText) ]]"></div>
+                         <!--   <p class="oj-p oj-flex-item oj-sm-12 oj-md-12"><oj-bind-text value="[[ $functions.processText($variables.summaryText) ]]"></oj-bind-text></p>-->
+                          <!--$variables.summaryText-->
+                         <div class="oj-flex-item oj-sm-flex-initial">
+                              <oj-bind-if test="[[ $variables.minimumSize ]]">
+                                <div class="oj-flex">
+                                  <div class="oj-flex-item oj-sm-flex-initial">
+                                    <oj-bind-text
+                                      value="Summarization is only available for transcripts longer than 250 characters"></oj-bind-text>
+                                  </div>
+                                </div>
+                              </oj-bind-if>
+                         </div>
+                        </div>
+                        </oj-collapsible>
+                        </oj-accordion>
+                    </div>
+
+
+
+
+                    <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial"
+                      style="margin-top:20px;margin-bottom:20px;width:100%;max-width:100%;">
+                        <h6 class="oj-header oj-flex-item oj-sm-flex-initial">Chat with meeting</h6>
+                        <oj-accordion class="oj-flex-item">
+                        <oj-collapsible id="oj-collapsible--311209415-3" style="max-width:100%;">
+                        <div class="oj-sm-justify-content-center oj-flex">
+                            <div class="oj-flex-item oj-sm-flex-initial" style="width:80%;">
+                              <div class="chat-container">
+                                <div class="chat-window" id="chat-window"
+                                  style="height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"></div>
+                                <oj-bind-if test="[[ $application.responsive.mdUp ]]">
+                                  <div class="oj-flex oj-sm-align-items-center oj-sm-justify-content-center"
+                                    style="margin-top:5px; width:100%;">
+                                    <div class="oj-flex-item oj-flex" style="width:100%;">
+                                      <oj-input-text label-hint="Type your message and press Enter" value="{{ $variables.query }}"
+                                        style="width:100%;" id="chat-input" class="oj-form-control-full-width"></oj-input-text>
+                                    </div>
+                                  <!--  <div class="oj-flex-item oj-flex oj-sm-justify-content-flex-end" style="width:15%;">
+                                      <oj-button id="sent-button" label="Send" on-oj-action="[[$listeners.buttonAction9]]"
+                                        chroming="callToAction" style="margin-left:5px;" class="oj-button-sm"></oj-button>
+                                    </div>-->
+                                  </div>
+                                </oj-bind-if>
+
+                                <oj-bind-if test="[[ $application.responsive.smOnly ]]">
+                                  <div class="oj-flex oj-sm-align-items-center oj-sm-justify-content-center"
+                                    style="margin-top:5px; width:100%;">
+                                    <div class="oj-flex-item oj-flex" style="width:100%;">
+                                      <oj-input-text label-hint="Type your message and press Enter" value="{{ $variables.query }}"
+                                        style="width:100%;" id="chat-input" class="oj-form-control-full-width"></oj-input-text>
+                                    </div>
+                                    <div class="oj-flex-item oj-flex oj-sm-justify-content-flex-end" style="width:20%;">
+                                    <!--  <oj-button label="Send" on-oj-action="[[$listeners.buttonAction9]]"
+                                        chroming="callToAction" style="margin-left:5px;" class="oj-button-sm"
+                                        display="icons">
+                                        <span class="oj-ux-ico-send" slot="startIcon"></span>
+                                      </oj-button>-->
+                                    </div>
+                                  </div>
+                                </oj-bind-if>
+                              </div>
+                            </div>
+                        </div>
+                        </oj-collapsible>
+                        </oj-accordion>
+                    </div>
+                    
+                    <div class="oj-flex oj-flex-item oj-sm-flex-initial oj-sm-flex-direction-column"
+                      style="margin-top:20px;margin-bottom:20px;width:100%;">
+                      <h6 class="oj-header oj-flex-item oj-sm-flex-initial">Sentiment Analysis</h6>
+                        <oj-accordion class="oj-flex-item">
+                      <oj-collapsible id="oj-collapsible--311209415-2" style="width:100%;">
+                        <div class="oj-flex oj-sm-justify-content-center">
+                            <div
+                              class="oj-flex oj-flex-item oj-sm-align-items-center oj-sm-align-self-center oj-sm-justify-content-center oj-sm-only-flex-direction-column"
+                              style="width:100px;">
+                              <oj-input-text label-hint="Positive"
+                                class="oj-flex-item"
+                                readonly="true" style="max-width:80px;"
+                                value='{{ (Number($variables.positive).toFixed(2)*100).toFixed(2)+"%" }}'></oj-input-text>
+                              <oj-input-text label-hint="Negative"
+                                class="oj-flex-item"
+                                readonly="true" style="max-width:80px;"
+                                value='{{ ((Number($variables.negative).toFixed(2))*100).toFixed(2)+"%" }}'></oj-input-text>
+                              <oj-input-text label-hint="Mixed"
+                                class="oj-flex-item"
+                                readonly="true" style="max-width:80px;"
+                                value='{{ ((Number($variables.mixed).toFixed(2))*100).toFixed(2)+"%" }}'></oj-input-text>
+                              <oj-input-text label-hint="Neutral"
+                                class="oj-flex-item"
+                                readonly="true" style="max-width:80px;"
+                                value='{{ ((Number($variables.neutral).toFixed(2))*100).toFixed(2)+"%" }}'></oj-input-text>
+                            </div>
+                        </div>
+
+                          <oj-chart type="pie" class="oj-sm-flex-initial oj-flex-item" animation-on-data-change="auto"
+                              animation-on-display="alphaFade" data="[[ $variables.chartADP ]]" legend.position="bottom" legend.rendered="on"
+                              legend.title="Sentiment Distribution">
+                              <template slot="itemTemplate">
+                                <oj-chart-item group-id="[[ [$current.index.group] ]]" series-id="[[ $current.data.series ]]"
+                                  value="[[ $current.data.value ]]"></oj-chart-item>
+                              </template>
+                            </oj-chart>
+                          <!--  <oj-table scroll-policy="loadMoreOnScroll"
+                              class="oj-flex-item oj-sm-flex-initial oj-table-stretch oj-table-data-cell-no-padding"
+                              style="margin-top:20px;margin-bottom:30px;max-width:400px;"
+                              data="[[ $variables.tableADP ]]"
+                              columns='[{"headerText":"Sentence","field":"sentence","sortable":"disabled","width":100},{"headerText":"Sentiment","field":"sentiment","sortable":"disabled","width":100},{"headerText":"Value","field":"value","sortable":"disabled","template":"Value","width":100}]'
+                              selection-mode.row="none" selection-mode.column="none">
+                              <template slot="Value">
+                                <oj-input-text label-hint="" value='[[ $current.data+"%" ]]' readonly="true"></oj-input-text>
+                              </template>
+                            </oj-table>-->
+                        </oj-collapsible>
+                        </oj-accordion>
+                    </div>
+                    <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial"
+                      style="margin-top:20px;margin-bottom:20px;width:100%;max-width:100%;">
+                        <h6 class="oj-header oj-flex-item oj-sm-flex-initial">Others Mentions</h6>
+                        <oj-accordion class="oj-flex-item">
+                        <oj-collapsible id="oj-collapsible--311209415-6" style="max-width:100%;">
+                        <div class="oj-sm-justify-content-center oj-flex" style="margin-top:10px;">
+                            <div class="oj-flex-item oj-sm-flex-initial" style="margin-right:5px;font-weight: bold;">
+                              <oj-bind-text value="Organizations: "></oj-bind-text>
+                            </div>
+                            <div class="oj-flex-item oj-sm-flex-initial">
+                              <oj-bind-for-each data="[[ $variables.arrayOrg ]]">
+                                <template>
+                                 <!-- <oj-bind-text value='[[ $current.data+", " ]]'></oj-bind-text>--></template>
+                                <template slot="noData">
+                                  <oj-bind-text value=" Organizations not detected in the transcription"></oj-bind-text>
+                                </template>
+                              </oj-bind-for-each>
+                              <oj-bind-text value='[[ $variables.arrayOrg.join(", ") ]]'></oj-bind-text>
+                            </div>
+                        </div>
+                        <div class="oj-sm-justify-content-center oj-flex" style="margin-top:10px;">
+                            <div class="oj-flex-item oj-sm-flex-initial" style="margin-right:5px;font-weight: bold;">
+                              <oj-bind-text value="Products: "></oj-bind-text>
+                            </div>
+                            <div class="oj-flex-item oj-sm-flex-initial">
+                              <oj-bind-for-each data="[[ $variables.arrayProduct ]]">
+                                <template></template>
+                                <template slot="noData">
+                                  <oj-bind-text value=" Products not detected in the transcription"></oj-bind-text>
+                                </template>
+                              </oj-bind-for-each>
+                              <oj-bind-text value='[[ $variables.arrayProduct.join(", ") ]]'></oj-bind-text>
+                            </div>
+                        </div>
+                      <!--  <div class="oj-sm-justify-content-center oj-flex" style="margin-top:10px;">
+                            <div class="oj-flex-item oj-sm-flex-initial" style="margin-right:5px;font-weight: bold;">
+                              <oj-bind-text value="Datetimes: "></oj-bind-text>
+                            </div>
+                            <div class="oj-flex-item oj-sm-flex-initial">
+                              <oj-bind-for-each data="[[ $variables.arrayDatetime ]]">
+                                <template></template>
+                                <template slot="noData">
+                                  <oj-bind-text value=" Datetimes not detected in the transcription"></oj-bind-text>
+                                </template>
+                              </oj-bind-for-each>
+                              <oj-bind-text value='[[ $variables.arrayDatetime.join(", ") ]]'></oj-bind-text>
+                            </div>
+                        </div>-->
+                        <div class="oj-sm-justify-content-center oj-flex" style="margin-top:10px;">
+                            <div class="oj-flex-item oj-sm-flex-initial" style="margin-right:5px;font-weight: bold;">
+                              <oj-bind-text value="Locations: "></oj-bind-text>
+                            </div>
+                            <div class="oj-flex-item oj-sm-flex-initial">
+                              <oj-bind-for-each data="[[ $variables.arrayLocation ]]">
+                                <template></template>
+                                <template slot="noData">
+                                  <oj-bind-text value=" Locations not detected in the transcription"></oj-bind-text>
+                                </template>
+                              </oj-bind-for-each>
+                              <oj-bind-text value='[[ $variables.arrayLocation.join(", ") ]]'></oj-bind-text>
+                            </div>
+                        </div>
+                        </oj-collapsible>
+                        </oj-accordion>
+                    </div>
+
+                        <div class="oj-flex-item oj-sm-flex-initial oj-flex oj-sm-flex-direction-column" style="width:100%;">
+                        <div class="oj-flex-item" style="width:100%;">
+                        <h6 class="oj-header">Transcription</h6>
+                        </div>
+                        <oj-accordion class="oj-flex-item">
+                        <oj-collapsible id="oj-collapsible--311209415-1" style="min-width:100%;">
+                        <div>
+                         <!--   <oj-text-area label-hint="Transcription"
+                              class="oj-form-control-full-width oj-flex-item oj-sm-flex-initial" rows="8"
+                              style="margin-bottom:20px;" value="{{ $variables.transcriptionText }}"></oj-text-area>-->
+                            <div style="padding-bottom:10px; width:190px;">
+                                <oj-bind-text value="Copy Transcription"></oj-bind-text>
+                                <span class="oj-ux-ico-copy" on-click="[[$listeners.iconClick]]"
+                                  style="cursor:pointer;"></span>
+                            </div>
+                            
+
+                             <div class="chat-t-container">
+                                <div class="chat-window" id="chat-t-window"
+                                  style="height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"></div>
+                                <div class="oj-flex oj-sm-align-items-center oj-sm-justify-content-center"
+                                  style="margin-top:5px; width:100%;">
+                               
+                                </div>
+                              </div>
+                            <oj-bind-for-each data="[[ $page.variables.tokenArray ]]">
+                              <template>
+                                    <oj-bind-text value="[[ $functions.sendTranscriptionMessage(($current.data.speakerIndex+1), $current.data.token) ]]"></oj-bind-text>
+                              </template>
+                            </oj-bind-for-each>
+                            
+                          <!--  <oj-bind-for-each data="[[ $page.variables.tokenArray ]]">
+                              <template>
+                                <oj-label-value>
+                                  <oj-label slot="label" for="oj-vb-fragment--944316424-1">
+                                    <oj-bind-text value='[[ "Speaker "+($current.data.speakerIndex+1)+":" ]]'></oj-bind-text>
+                                  </oj-label>
+                                  <oj-text-area class="" value="[[ $current.data.token ]]" style="min-width:100%;"
+                                    rows="3" slot="value" id="oj-text-area--944316424-1"></oj-text-area>
+                                </oj-label-value>
+                              </template>
+                            </oj-bind-for-each>-->
+                        </div>
+                       <!-- <oj-bind-text value="Speakers" slot="header"></oj-bind-text>-->
+                        </oj-collapsible>
+                        </oj-accordion>
+                    </div>
+                    <div class="oj-flex-item oj-sm-flex-initial" style="margin-top:20px;margin-bottom:50px;">
+                      <oj-button label="Back to meetings list" chroming="callToAction" class="oj-button-sm"
+                          on-oj-action="[[$listeners.buttonAction7]]">
+                        <span class="oj-ux-ico-batch-view" slot="startIcon"></span>
+                        </oj-button>
+                       <!-- <oj-button label="New Meeting" chroming="callToAction" class="oj-button-sm"
+                          on-oj-action="[[$listeners.buttonAction3]]">
+                        <span class="oj-ux-ico-new-application" slot="startIcon"></span>
+                        </oj-button>-->
+                    </div>
+                </div>
+            </oj-bind-if>
+        </div>
+    </div>
+  </div>
+</div>
+<oj-dialog dialog-title="Configuration" id="oj-dialog--configuration">
+  <div slot="body">
+    <div class="oj-flex">
+        <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial" style="width:100%;">
+            <div class="oj-flex-item oj-sm-flex-initial">
+                <oj-bind-text value="Summarization"></oj-bind-text>
+            </div>
+            <div class="oj-flex oj-flex-item oj-sm-flex-initial oj-sm-justify-content-space-between">
+            <!--    <oj-combobox-one label-hint="Extractiveness"
+                  class="oj-flex-item oj-sm-flex-initial" placeholder="AUTO" style="width:180px;"
+                  value="{{ $variables.extractiveness }}" >
+                  <oj-option value="LOW">Low</oj-option>
+                  <oj-option value="MEDIUM">Medium</oj-option>
+                  <oj-option value="HIGH">High</oj-option>
+                  <oj-option value="AUTO">Auto</oj-option>
+                </oj-combobox-one>-->
+                
+                <oj-combobox-one label-hint="Format"
+                class="oj-flex-item oj-sm-flex-initial" placeholder="AUTO" style="width:140px;"
+                value="{{ $variables.format }}" >
+                <oj-option value="PARAGRAPH">Paragraph</oj-option>
+                <oj-option value="BULLETS">Bullets</oj-option>
+                <oj-option value="AUTO">Auto</oj-option>
+              </oj-combobox-one>
+              <oj-combobox-one label-hint="Length"
+                class="oj-flex-item oj-sm-flex-initial" placeholder="AUTO" style="width:140px;"
+                value="{{ $variables.length }}" >
+                <oj-option value="SHORT">Short</oj-option>
+                <oj-option value="MEDIUM">Medium</oj-option>
+                <oj-option value="LONG">Long</oj-option>
+                <oj-option value="AUTO">Auto</oj-option>
+              </oj-combobox-one>
+
+            </div>
+        </div>
+    </div>
+  </div>
+  <div slot="footer">
+    <oj-button class="oj-button-sm" on-oj-action="[[$listeners.buttonAction5]]">Close
+        <span class="oj-ux-ico-close" slot="startIcon"></span>
+    </oj-button>
+    <oj-button chroming="callToAction" class="oj-button-sm" on-oj-action="[[$listeners.buttonAction6]]">Save
+        <span class="oj-ux-ico-save-and-close" slot="startIcon"></span>
+    </oj-button>
+  </div>
+</oj-dialog>
+<oj-dialog dialog-title="The Team: EMEA AI Specialist Team" id="oj-dialog">
+  <div slot="body">
+    <div class="oj-flex" style="padding-top:20px;">
+        <div class="oj-flex oj-flex-item oj-sm-flex-initial oj-sm-align-items-center">
+            <div class="oj-flex-item oj-sm-flex-initial">
+                <img height="50" :src="[[ $flow.path + 'resources/images/alex.jpeg' ]]">
+            </div>
+            <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial">
+                <div class="oj-flex-item oj-sm-flex-initial" style="padding-left:10px;">
+                <oj-bind-text value="Alexandru Negrea"></oj-bind-text>
+                </div>
+                <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-center" style="padding-left:10px;">
+                <oj-bind-text value="AI and App Integration"></oj-bind-text>
+                </div>
+                <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-flex-start" style="padding-left:10px;">
+                <oj-bind-text value="Specialist Leader"></oj-bind-text>
+                </div>
+            </div>
+        </div>
+        <div class="oj-flex oj-flex-item oj-sm-flex-initial oj-sm-align-items-center" style="margin-top:10px;">
+            <div class="oj-flex-item oj-sm-flex-initial">
+                <img height="50" :src="[[ $flow.path + 'resources/images/luigi.jpeg' ]]">
+            </div>
+            <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial">
+                <div class="oj-flex-item oj-sm-flex-initial" style="padding-left:10px;">
+                <oj-bind-text value="Luigi Saeta"></oj-bind-text>
+                </div>
+                <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-center" style="padding-left:10px;">
+                <oj-bind-text value=" Gen AI Cloud Service Specialist"></oj-bind-text>
+                </div>
+            </div>
+        </div>
+        <div class="oj-flex oj-flex-item oj-sm-flex-initial oj-sm-align-items-center" style="margin-top:10px;">
+            <div class="oj-flex-item oj-sm-flex-initial">
+                <img height="50" :src="[[ $flow.path + 'resources/images/Marc.jpeg' ]]">
+            </div>
+            <div class="oj-flex oj-sm-flex-direction-column oj-flex-item oj-sm-flex-initial">
+                <div class="oj-flex-item oj-sm-flex-initial" style="padding-left:10px;">
+                <oj-bind-text value="Marc Gueury"></oj-bind-text>
+                </div>
+                <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-center" style="padding-left:10px;">
+                <oj-bind-text value=" AI Cloud Service Specialist"></oj-bind-text>
+                </div>
+            </div>
+        </div>
+        <div class="oj-flex oj-flex-item oj-sm-flex-initial oj-sm-align-items-center" style="margin-top:10px;">
+            <div class="oj-flex-item oj-sm-flex-initial">
+                <img height="50" :src="[[ $flow.path + 'resources/images/jesus.jpeg' ]]">
+            </div>
+            <div class="oj-flex oj-sm-flex-direction-column"><div class="oj-flex-item oj-sm-flex-initial"
+                                                                 style="padding-left:10px;">
+                <oj-bind-text value="Jesús Brasero"></oj-bind-text>
+            </div>
+            <div class="oj-flex-item oj-sm-flex-initial oj-sm-align-self-center" style="padding-left:10px;">
+                <oj-bind-text value=" AI Cloud Service Specialist"></oj-bind-text>
+            </div></div>
+        </div>
+    </div>
+  </div>
+  <div slot="footer">
+    <oj-button chroming="callToAction" on-oj-action="[[$listeners.buttonAction]]">Close</oj-button>
+  </div>
+</oj-dialog>
+
+

@@ -1,0 +1,23 @@
+{
+"compartmentId":"ocid1.compartment.oc1..aaaaaaaa4bz2p36xc2wvhqvxr65s22xmp5jmm5gtlnauu3aajpx6pfgtwrxq",
+"displayName":"name",
+"inputLocation": {
+              "locationType":"OBJECT_LIST_INLINE_INPUT_LOCATION", 
+              "objectLocations":
+                                    [{
+                                       "bucketName":"AI_Meetings", "namespaceName":"wedoinfra", "objectNames": ["f93d5e52-b1fb-4981-8467-907dd0e2cacc.mp3"] 
+                                    }]
+                                
+                 },
+"modelDetails": 
+   {
+     "languageCode":"en",
+      "modelType": "WHISPER_MEDIUM",
+     "transcriptionSettings": {
+            "diarization": {"isDiarizationEnabled": true, "numberOfSpeakers":2}
+       }
+   },
+"outputLocation": {
+                    "bucketName":"AI_Meetings", "namespaceName":"wedoinfra", "prefix": "idxxx"
+                  }
+}

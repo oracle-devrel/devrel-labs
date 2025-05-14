@@ -1,0 +1,10 @@
+HUGGING_FACE_HUB_TOKEN: your_token_here
+
+# Oracle DB Configuration
+ORACLE_DB_USERNAME: ADMIN
+ORACLE_DB_PASSWORD: your_password_here
+ORACLE_DB_DSN: >-
+  (description= (retry_count=20)(retry_delay=3)
+  (address=(protocol=tcps)(port=1522)(host=your-oracle-db-host.com))
+  (connect_data=(service_name=your-service-name))
+  (security=(ssl_server_dn_match=yes)))

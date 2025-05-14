@@ -1,0 +1,27 @@
+image:
+  repository: nvcr.io/nim/meta/llama3-8b-instruct:latest
+  pullPolicy: IfNotPresent
+  model: llama3-8b-instruct
+  numGpus: 1
+
+service:
+  type: ClusterIP
+  openaiPort: 8000
+  annotations: {}
+  labels: {}
+  name: ""  # override the default service name 
+  # below options are deprecated
+  # http_port: 8000  # exposes http interface used in healthchecks to the service
+  # grpc_port: 8001  # exposes the triton grpc interface
+  # metrics_port: 8002  # expose metrics through the main service
+  # openai_port: 8005
+  # nemo_port: 8006
+
+mount:
+  name: /opt/nim/cache
+
+imageCredentials:
+  registry: nvcr.io
+  username: $oauthtoken
+  password: <YOUR_KEY_FROM_NVIDIA>
+  email: <YOUR_EMAIL>

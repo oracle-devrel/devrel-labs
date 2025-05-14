@@ -1,0 +1,15 @@
+{
+    "num_dogs": 2,
+    "num_toys": 1,
+    "playing": true,
+    "dog_characteristics":{
+        "dog_1":
+            {
+                "breed": "golden retriever"
+            },
+        "dog_2": 
+            {
+                "breed": "unknown"
+            }
+    }
+}

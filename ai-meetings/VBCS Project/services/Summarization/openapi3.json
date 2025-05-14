@@ -1,0 +1,110 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Summarization",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "vb-catalog://backends/GenAI"
+        }
+    ],
+    "paths": {
+        "/summarizeText": {
+            "post": {
+                "operationId": "postSummarizeText",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostSummarizeTextRequest"
+                            },
+                            "examples": {
+                                "vb": {
+                                    "summary": "Example stored by VB User",
+                                    "externalValue": "./examples/postSummarizeText/request_application_json_vb.json"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "Response for default",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostSummarizeTextResponse"
+                                },
+                                "examples": {
+                                    "vb": {
+                                        "summary": "Example stored by VB User",
+                                        "externalValue": "./examples/postSummarizeText/response_default_application_json_vb.json"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-vb": {
+                    "actionHint": "create"
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "PostSummarizeTextRequest": {
+                "type": "object",
+                "properties": {
+                    "compartmentId": {
+                        "type": "string"
+                    },
+                    "extractiveness": {
+                        "type": "string"
+                    },
+                    "format": {
+                        "type": "string"
+                    },
+                    "input": {
+                        "type": "string"
+                    },
+                    "length": {
+                        "type": "string"
+                    },
+                    "servingMode": {
+                        "type": "object",
+                        "properties": {
+                            "modelId": {
+                                "type": "string"
+                            },
+                            "servingType": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "temperature": {
+                        "type": "number"
+                    }
+                }
+            },
+            "PostSummarizeTextResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "summary": {
+                        "type": "string"
+                    },
+                    "modelId": {
+                        "type": "string"
+                    },
+                    "modelVersion": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

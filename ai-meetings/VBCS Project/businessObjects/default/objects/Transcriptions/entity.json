@@ -1,0 +1,90 @@
+{
+    "fields": [
+        {
+            "type": "number",
+            "name": "id",
+            "internal": false,
+            "key": true,
+            "oid": "426fd097-5c34-465c-ab8f-eb7e03d4b323",
+            "required": true,
+            "unique": true,
+            "displayLabel": "Id"
+        },
+        {
+            "type": "datetime",
+            "name": "creationDate",
+            "internal": false,
+            "oid": "9c333e93-9abe-4ffd-944a-1a0428c96a6d",
+            "displayLabel": "Created",
+            "historyType": "timeCreated"
+        },
+        {
+            "type": "datetime",
+            "name": "lastUpdateDate",
+            "internal": false,
+            "oid": "8888532d-4903-4be5-956f-ee6229f57613",
+            "displayLabel": "Last Updated",
+            "historyType": "timeUpdated"
+        },
+        {
+            "type": "string",
+            "name": "createdBy",
+            "internal": false,
+            "oid": "7dcbdfce-e336-46af-ab4f-67f750f577f0",
+            "displayLabel": "Created By",
+            "historyType": "createdBy"
+        },
+        {
+            "type": "string",
+            "name": "lastUpdatedBy",
+            "internal": false,
+            "oid": "c1972ae6-ba94-4a4b-966e-7bc67a6ad5b0",
+            "displayLabel": "Last Updated By",
+            "historyType": "updatedBy"
+        },
+        {
+            "type": "number",
+            "name": "versionNumber",
+            "internal": false,
+            "oid": "9dcab739-4528-4baa-b932-d4ae721b17bd",
+            "displayLabel": "Version Number",
+            "historyType": "versionNumber"
+        },
+{
+            "type": "string",
+            "name": "tContent",
+            "oid": "fb308ad9-12e7-48c7-b636-93652a97ab37",
+            "displayLabel": "tContent"
+        },
+        {
+            "type": "string",
+            "name": "jobID",
+            "oid": "dd1f6cef-3185-4469-a54b-0b140ec501fa",
+            "displayLabel": "jobID"
+        }        ,
+        {
+            "type": "string",
+            "name": "jobNAME",
+            "oid": "18c02173-0272-4cf6-a61d-155636bb7d3b",
+            "displayLabel": "jobNAME"
+        }        ,
+        {
+            "type": "string",
+            "name": "status",
+            "oid": "4c12927b-2b5e-4699-a863-9e362a7c6dc1",
+            "displayLabel": "status"
+        }
+    ],
+    "name": "Transcriptions",
+    "oid": "3dba1cd7-64f7-42d4-a005-f0d3c35752e5",
+    "relationships": [
+        {
+            "name": "meetingsCollection",
+            "reverseRelationship": "transcriptionIdObject",
+            "targetEntity": "Meetings",
+            "type": "incoming",
+            "displayField": "id"
+        }
+    ],
+    "displayLabel": "Transcriptions"
+}

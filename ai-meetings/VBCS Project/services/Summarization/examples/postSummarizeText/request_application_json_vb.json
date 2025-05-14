@@ -1,0 +1,12 @@
+{
+"compartmentId":"ocid1.compartment.oc1..aaaaaaaa4bz2p36xc2wvhqvxr65s22xmp5jmm5gtlnauu3aajpx6pfgtwrxq",
+"extractiveness": "AUTO",
+"format": "AUTO",
+"input": "Del diluvio en aquel domingo electoral del 28-M, hace hoy justo un año, al sofocante epílogo de este mayo abrasador, con los comicios europeos en el horizonte. Sentado en la privilegiada terraza del Café del Río,José Luis Martínez-Almeida (Madrid, 1975) mira de refilón su reloj de correa roja durante su cita con GRAN MADRID. El motivo: asoma una cita en el Palacio Real, ante la visita del mandatario ucraniano, Volodimir Zelenski.Bajo los pies del alcalde, a unos metros de profundidad, esa A-5 soterrada por Gallardón, cuyo ejemplo seguirá, para dicha de los vecinos, unos kilómetros más adelante. «Les pedí disculpas por no hacerlo la legislatura pasada y les garanticé que esta vez saldría». Y Almeida pasa a limpio este año natural donde Pedro Sánchez, cómo no, es protagonista. ¿Cuál es su valoración sobre la concentración que su partido organizó el domingo? Positiva. Entre otras circunstancias porque creo que la cifra de asistencia, ya fueran los 20.000 que dice la delegación del Gobierno, que ya sabemos de su generosidad, o ya sean los 80.000, que defendemos nosotros, fue el acto de campaña en el ámbito de unas elecciones europeas más grande que ha habido en la historia de las elecciones europeas en España. Por tanto, creo que habla de dos cuestiones. En primer lugar, de la capacidad de movilización del PP, pues llevamos ya concentraciones masivas y siguen siendo así. Hay un hartazgo social muy importante con Pedro Sánchez en la semana más dura para la democracia española, ya que se va a aprobar la Ley de Amnistía.",
+"length": "AUTO",
+  "servingMode": {
+        "modelId": "cohere.command",
+        "servingType": "ON_DEMAND"
+    },
+"temperature": 0.1
+}

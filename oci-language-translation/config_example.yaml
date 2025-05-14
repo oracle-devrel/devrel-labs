@@ -1,0 +1,12 @@
+# Language Translation Service Configuration
+language_translation:
+  compartment_id: "ocid1.compartment.oc1..your-compartment-id"
+  source_bucket: "source-bucket-name"
+  target_bucket: "target-bucket-name"
+  source_language: "en"  # ISO language code
+  target_language: "es"  # ISO language code
+
+# Object Storage Configuration
+object_storage:
+  namespace: "your-namespace"  # Your tenancy's Object Storage namespace
+  bucket_name: "your-bucket-name"  # Bucket for CSV/JSON translations

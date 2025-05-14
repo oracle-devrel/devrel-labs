@@ -1,0 +1,135 @@
+/*
+    Document   : override
+    Created on : <date>
+    Author     : <author>
+    Description:
+        This is where any of your application specific styles should be included
+*/
+.demo-oracle-icon {
+    width:137px;
+    height:18px
+}
+
+.demo-oracle-icon:before {
+    content:url("images/oracle_logo.svg")
+}
+
+html:not([dir="rtl"]) .demo-oracle-icon {
+    padding-right:4px
+}
+
+html[dir="rtl"] .demo-oracle-icon {
+    padding-left:4px
+}
+
+.demo-oracle-icon:before {
+    display:inline
+}
+
+.demo-appheader-avatar {
+    width:24px;
+    height:24px
+}
+
+.demo-appheader-avatar:before {
+    content:url("images/avatar_24px.png")
+}
+@media (-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi), (min-resolution: 1.5dppx) {
+    .demo-appheader-avatar:before {
+        content:url("images/avatar_24px_2x.png");
+        -webkit-transform:translate(-25%, -25%) scale(0.5);
+        transform:translate(-25%, -25%) scale(0.5)
+    }
+}
+
+  .no-wrap {
+    flex-wrap: nowrap;
+  }
+
+  .parent-container {
+    position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-left: 100px;
+  background-color: #f9f9f9; /* Light gray background */
+  padding: 20px; /* Add some padding */
+  font-family: Arial, sans-serif; /* Set a fallback font */
+  color: #333; /* Dark text color */
+}
+/* ListView Styles */
+.item-display {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.item-display .oj-listview-item {
+  padding: 10px;
+  margin-bottom: 5px;
+  background-color: #f9f9f9;
+  border-radius: 3px;
+}
+
+/* Filter Select Styles */
+.oj-select-single {
+  max-width: 200px;
+  padding-left: 14px;
+}
+
+.oj-select-single select {
+  width: 100%;
+  height: 30px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 5px;
+  font-size: 14px;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.oj-select-single select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+.separator-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 1px); /* Adjust position to center the line */
+  width: 1px; /* Adjust thickness as needed */
+  background-color: #ccc; /* Adjust color as needed */
+  content: "";
+}
+.list-view-container {
+  margin-left: 20px; /* Add space between the line and ListView */
+}
+.bold-text {
+  font-weight: bold;
+}
+
+.heading-small {
+  font-size: 1.1em;
+}
+
+.margin-left-20 {
+  margin-left: 20px;
+}
+
+.label {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.select-single-style{
+  padding-left: 14px;
+  max-width: 200px;
+}
+
+.background-yellow{
+   background-color: yellow;
+}
+
+.parent-container-margin{
+  margin-left: 100px;
+}

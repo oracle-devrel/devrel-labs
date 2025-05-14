@@ -1,0 +1,461 @@
+{
+  "title": "AI Meetings",
+  "description": "",
+  "variables": {
+    "arrayDatetime": {
+      "type": "string[]"
+    },
+    "arrayLocation": {
+      "type": "string[]"
+    },
+    "arrayMention": {
+      "type": "string[]"
+    },
+    "arrayOrg": {
+      "type": "string[]"
+    },
+    "arrayProduct": {
+      "type": "string[]"
+    },
+    "currentRequest": {
+      "type": "number",
+      "persisted": "session"
+    },
+    "enterKey": {
+      "type": "boolean",
+      "defaultValue": false,
+      "onValueChanged": {
+        "chains": [
+          {
+            "parameters": {
+              "event": "{{ $event }}"
+            },
+            "chain": "ButtonActionSendChat"
+          }
+        ]
+      },
+      "dirtyDataBehavior": "track"
+    },
+    "extractiveness": {
+      "type": "string",
+      "defaultValue": "AUTO",
+      "persisted": "session"
+    },
+    "filename": {
+      "type": "string",
+      "persisted": "session"
+    },
+    "fileSize": {
+      "type": "string"
+    },
+    "format": {
+      "type": "string",
+      "defaultValue": "AUTO",
+      "persisted": "session"
+    },
+    "internalMeeting": {
+      "type": "boolean",
+      "defaultValue": true,
+      "persisted": "session"
+    },
+    "jobCompletion": {
+      "type": "number",
+      "persisted": "session"
+    },
+    "jobId": {
+      "type": "string",
+      "persisted": "session"
+    },
+    "jobIdName": {
+      "type": "string",
+      "persisted": "session"
+    },
+    "jobStatus": {
+      "type": "string",
+      "persisted": "session"
+    },
+    "languageProcessingFinish": {
+      "type": "boolean",
+      "defaultValue": false
+    },
+    "length": {
+      "type": "string",
+      "defaultValue": "AUTO",
+      "persisted": "session"
+    },
+    "loading": {
+      "type": "boolean",
+      "defaultValue": false,
+      "persisted": "none"
+    },
+    "meetingCreated": {
+      "type": "boolean",
+      "defaultValue": false,
+      "persisted": "session"
+    },
+    "meetingDesc": {
+      "type": "string"
+    },
+    "meetingID": {
+      "type": "number",
+      "persisted": "session",
+      "input": "fromUrl"
+    },
+    "meetingName": {
+      "type": "string",
+      "persisted": "session"
+    },
+    "meetingParticipants": {
+      "type": "object[]"
+    },
+    "mention": {
+      "type": "string"
+    },
+    "minimumSize": {
+      "type": "boolean",
+      "defaultValue": false
+    },
+    "nParticipants": {
+      "type": "number",
+      "defaultValue": 0
+    },
+    "outputlocation": {
+      "type": "string"
+    },
+    "parURL": {
+      "type": "string",
+      "persisted": "session"
+    },
+    "query": {
+      "type": "string",
+      "onValueChanged": {
+        "chains": [
+          {
+            "parameters": {
+              "event": "{{ $event }}"
+            },
+            "chain": "queryChangeListener"
+          }
+        ]
+      },
+      "dirtyDataBehavior": "track"
+    },
+    "ragResponse": {
+      "type": "string"
+    },
+    "requirements": {
+      "type": "string[]",
+      "uniqueItems": true
+    },
+    "sentiment": {
+      "type": "boolean"
+    },
+    "spareTime": {
+      "type": "boolean"
+    },
+    "summary": {
+      "type": "boolean"
+    },
+    "summaryStatus": {
+      "type": "boolean",
+      "defaultValue": false
+    },
+    "summaryText": {
+      "type": "string"
+    },
+    "transcriptionID": {
+      "type": "number",
+      "persisted": "session",
+      "input": "fromUrl"
+    },
+    "transcriptionTask": {
+      "type": "boolean",
+      "defaultValue": false,
+      "persisted": "none"
+    },
+    "transcriptionText": {
+      "type": "string"
+    },
+    "uploadSuccess": {
+      "type": "boolean",
+      "defaultValue": false,
+      "persisted": "session"
+    },
+   "tokenArray": {
+      "type": "tokenType[]"
+    },
+    "tokens": {
+      "type": "number[]"
+    },
+
+    "chartADP": {
+      "type": "vb/ArrayDataProvider2",
+      "defaultValue": {
+        "data": "{{ $variables.chartDataArray }}",
+        "itemType": "ChartType",
+        "keyAttributes": "id"
+      }
+    },
+    "chartDataArray": {
+      "type": "ChartType[]",
+      "defaultValue": [
+        {
+          "id": 1,
+          "series": "Positive",
+          "group": "Group 1",
+          "value": 25
+        },
+        {
+          "id": 2,
+          "series": "Negative",
+          "group": "Group 1",
+          "value": 25
+        },
+        {
+          "id": 3,
+          "series": "Neutral",
+          "group": "Group 1",
+          "value": 25
+        },
+        {
+          "id": 4,
+          "series": "Mixed",
+          "group": "Group 1",
+          "value": 25
+        }
+      ]
+    },
+    "meetingSentiment": {
+      "type": "string",
+      "defaultValue": "getting...."
+    },
+    "mixed": {
+      "type": "number",
+      "defaultValue": 0
+    },
+    "negative": {
+      "type": "number",
+      "defaultValue": 0
+    },
+    "neutral": {
+      "type": "number",
+      "defaultValue": 0
+    },
+    "positive": {
+      "type": "number",
+      "defaultValue": 0
+    },
+    "tableADP": {
+      "type": "vb/ArrayDataProvider2",
+      "defaultValue": {
+        "data": "{{ $variables.tableArray }}",
+        "itemType": "TableType",
+        "keyAttributes": "@index"
+      }
+    },
+    "tableArray": {
+      "type": "TableType[]",
+      "defaultValue": [
+        {
+          "sentence": "Glad to hear all's well.",
+          "sentiment": "Neutral",
+          "value": "50.54"
+        },
+        {
+          "sentence": "And yeah, I just wanted to check in with you on progress and whatnot.",
+          "sentiment": "Neutral",
+          "value": "97.42"
+        },
+        {
+          "sentence": "Yes, of course.",
+          "sentiment": "Neutral",
+          "value": "94.35"
+        }
+      ]
+    }
+
+  },
+  "metadata": {},
+  "types": {  
+    "tokenType": {
+      "speakerIndex": "number",
+      "token": "string"
+    },
+            "ChartType": {
+      "group": "string",
+      "id": "number",
+      "series": "string",
+      "value": "number"
+    },
+    "TableType": {
+      "sentence": "string",
+      "sentiment": "string",
+      "value": "string"
+    }
+    },
+  "eventListeners": {
+    "buttonAction": {
+      "chains": [
+        {
+          "chain": "ButtonCloseDialog"
+        }
+      ]
+    },
+    "buttonAction2": {
+      "chains": [
+        {
+          "chain": "ButtonActionRefresh"
+        }
+      ]
+    },
+    "buttonAction3": {
+      "chains": [
+        {
+          "chain": "ButtonNewMeeting"
+        }
+      ]
+    },
+    "buttonAction4": {
+      "chains": [
+        {
+          "chain": "ButtonCloseDialog"
+        }
+      ]
+    },
+    "buttonAction5": {
+      "chains": [
+        {
+          "chain": "ButtonCloseConfigurationDialog"
+        }
+      ]
+    },
+    "buttonAction6": {
+      "chains": [
+        {
+          "chain": "ButtonSaveConfigurationDialog"
+        }
+      ]
+    },
+    "buttonAction7": {
+      "chains": [
+        {
+          "chain": "ButtonMyMeetings"
+        }
+      ]
+    },
+    "buttonAction8": {
+      "chains": [
+        {
+          "chain": "createMeeting"
+        }
+      ]
+    },
+    "buttonAction9": {
+      "chains": [
+        {
+          "chain": "ButtonActionSendChat"
+        }
+      ]
+    },
+    "enterKey": {
+      "chains": [
+        {
+          "parameters": {},
+          "chain": "ButtonActionSendChat"
+        }
+      ]
+    },
+    "filePickerSelect": {
+      "chains": [
+        {
+          "chain": "FilePickerSelectChain",
+          "parameters": {
+            "files": "[[ Array.prototype.slice.call($event.detail.files) ]]"
+          }
+        }
+      ]
+    },
+    "flexClick": {
+      "chains": [
+        {
+          "chain": "FlexClickChain"
+        }
+      ]
+    },
+    "flexClick2": {
+      "chains": [
+        {
+          "chain": "ClickGear"
+        }
+      ]
+    },
+    "iconClick": {
+      "chains": [
+        {
+          "chain": "CopyTranscription"
+        }
+      ]
+    },
+    "vbEnter": {
+      "chains": [
+{
+          "parameters": {},
+          "chain": "loadData"
+        }
+      ]
+    }
+
+  },
+  "imports": {
+    "components": {
+      "oj-accordion": {
+        "path": "ojs/ojaccordion"
+      },
+      "oj-button": {
+        "path": "ojs/ojbutton"
+      },
+      "oj-c-file-picker": {
+        "path": "oj-c/file-picker"
+      },
+      "oj-chart": {
+        "path": "ojs/ojchart"
+      },
+      "oj-chart-item": {
+        "path": "ojs/ojchart"
+      },
+      "oj-collapsible": {
+        "path": "ojs/ojcollapsible"
+      },
+      "oj-combobox-one": {
+        "path": "ojs/ojselectcombobox"
+      },
+      "oj-dialog": {
+        "path": "ojs/ojdialog"
+      },
+      "oj-input-text": {
+        "path": "ojs/ojinputtext"
+      },
+      "oj-label": {
+        "path": "ojs/ojlabel"
+      },
+      "oj-label-value": {
+        "path": "ojs/ojlabelvalue"
+      },
+      "oj-option": {
+        "path": "ojs/ojoption"
+      },
+      "oj-text-area": {
+        "path": "ojs/ojinputtext"
+      },
+      "oj-validation-group": {
+        "path": "ojs/ojvalidationgroup"
+      }
+
+   },
+    "css": [
+      "/resources/css/app.css"
+    ]
+  },
+  "events": {
+  }
+}

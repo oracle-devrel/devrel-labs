@@ -1,0 +1,10 @@
+{
+  "component-dependencies": {
+    "oj-dyn": {
+      "version": "15.1.7",
+      "components": {
+        "form": "15.1.7"
+      }
+    }
+  }
+}

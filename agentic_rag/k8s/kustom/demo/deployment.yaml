@@ -1,0 +1,144 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentic-rag
+  labels:
+    app: agentic-rag
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agentic-rag
+  template:
+    metadata:
+      labels:
+        app: agentic-rag
+    spec:
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Equal"
+        value: "present"
+        effect: "NoSchedule"
+      initContainers:
+      - name: unzip
+        image: busybox
+        command: ["unzip", "/app/walletzip/wallet.zip", "-d", "/app/wallet"]
+        volumeMounts:
+          - name: wallet-config
+            mountPath: /app/walletzip
+          - name: wallet-volume
+            mountPath: /app/wallet
+      containers:
+      - name: agentic-rag
+        image: python:3.10-slim
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2"
+            ephemeral-storage: "50Gi"  # Add this
+          limits:
+            memory: "16Gi"
+            cpu: "4"
+            ephemeral-storage: "100Gi"  # Add this
+        ports:
+        - containerPort: 7860
+          name: gradio
+        - containerPort: 11434
+          name: ollama-api
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+        - name: wallet-config
+          mountPath: /app/walletzip
+        - name: wallet-volume
+          mountPath: /app/wallet
+        - name: data-volume
+          mountPath: /app/embeddings
+        - name: chroma-volume
+          mountPath: /app/chroma_db
+        - name: ollama-models
+          mountPath: /root/.ollama
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          apt-get update && apt-get install -y git curl gnupg
+          
+          # Install NVIDIA drivers and CUDA
+          echo "Installing NVIDIA drivers and CUDA..."
+          curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+          curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+            sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+            tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+          apt-get update && apt-get install -y nvidia-container-toolkit
+          
+          # Verify GPU is available
+          echo "Verifying GPU availability..."
+          nvidia-smi || echo "WARNING: nvidia-smi command failed. GPU might not be properly configured."
+          
+          # Install Ollama
+          echo "Installing Ollama..."
+          curl -fsSL https://ollama.com/install.sh | sh
+          
+          # Configure Ollama to use GPU
+          echo "Configuring Ollama for GPU usage..."
+          mkdir -p /root/.ollama
+          echo '{"gpu": {"enable": true}}' > /root/.ollama/config.json
+          
+          # Start Ollama in the background with GPU support
+          echo "Starting Ollama service with GPU support..."
+          ollama serve &
+          
+          # Wait for Ollama to be ready
+          echo "Waiting for Ollama to be ready..."
+          until curl -s http://localhost:11434/api/tags >/dev/null; do
+            sleep 5
+          done
+          
+          # Verify models are using GPU
+          echo "Verifying models are using GPU..."
+          curl -s http://localhost:11434/api/tags | grep -q "llama3" && echo "llama3 model is available"
+          
+          # Clone and set up the application
+          cd /app
+          git clone -b agentic_rag_automation https://github.com/vmleon/devrel-labs.git
+          cd devrel-labs/agentic_rag
+          pip install -r requirements.txt
+
+          # Move config.yaml file to agentic-rag folder
+          echo "Copying config.yaml to /app/devrel-labs/agentic_rag/config.yaml"
+          cp /app/config.yaml /app/devrel-labs/agentic_rag/config.yaml
+          
+          # Start the Gradio app
+          echo "Starting Gradio application..."
+          python gradio_app.py
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: OLLAMA_HOST
+          value: "http://localhost:11434"
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: TORCH_CUDA_ARCH_LIST
+          value: "7.0;7.5;8.0;8.6"
+      volumes:
+      - name: config-volume
+        configMap:
+          name: agentic-rag-config
+      - name: wallet-config
+        configMap:
+          name: wallet-zip
+      - name: wallet-volume
+        emptyDir:
+          sizeLimit: 50Mi
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: agentic-rag-data-pvc
+      - name: chroma-volume
+        persistentVolumeClaim:
+          claimName: agentic-rag-chroma-pvc
+      - name: ollama-models
+        persistentVolumeClaim:
+          claimName: ollama-models-pvc

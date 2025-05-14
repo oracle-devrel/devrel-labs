@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: docker
+  labels:
+    name: docker
+spec:
+  containers:
+  - name: docker
+    image: ubuntu:latest    
+    securityContext:
+      privileged: true
+    command: ["tail", "-f", "/dev/null"]
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+        #ephemeral-storage: "100Gi"
+  hostNetwork: true
