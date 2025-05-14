@@ -1,0 +1,12 @@
+resources:
+  - pvcs.yaml
+  - deployment.yaml
+  - service.yaml
+configMapGenerator:
+  - name: agentic-rag-config
+    files:
+      - config.yaml
+  - name: wallet-zip
+    files:
+      - wallet/wallet.zip
+namespace: agentic-rag

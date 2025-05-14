@@ -1,0 +1,289 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Sentiment Analysis",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "vb-catalog://backends/Language"
+        }
+    ],
+    "paths": {
+        "/batchDetectLanguageSentiments": {
+            "post": {
+                "operationId": "postBatchDetectLanguageSentiments",
+                "parameters": [
+                    {
+                        "name": "level",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostDetectLanguageSentimentsRequest"
+                            },
+                            "examples": {
+                                "vb": {
+                                    "externalValue": "./examples/postDetectLanguageSentiments/request_application_json_vb.json"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "Response for default",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostBatchDetectLanguageSentimentsResponse"
+                                },
+                                "examples": {
+                                    "vb": {
+                                        "summary": "Example stored by VB User",
+                                        "externalValue": "./examples/postBatchDetectLanguageSentiments/response_default_application_json_vb.json"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-vb": {
+                    "actionHint": "create",
+                    "queryParameters": {}
+                }
+            }
+        },
+        "/batchDetectLanguageEntities": {
+            "post": {
+                "operationId": "DetectLanguageEntities",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostBatchDetectLanguageEntitiesRequest"
+                            },
+                            "examples": {
+                                "vb": {
+                                    "externalValue": "./examples/DetectLanguageEntities/request_application_json_vb.json"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "Response for default",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostBatchDetectLanguageEntitiesResponse"
+                                },
+                                "examples": {
+                                    "vb": {
+                                        "summary": "Example stored by VB User",
+                                        "externalValue": "./examples/DetectLanguageEntities/response_default_application_json_vb.json"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-vb": {
+                    "actionHint": "getMany"
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "PostDetectLanguageSentimentsRequest": {
+                "type": "object",
+                "properties": {
+                    "documents": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "text": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "PostBatchDetectLanguageSentimentsResponse": {
+                "type": "object",
+                "properties": {
+                    "documents": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "documentSentiment": {
+                                    "type": "string"
+                                },
+                                "documentScores": {
+                                    "type": "object"
+                                },
+                                "sentences": {
+                                    "type": "array",
+                                    "items": {}
+                                },
+                                "aspects": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "offset": {
+                                                "type": "integer"
+                                            },
+                                            "length": {
+                                                "type": "integer"
+                                            },
+                                            "text": {
+                                                "type": "string"
+                                            },
+                                            "sentiment": {
+                                                "type": "string"
+                                            },
+                                            "scores": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "Positive": {
+                                                        "type": "number"
+                                                    },
+                                                    "Negative": {
+                                                        "type": "number"
+                                                    },
+                                                    "Neutral": {
+                                                        "type": "integer"
+                                                    },
+                                                    "Mixed": {
+                                                        "type": "number"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "languageCode": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {}
+                    }
+                }
+            },
+            "PostBatchDetectLanguageEntitiesRequest": {
+                "type": "object",
+                "properties": {
+                    "documents": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "text": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "PostBatchDetectLanguageEntitiesResponse": {
+                "type": "object",
+                "properties": {
+                    "documents": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "entities": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "offset": {
+                                                "type": "integer"
+                                            },
+                                            "length": {
+                                                "type": "integer"
+                                            },
+                                            "text": {
+                                                "type": "string"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "subType": {
+                                                "type": "string"
+                                            },
+                                            "score": {
+                                                "type": "number"
+                                            },
+                                            "metaInfo": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "offset": {
+                                                            "type": "integer"
+                                                        },
+                                                        "length": {
+                                                            "type": "integer"
+                                                        },
+                                                        "text": {
+                                                            "type": "string"
+                                                        },
+                                                        "subType": {
+                                                            "type": "string"
+                                                        },
+                                                        "score": {
+                                                            "type": "number"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "languageCode": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {}
+                    }
+                }
+            }
+        }
+    }
+}

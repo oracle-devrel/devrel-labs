@@ -1,0 +1,496 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "20220101",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "vb-catalog://backends/speech"
+        }
+    ],
+    "paths": {
+        "/transcriptionJobs": {
+            "post": {
+                "operationId": "postTranscriptionJobs",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PostTranscriptionJobsRequest"
+                            },
+                            "examples": {
+                                "vb": {
+                                    "externalValue": "./examples/postTranscriptionJobs/request_application_json_vb.json"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "Default response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostTranscriptionJobsResponse"
+                                },
+                                "examples": {
+                                    "vb": {
+                                        "externalValue": "./examples/postTranscriptionJobs/response_default_application_json_vb.json"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-vb": {
+                    "actionHint": "create"
+                }
+            }
+        },
+        "/transcriptionJobs/{transcriptionJobId}": {
+            "parameters": [
+                {
+                    "name": "transcriptionJobId",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "get": {
+                "operationId": "getTranscriptionJobs",
+                "responses": {
+                    "default": {
+                        "description": "Response for default",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetTranscriptionJobsTranscriptionJobId"
+                                },
+                                "examples": {
+                                    "vb": {
+                                        "summary": "Example stored by VB User",
+                                        "externalValue": "./examples/getTranscriptionJobs/response_default_application_json_vb.json"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-vb": {
+                    "actionHint": "getMany"
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "PostTranscriptionJobsRequest": {
+                "type": "object",
+                "properties": {
+                    "compartmentId": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "inputLocation": {
+                        "type": "object",
+                        "properties": {
+                            "locationType": {
+                                "type": "string"
+                            },
+                            "objectLocations": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "bucketName": {
+                                            "type": "string"
+                                        },
+                                        "namespaceName": {
+                                            "type": "string"
+                                        },
+                                        "objectNames": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "modelDetails": {
+                        "type": "object",
+                        "properties": {
+                            "languageCode": {
+                                "type": "string"
+                            },
+                            "modelType": {
+                                "type": "string"
+                            },
+                            "transcriptionSettings": {
+                                "type": "object",
+                                "properties": {
+                                    "diarization": {
+                                        "type": "object",
+                                        "properties": {
+                                            "isDiarizationEnabled": {
+                                                "type": "boolean"
+                                            },
+                                            "numberOfSpeakers": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "outputLocation": {
+                        "type": "object",
+                        "properties": {
+                            "bucketName": {
+                                "type": "string"
+                            },
+                            "namespaceName": {
+                                "type": "string"
+                            },
+                            "prefix": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "PostTranscriptionJobsResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "compartmentId": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "nullable": true
+                    },
+                    "modelDetails": {
+                        "type": "object",
+                        "properties": {
+                            "modelType": {
+                                "type": "string"
+                            },
+                            "domain": {
+                                "type": "string"
+                            },
+                            "languageCode": {
+                                "type": "string"
+                            },
+                            "transcriptionSettings": {
+                                "type": "object",
+                                "properties": {
+                                    "diarization": {
+                                        "type": "object",
+                                        "properties": {
+                                            "isDiarizationEnabled": {
+                                                "type": "boolean"
+                                            },
+                                            "numberOfSpeakers": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    },
+                                    "additionalSettings": {
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "normalization": {
+                        "type": "object",
+                        "properties": {
+                            "isPunctuationEnabled": {
+                                "type": "boolean"
+                            },
+                            "filters": {
+                                "type": "array",
+                                "items": {}
+                            }
+                        }
+                    },
+                    "timeAccepted": {
+                        "type": "string"
+                    },
+                    "timeStarted": {
+                        "nullable": true
+                    },
+                    "timeFinished": {
+                        "nullable": true
+                    },
+                    "totalTasks": {
+                        "type": "integer"
+                    },
+                    "outstandingTasks": {
+                        "type": "integer"
+                    },
+                    "successfulTasks": {
+                        "type": "integer"
+                    },
+                    "ttlInDays": {
+                        "type": "integer"
+                    },
+                    "percentComplete": {
+                        "type": "integer"
+                    },
+                    "inputLocation": {
+                        "type": "object",
+                        "properties": {
+                            "locationType": {
+                                "type": "string"
+                            },
+                            "objectLocations": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "namespaceName": {
+                                            "type": "string"
+                                        },
+                                        "bucketName": {
+                                            "type": "string"
+                                        },
+                                        "objectNames": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "outputLocation": {
+                        "type": "object",
+                        "properties": {
+                            "namespaceName": {
+                                "type": "string"
+                            },
+                            "bucketName": {
+                                "type": "string"
+                            },
+                            "prefix": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "createdBy": {
+                        "type": "string"
+                    },
+                    "additionalTranscriptionFormats": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "lifecycleState": {
+                        "type": "string"
+                    },
+                    "lifecycleDetails": {
+                        "nullable": true
+                    },
+                    "freeformTags": {
+                        "type": "object"
+                    },
+                    "definedTags": {
+                        "type": "object",
+                        "properties": {
+                            "Oracle-Tags": {
+                                "type": "object",
+                                "properties": {
+                                    "CreatedBy": {
+                                        "type": "string"
+                                    },
+                                    "CreatedOn": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "systemTags": {
+                        "type": "object"
+                    }
+                }
+            },
+            "GetTranscriptionJobsTranscriptionJobId": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "compartmentId": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "nullable": true
+                    },
+                    "modelDetails": {
+                        "type": "object",
+                        "properties": {
+                            "modelType": {
+                                "type": "string"
+                            },
+                            "domain": {
+                                "type": "string"
+                            },
+                            "languageCode": {
+                                "type": "string"
+                            },
+                            "transcriptionSettings": {
+                                "type": "object",
+                                "properties": {
+                                    "diarization": {
+                                        "type": "object",
+                                        "properties": {
+                                            "isDiarizationEnabled": {
+                                                "type": "boolean"
+                                            },
+                                            "numberOfSpeakers": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    },
+                                    "additionalSettings": {
+                                        "nullable": true
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "normalization": {
+                        "type": "object",
+                        "properties": {
+                            "isPunctuationEnabled": {
+                                "type": "boolean"
+                            },
+                            "filters": {
+                                "type": "array",
+                                "items": {}
+                            }
+                        }
+                    },
+                    "timeAccepted": {
+                        "type": "string"
+                    },
+                    "timeStarted": {
+                        "type": "string"
+                    },
+                    "timeFinished": {
+                        "type": "string"
+                    },
+                    "totalTasks": {
+                        "type": "integer"
+                    },
+                    "outstandingTasks": {
+                        "type": "integer"
+                    },
+                    "successfulTasks": {
+                        "type": "integer"
+                    },
+                    "ttlInDays": {
+                        "type": "integer"
+                    },
+                    "percentComplete": {
+                        "type": "integer"
+                    },
+                    "inputLocation": {
+                        "type": "object",
+                        "properties": {
+                            "locationType": {
+                                "type": "string"
+                            },
+                            "objectLocations": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "namespaceName": {
+                                            "type": "string"
+                                        },
+                                        "bucketName": {
+                                            "type": "string"
+                                        },
+                                        "objectNames": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "outputLocation": {
+                        "type": "object",
+                        "properties": {
+                            "namespaceName": {
+                                "type": "string"
+                            },
+                            "bucketName": {
+                                "type": "string"
+                            },
+                            "prefix": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "createdBy": {
+                        "type": "string"
+                    },
+                    "additionalTranscriptionFormats": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "lifecycleState": {
+                        "type": "string"
+                    },
+                    "lifecycleDetails": {
+                        "nullable": true
+                    },
+                    "freeformTags": {
+                        "type": "object"
+                    },
+                    "definedTags": {
+                        "type": "object",
+                        "properties": {
+                            "Audit": {
+                                "type": "object",
+                                "properties": {
+                                    "creator": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "systemTags": {
+                        "type": "object"
+                    }
+                }
+            }
+        }
+    }
+}

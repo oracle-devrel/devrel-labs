@@ -1,0 +1,19 @@
+{
+  "component-dependencies": {
+    "oj-dyn": {
+      "version": "15.1.7",
+      "components": {
+        "form": "15.1.7",
+        "bind-field": "15.1.7"
+      }
+    },
+    "oj-dynamic": {
+      "version": "15.1.7",
+      "components": {
+        "shared": "15.1.7",
+        "utils": "15.1.7",
+        "providers": "15.1.7"
+      }
+    }
+  }
+}

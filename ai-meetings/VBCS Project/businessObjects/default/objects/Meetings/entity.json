@@ -1,0 +1,129 @@
+{
+    "fields": [
+        {
+            "type": "number",
+            "name": "id",
+            "internal": false,
+            "key": true,
+            "oid": "96a32f29-2c8a-4bbc-8fc5-7412d01203c6",
+            "required": true,
+            "unique": true,
+            "displayLabel": "Id"
+        },
+        {
+            "type": "datetime",
+            "name": "creationDate",
+            "internal": false,
+            "oid": "4ec690f3-7c3d-448b-82b1-f493aa2e1fd8",
+            "displayLabel": "Created",
+            "historyType": "timeCreated"
+        },
+        {
+            "type": "datetime",
+            "name": "lastUpdateDate",
+            "internal": false,
+            "oid": "ebec113e-da32-488b-a2e4-04a4273f83bb",
+            "displayLabel": "Last Updated",
+            "historyType": "timeUpdated"
+        },
+        {
+            "type": "string",
+            "name": "createdBy",
+            "internal": false,
+            "oid": "4994943a-267e-4492-97f6-fce3e6bc2e02",
+            "displayLabel": "Created By",
+            "historyType": "createdBy"
+        },
+        {
+            "type": "string",
+            "name": "lastUpdatedBy",
+            "internal": false,
+            "oid": "374ffd7d-a756-412c-aaa8-8844302cf970",
+            "displayLabel": "Last Updated By",
+            "historyType": "updatedBy"
+        },
+        {
+            "type": "number",
+            "name": "versionNumber",
+            "internal": false,
+            "oid": "ad4b36e3-0144-4993-8f01-20989a80a946",
+            "displayLabel": "Version Number",
+            "historyType": "versionNumber"
+        },
+        {
+            "type": "string",
+            "name": "meetingName",
+            "oid": "2f1dd76b-1e99-43f8-b1fd-356b21fb9b03",
+            "displayLabel": "meetingName"
+        },
+        {
+            "type": "string",
+            "name": "meetingDesc",
+            "oid": "9d7c3f58-e00b-495c-9dc5-17ab25f56b64",
+            "displayLabel": "meetingDesc"
+        },
+        {
+            "type": "boolean",
+            "name": "internalMeeting",
+            "oid": "5024b1d1-8a49-4c91-8067-ebc0149c535b",
+            "displayLabel": "internalMeeting"
+        },
+        {
+            "type": "string",
+            "name": "fname",
+            "oid": "9fabb08c-c4b8-4bcd-842f-3ec352216ba7",
+            "displayLabel": "fname"
+        },
+        {
+            "type": "boolean",
+            "name": "sentiment",
+            "oid": "7df2694b-e188-4001-975d-d5e688b17623",
+            "displayLabel": "sentiment"
+        },
+        {
+            "type": "string",
+            "name": "speakersInvolved",
+            "oid": "3b17e0ef-8526-4824-8b79-b34e006dc3ea",
+            "displayLabel": "speakersInvolved"
+        },
+        {
+            "type": "number",
+            "name": "speakersN",
+            "oid": "7be8ff3e-6d79-4af1-a7b9-c77b1b0b6e07",
+            "displayLabel": "speakersN"
+        },
+        {
+            "type": "boolean",
+            "name": "summarization",
+            "oid": "54fe2bdb-04a8-4216-9c14-66e3c6f33916",
+            "displayLabel": "summarization"
+        },
+        {
+            "type": "boolean",
+            "name": "transcription",
+            "oid": "81bdc586-6537-4092-aaa9-a7c1300e2c4b",
+            "displayLabel": "transcription"
+        },
+        {
+            "type": "number",
+            "name": "transcriptionId",
+            "oid": "a135ef2f-d5a5-4054-93cd-59b29705ac2d",
+            "displayLabel": "transcriptionId",
+            "unique": true
+        }
+    ],
+    "name": "Meetings",
+    "oid": "99e92c92-8aa2-43be-9ae4-ee61b7924983",
+    "displayLabel": "Meetings",
+    "relationships": [
+        {
+            "name": "transcriptionIdObject",
+            "reverseRelationship": "meetingsCollection",
+            "targetEntity": "Transcriptions",
+            "type": "outgoing",
+            "exposeAccessor": true,
+            "mappingField": "transcriptionId",
+            "deleteRule": "restrict"
+        }
+    ]
+}

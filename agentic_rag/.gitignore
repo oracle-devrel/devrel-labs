@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+.env
+kubeconfig
+
+# IDE
+.vscode/
+.idea/
+
+# Gradio
+.gradio/
+
+# Generated files
+embeddings/
+chroma_db/
+docs/*.json
+**/.certs
+**/node_modules
+k8s/kustom/demo/config.yaml
+k8s/kustom/demo/wallet/
+**/generated/
+
+# Terraform
+**/.terraform/*
+*.plan
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log 

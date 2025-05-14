@@ -1,0 +1,17 @@
+image:
+  imageName: nvcr.io/nvidia/tritonserver:latest
+  pullPolicy: IfNotPresent
+  model: llama3-8b-instruct
+  numGpus: 1
+
+service:
+  type: LoadBalancer
+
+mount:
+  name: /opt/nim/cache
+
+imageCredentials:
+  registry: nvcr.io
+  username: $oauthtoken
+  password: <YOUR_KEY_FROM_NVIDIA>
+  email: <YOUR_EMAIL>

@@ -1,0 +1,98 @@
+{
+    "backends": {
+        "objectStorage": {
+            "description": "objectStorage",
+            "servers": [
+                {
+                    "url": "https://objectstorage.eu-frankfurt-1.oraclecloud.com",
+                    "description": "Objectstorage Eu Frankfurt 1 Oraclecloud Com",
+                    "x-vb": {
+                        "authentication": {
+                            "authenticated": {
+                                "type": "http_signature_oci",
+                                "credentials": "vb_4c205fc4-cbba-43c4-8ce2-9799639da86a"
+                            }
+                        }
+                    }
+                },
+                {
+                    "url": "https://objectstorage.eu-frankfurt-1.oraclecloud.com",
+                    "description": "storage2",
+                    "x-vb": {
+                        "profiles": [
+                            "base_configuration"
+                        ],
+                        "authentication": {
+                            "authenticated": {
+                                "type": "http_signature_oci",
+                                "credentials": "vb_c58fb4c5-5b07-4047-b712-74fd9eda2a09"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "speech": {
+            "description": "speech backend",
+            "servers": [
+                {
+                    "url": "https://speech.aiservice.eu-frankfurt-1.oci.oraclecloud.com/20220101",
+                    "description": "20220101",
+                    "x-vb": {
+                        "authentication": {
+                            "authenticated": {
+                                "type": "http_signature_oci",
+                                "credentials": "vb_a966e0b1-df57-4ea2-af36-44529de5bafa"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "Language": {
+            "description": "Language",
+            "servers": [
+                {
+                    "url": "https://language.aiservice.eu-frankfurt-1.oci.oraclecloud.com/20221001/actions",
+                    "description": "20221001 Actions",
+                    "x-vb": {
+                        "authentication": {
+                            "authenticated": {
+                                "type": "http_signature_oci",
+                                "credentials": "vb_ee3e2c84-8d5b-4cfd-8bdc-53b8bdf10941"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "GenAI": {
+            "description": "GenAI",
+            "servers": [
+                {
+                    "url": "https://inference.generativeai.us-chicago-1.oci.oraclecloud.com/20231130/actions",
+                    "description": "20231130 Actions",
+                    "x-vb": {
+                        "authentication": {
+                            "authenticated": {
+                                "type": "http_signature_oci",
+                                "credentials": "vb_32d5d5ca-af98-4bde-8aee-47c5d6a0a948"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "ragLuigi": {
+            "servers": [
+                {
+                    "url": "http://xxx.xx.xxx.xxx:8888",
+                    "description": "RAG machine",
+                    "x-vb": {
+                        "anonymousAccess": true
+                    }
+                }
+            ]
+        }
+      }
+}

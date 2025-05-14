@@ -1,0 +1,23 @@
+{
+  "title": "Shell Header",
+  "eventListeners": {
+    "openAvatarMenu": {
+      "chains": [
+        {
+          "chain": "openAvatarMenu"
+        }
+      ]
+    }
+  },
+  "events": {},
+  "imports": {
+    "components": {
+    },
+    "css": [
+      "/resources/css/shell.css"
+    ]
+  },
+  "metadata": {},
+  "types": {},
+  "variables": {}
+}
