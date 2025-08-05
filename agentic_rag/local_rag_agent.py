@@ -358,8 +358,17 @@ class LocalRAGAgent:
                 logger.info("Falling back to general response")
                 return self._generate_general_response(query)
             
+            # Handle string response from synthesis
+            if isinstance(synthesis_result, str):
+                return {
+                    "answer": synthesis_result,
+                    "reasoning_steps": reasoning_steps,
+                    "context": context
+                }
+            
+            # Handle dictionary response
             return {
-                "answer": synthesis_result["answer"],
+                "answer": synthesis_result.get("answer", synthesis_result) if isinstance(synthesis_result, dict) else synthesis_result,
                 "reasoning_steps": reasoning_steps,
                 "context": context
             }
