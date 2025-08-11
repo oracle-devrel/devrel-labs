@@ -1,4 +1,6 @@
 # Speech Service Configuration
+profile: "your-profile"
+
 speech:
   compartment_id: "ocid1.compartment.oc1..your-compartment-id"
   bucket_name: "your-bucket-name"
@@ -6,4 +8,4 @@ speech:
 
 # Language Translation Configuration
 language:
-  compartment_id: "ocid1.compartment.oc1..your-compartment-id" 
+  compartment_id: "ocid1.compartment.oc1..your-compartment-id"

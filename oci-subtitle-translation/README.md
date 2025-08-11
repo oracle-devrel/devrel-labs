@@ -70,6 +70,9 @@ This automated approach significantly reduces the time and effort required to cr
 
 ## 2. Usage
 
+> Before running the script, make sure your input `.mp3` file has already been uploaded to the OCI Object Storage **input bucket** defined in your `config.yaml`.  
+> The script does **not** accept local files it looks for the file in the cloud bucket only.
+
 This solution works in two steps:
 
 1. First, we generate SRT from audio:
