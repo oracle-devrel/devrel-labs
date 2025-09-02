@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Enhanced Audio to SRT Transcription Script
+OCI Speech Audio Transcription
 
-Supports both local audio files and files in OCI Object Storage.
-Provides flexible output options (local, object storage, or both).
+Transcribe audio files to SRT subtitles using OCI Speech service.
+Supports both local files and Object Storage inputs.
 """
 
 import oci
@@ -68,22 +68,33 @@ def upload_audio_file(object_storage_client, config, local_file_path):
         raise
 
 
-def wait_for_job_completion(ai_speech_client, job_id, check_interval=15):
-    """Wait for the transcription job to complete and return the output file name"""
+def wait_for_transcription_job(ai_speech_client, job_id, check_interval=30):
+    """Wait for transcription job to complete and return job information"""
+    log_step(f"Waiting for transcription job {job_id} to complete...")
+    
     while True:
         try:
-            job_response = ai_speech_client.get_transcription_job(job_id)
+            job_response = ai_speech_client.get_transcription_job(transcription_job_id=job_id)
             status = job_response.data.lifecycle_state
             
             if status == "SUCCEEDED":
                 log_step("Transcription job completed successfully")
-                # Get the output file name from the job details
-                input_file = job_response.data.input_location.object_locations[0].object_names[0]
-                input_file_name = input_file.split("/")[-1]
-                output_prefix = job_response.data.output_location.prefix
-                job_id_part = job_id.split("/")[0] if "/" in job_id else job_id
-                output_file = f"{output_prefix}/{job_id_part}/{input_file_name}.srt"
-                return output_file
+                
+                if hasattr(job_response.data, 'output_location') and hasattr(job_response.data.output_location, 'prefix'):
+                    output_prefix = job_response.data.output_location.prefix
+                    input_file = job_response.data.input_location.object_locations[0].object_names[0]
+                    input_file_name = input_file.split("/")[-1]
+                    
+                    return {
+                        'job_id': job_id,
+                        'output_prefix': output_prefix,
+                        'input_file_name': input_file_name,
+                        'namespace': job_response.data.output_location.namespace_name,
+                        'bucket': job_response.data.output_location.bucket_name if hasattr(job_response.data.output_location, 'bucket_name') else None
+                    }
+                else:
+                    log_step("Could not get output location from job response", True)
+                    raise Exception("Could not get output location from job response")
             
             elif status == "FAILED":
                 log_step("Transcription job failed", True)
@@ -96,18 +107,65 @@ def wait_for_job_completion(ai_speech_client, job_id, check_interval=15):
                 time.sleep(check_interval)
                 
         except Exception as e:
-            if "Transcription job" in str(e):
+            if "Transcription job" in str(e) or "Could not get output location" in str(e):
                 raise
             log_step(f"Error checking job status: {str(e)}", True)
             raise
 
 
-def download_srt_file(object_storage_client, config, object_name, local_path=None):
+def find_srt_file_in_bucket(object_storage_client, namespace, bucket_name, output_prefix, job_id, input_file_name):
+    """Find the actual SRT file in the bucket by listing objects"""
+    try:
+        log_step(f"Searching for SRT file in bucket with prefix: {output_prefix}")
+        
+        # List objects with the output prefix
+        list_response = object_storage_client.list_objects(
+            namespace_name=namespace,
+            bucket_name=bucket_name,
+            prefix=output_prefix
+        )
+        
+        # Look for SRT files
+        srt_files = []
+        for obj in list_response.data.objects:
+            if obj.name.endswith('.srt') and input_file_name.replace('.mp3', '') in obj.name:
+                srt_files.append(obj.name)
+                log_step(f"Found SRT file: {obj.name}")
+        
+        if srt_files:
+            # Return the first matching SRT file (there should only be one)
+            return srt_files[0]
+        else:
+            log_step(f"No SRT files found with prefix {output_prefix}", True)
+            return None
+            
+    except Exception as e:
+        log_step(f"Error searching for SRT file: {str(e)}", True)
+        return None
+
+
+def download_srt_file(object_storage_client, config, job_info, local_path=None):
     """Download SRT file from Object Storage to local filesystem"""
+    
+    # First, find the actual SRT file in the bucket
+    srt_object_name = find_srt_file_in_bucket(
+        object_storage_client,
+        job_info['namespace'] or config['speech']['namespace'],
+        job_info['bucket'] or config['speech']['bucket_name'],
+        job_info['output_prefix'],
+        job_info['job_id'],
+        job_info['input_file_name']
+    )
+    
+    if not srt_object_name:
+        raise Exception(f"Could not find SRT file in bucket for job {job_info['job_id']}")
+    
     if local_path is None:
-        filename = object_name.split("/")[-1]
+        filename = srt_object_name.split("/")[-1]
         output_dir = config.get('output', {}).get('local_directory', './output')
-        local_path = os.path.join(output_dir, filename)
+        # Use a simpler filename for local storage
+        simple_filename = f"{os.path.splitext(job_info['input_file_name'])[0]}.srt"
+        local_path = os.path.join(output_dir, simple_filename)
     
     # Create output directory if it doesn't exist
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
@@ -116,9 +174,9 @@ def download_srt_file(object_storage_client, config, object_name, local_path=Non
         log_step(f"Downloading SRT file to: {local_path}")
         
         get_response = object_storage_client.get_object(
-            namespace_name=config['speech']['namespace'],
-            bucket_name=config['speech']['bucket_name'],
-            object_name=object_name
+            namespace_name=job_info['namespace'] or config['speech']['namespace'],
+            bucket_name=job_info['bucket'] or config['speech']['bucket_name'],
+            object_name=srt_object_name
         )
         
         with open(local_path, 'wb') as f:
@@ -256,15 +314,18 @@ Examples:
         job_id = create_transcription_job_response.data.id
         log_step(f"Successfully created transcription job with ID: {job_id}")
         
-        # Wait for job completion and get output file name
-        srt_object_name = wait_for_job_completion(ai_speech_client, job_id)
+        # Wait for job completion and get job info
+        job_info = wait_for_transcription_job(ai_speech_client, job_id)
         
         log_step("Transcription completed successfully!")
-        log_step(f"SRT file in Object Storage: {srt_object_name}")
+        log_step(f"Job output prefix: {job_info['output_prefix']}")
+        
+        result = {'job_info': job_info}
         
         # Download to local if configured
         if storage_type in ['local', 'both']:
-            local_srt_path = download_srt_file(object_storage_client, config, srt_object_name)
+            local_srt_path = download_srt_file(object_storage_client, config, job_info)
+            result['local_srt_path'] = local_srt_path
             log_step(f"Local SRT file: {local_srt_path}")
         
         log_step("Transcription workflow completed successfully!")

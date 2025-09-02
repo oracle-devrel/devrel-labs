@@ -1,301 +1,281 @@
 # OCI Subtitle Translation
 
-## Introduction
+Automatically transcribe audio files and translate subtitles into multiple languages using Oracle Cloud Infrastructure (OCI) AI services.
 
-In today's global digital landscape, making audio and video content accessible across different languages is crucial. This solution leverages OCI's AI services to automatically generate and translate subtitles for audio content into multiple languages.
+## Overview
 
-The solution combines two powerful OCI services:
-- **OCI Speech** to transcribe audio into text and generate SRT subtitle files
-- **OCI Language** to translate the generated subtitles into multiple target languages
+This solution combines two powerful OCI AI services to create multilingual subtitles:
+- **OCI Speech**: Transcribes audio files to SRT subtitle format
+- **OCI Language**: Translates subtitles into 30+ target languages
 
-This automated approach significantly reduces the time and effort required to create multilingual subtitles, making content more accessible to a global audience.
+Perfect for making video content accessible to global audiences with minimal manual effort.
 
 ## Features
 
-- **Flexible Input Sources**: Accept both local audio files (MP3, WAV, etc.) and files already stored in OCI Object Storage
-- **Multiple Output Options**: Store generated SRT files locally, in Object Storage, or both
-- **Complete Workflow**: Single command to transcribe audio and translate to multiple languages
-- **Standalone Scripts**: Individual scripts for transcription-only or translation-only workflows
-- **Translation Methods**: 
-  - Synchronous translation for smaller files (subtitle-by-subtitle)
-  - Batch translation for larger files (up to 20MB)
-- **Language Support**: 30+ supported languages for translation
-- **Configurable**: Comprehensive YAML configuration with sensible defaults
+- 🎧 **Flexible Input**: Local audio files or files in OCI Object Storage
+- 📄 **Multiple Formats**: Generates industry-standard SRT subtitle files
+- 🌍 **30+ Languages**: Translate to major world languages
+- ⚡ **Batch Processing**: Efficient translation for multiple languages
+- 🔧 **Configurable**: Customize storage, languages, and processing methods
+- 📦 **Complete Workflow**: Single command for transcription + translation
 
-## 0. Prerequisites and setup
+## Quick Start
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- OCI Account with Speech and Language services enabled
-- Required IAM Policies and Permissions
-- Object Storage bucket for input/output files
-- OCI CLI configured with proper credentials
+- Python 3.8+
+- OCI account with Speech and Language services enabled
+- OCI CLI configured (`oci setup config`)
+- Object Storage bucket for audio/subtitle files
 
-### Setup
+### Installation
 
-1. Create an OCI account if you don't have one
-2. Enable OCI Speech and Language services in your tenancy
-3. Set up OCI CLI and create API keys:
-   ```bash
-   # Install OCI CLI
-   bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)"
-   
-   # Configure OCI CLI (this will create ~/.oci/config)
-   oci setup config
-   ```
-4. Set up the appropriate IAM policies to use both OCI Speech and Language services
-5. Create a bucket in OCI Object Storage for your audio files and generated subtitles
-6. Take note of your Object Storage namespace (visible in the OCI Console under Object Storage)
-
-### Docs
-
-- [OCI Speech Service Documentation](https://docs.oracle.com/en-us/iaas/api/#/en/speech/20220101)
-- [OCI Language Translation Documentation](https://docs.oracle.com/en-us/iaas/language)
-- [OCI SDK Documentation](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm)
-
-## 1. Getting Started
-
-1. Clone this repository:
+1. **Clone and install dependencies:**
    ```bash
    git clone https://github.com/oracle-devrel/devrel-labs.git
    cd oci-subtitle-translation
-   ```
-
-2. Install required dependencies:
-   ```bash
    pip install -r requirements.txt
    ```
 
-3. Copy the example configuration and update with your settings:
+2. **Configure your settings:**
    ```bash
    cp config_example.yaml config.yaml
-   # Edit config.yaml with your OCI details
+   # Edit config.yaml with your OCI details (see Configuration section)
    ```
 
-## 2. Usage
+3. **Run the workflow:**
+   ```bash
+   # Transcribe local file and translate to Spanish
+   python workflow.py --audio-source audio.mp3 --target-language es
+   
+   # Transcribe Object Storage file and translate to multiple languages
+   python workflow.py --audio-source "audio/recording.mp3" --target-languages es fr de
+   ```
 
-The solution provides three main ways to use it:
+## Audio Input Methods
 
-### Option 1: Complete Workflow (Recommended)
+### Method 1: Local Audio Files
 
-Use the main workflow script to transcribe audio and translate in one command:
+For audio files on your local machine:
 
 ```bash
-# Transcribe local audio file and translate to multiple languages
-python workflow.py --audio-source audio.mp3 --target-languages es fr de
+# Single language translation
+python workflow.py --audio-source /path/to/audio.mp3 --target-language es
 
-# Use audio file already in Object Storage
-python workflow.py --audio-source "audio/myfile.mp3" --target-languages es fr de pt
+# Multiple languages
+python workflow.py --audio-source audio.wav --target-languages es fr de pt
 
-# Transcribe only (no translation)
+# Transcription only (no translation)
 python workflow.py --transcribe-only --audio-source audio.mp3
-
-# Translate only (use existing SRT file)
-python workflow.py --translate-only --srt-file subtitles.srt --target-languages es fr
 ```
 
-### Option 2: Individual Scripts
+**How it works:**
+- Script uploads your local file to Object Storage
+- Transcribes using OCI Speech
+- Downloads and translates the generated SRT files
 
-Use individual scripts for specific tasks:
+### Method 2: Object Storage Audio Files
 
-#### Transcription Only
+For audio files already in your configured Object Storage bucket:
 
 ```bash
-# Transcribe local audio file
-python generate_srt_from_audio.py --input-file audio.mp3
+# File in bucket root
+python workflow.py --audio-source "myfile.mp3" --target-language es
 
-# Transcribe with specific language
-python generate_srt_from_audio.py --input-file audio.mp3 --language es-ES
+# File in subfolder
+python workflow.py --audio-source "audio/recordings/interview.mp3" --target-languages es fr
 
-# Output to local only
-python generate_srt_from_audio.py --input-file audio.mp3 --output-type local
+# Complex path (from OCI Speech job output)
+python workflow.py --audio-source "transcriptions/audio.mp3/job-abc123/audio.mp3" --target-language es
 ```
 
-#### Translation Only
+**Important:** 
+- Use the **object path within your bucket** (don't include bucket name)
+- Bucket name and namespace come from your `config.yaml`
+- If path doesn't exist locally, it's treated as an Object Storage path
 
-```bash
-# Translate local SRT file to multiple languages
-python translate_srt.py --input-file subtitles.srt --target-languages es fr de
+## Configuration
 
-# Use synchronous translation method
-python translate_srt.py --input-file subtitles.srt --target-languages es --method sync
+Edit `config.yaml` with your OCI details:
 
-# Translate SRT file in Object Storage
-python translate_srt.py --input-file "srt_files/subtitles.srt" --target-languages es fr
-```
-
-## 3. Configuration
-
-The `config.yaml` file controls all aspects of the workflow. Key sections include:
-
-### Speech Configuration
 ```yaml
+# OCI Profile (from ~/.oci/config)
+profile: "DEFAULT"
+
+# Speech Service Settings
 speech:
   compartment_id: "ocid1.compartment.oc1..your-compartment-id"
-  bucket_name: "your-speech-bucket-name"
+  bucket_name: "your-bucket-name"
   namespace: "your-namespace"
   language_code: "en-US"  # Default transcription language
-```
 
-### Output Configuration
-```yaml
+# Output Settings
 output:
   storage_type: "both"  # "local", "object_storage", or "both"
   local_directory: "./output"
-  object_storage_prefix: "translations"
-```
 
-### Translation Configuration
-```yaml
+# Translation Settings
 translation:
-  target_languages:
-    - "es"    # Spanish
-    - "fr"    # French
-    - "de"    # German
+  target_languages: ["es", "fr", "de"]  # Default languages
   method: "batch"  # "batch" or "sync"
 ```
 
-## 4. Supported Languages
+### Finding Your OCI Details
 
-### Speech-to-Text (Transcription)
+- **Compartment ID**: OCI Console → Identity → Compartments
+- **Namespace**: OCI Console → Object Storage → Bucket Details
+- **Bucket Name**: The bucket you created for audio/subtitle files
+- **Profile**: Your OCI CLI profile name (usually "DEFAULT")
 
-The following language codes are supported for audio transcription:
+## Usage Examples
 
-| Language | Code |
-|----------|------|
-| US English | en-US |
-| British English | en-GB |
-| Australian English | en-AU |
-| Indian English | en-IN |
-| Spanish (Spain) | es-ES |
-| Brazilian Portuguese | pt-BR |
-| Hindi (India) | hi-IN |
-| French (France) | fr-FR |
-| German (Germany) | de-DE |
-| Italian (Italy) | it-IT |
-
-### Translation
-
-The solution supports translation to the following languages:
-
-| Language | Language Code |
-|----------|------|
-| Arabic | ar |
-| Croatian | hr |
-| Czech | cs |
-| Danish | da |
-| Dutch | nl |
-| English | en |
-| Finnish | fi |
-| French | fr |
-| French Canadian | fr-CA |
-| German | de |
-| Greek | el |
-| Hebrew | he |
-| Hungarian | hu |
-| Italian | it |
-| Japanese | ja |
-| Korean | ko |
-| Norwegian | no |
-| Polish | pl |
-| Portuguese | pt |
-| Portuguese Brazilian | pt-BR |
-| Romanian | ro |
-| Russian | ru |
-| Simplified Chinese | zh-CN |
-| Slovak | sk |
-| Slovenian | sl |
-| Spanish | es |
-| Swedish | sv |
-| Thai | th |
-| Traditional Chinese | zh-TW |
-| Turkish | tr |
-| Vietnamese | vi |
-
-For an updated list of supported languages, refer to [the OCI Documentation](https://docs.oracle.com/en-us/iaas/language/using/translate.htm#supported-langs).
-
-## 5. Advanced Usage
-
-### Custom Configuration Files
+### Complete Workflow
 
 ```bash
-# Use a different configuration file
-python workflow.py --config my-config.yaml --audio-source audio.mp3
+# Local file → transcribe → translate to Spanish and French
+python workflow.py --audio-source interview.mp3 --target-languages es fr
+
+# Object Storage file → transcribe → translate to German
+python workflow.py --audio-source "recordings/meeting.wav" --target-language de
+
+# Custom output location
+python workflow.py --audio-source audio.mp3 --target-language es --output-type local
 ```
 
-### Working with Object Storage
+### Individual Operations
 
+**Transcription only:**
 ```bash
-# Use files already in Object Storage (no local upload needed)
-python workflow.py --audio-source "audio/recording.mp3" --target-languages es fr
+# Local file
+python generate_srt_from_audio.py --input-file audio.mp3
 
-# Store output only in Object Storage
-python generate_srt_from_audio.py --input-file audio.mp3 --output-type object_storage
+# Object Storage file
+python generate_srt_from_audio.py --input-file "audio/recording.mp3"
+
+# Specify language and output
+python generate_srt_from_audio.py --input-file audio.mp3 --language es-ES --output-type local
 ```
 
-### Translation Methods
-
-**Batch Translation** (default):
-- Best for larger files (up to 20MB)
-- More efficient for multiple languages
-- Uses OCI Language batch processing
-
-**Synchronous Translation**:
-- Best for smaller files or individual subtitles
-- Processes subtitle by subtitle
-- More reliable for very small files
-
+**Translation only:**
 ```bash
-# Force synchronous translation
-python translate_srt.py --input-file subtitles.srt --target-languages es --method sync
+# Translate existing SRT file
+python translate_srt.py --input-file subtitles.srt --target-languages es fr de
+
+# Translate SRT file in Object Storage
+python translate_srt.py --input-file "srt/subtitles.srt" --target-language es --method sync
 ```
 
-### Troubleshooting
+## Supported Languages
 
-1. **Authentication Issues**: Ensure your OCI CLI is properly configured
-   ```bash
-   oci iam user get --user-id $(oci iam user list --query 'data[0].id' --raw-output)
-   ```
+### Audio Transcription
+| Language | Code | | Language | Code |
+|----------|------|---|----------|------|
+| English (US) | en-US | | Portuguese (Brazil) | pt-BR |
+| English (UK) | en-GB | | Hindi (India) | hi-IN |
+| English (Australia) | en-AU | | French (France) | fr-FR |
+| English (India) | en-IN | | German (Germany) | de-DE |
+| Spanish (Spain) | es-ES | | Italian (Italy) | it-IT |
 
-2. **File Size Limits**: 
-   - Audio files: No specific limit for OCI Speech
-   - SRT files for batch translation: 20MB maximum
-   - Large files automatically fall back to synchronous translation
+### Translation (30+ languages)
+| Language | Code | | Language | Code | | Language | Code |
+|----------|------|---|----------|------|---|----------|------|
+| Spanish | es | | French | fr | | German | de |
+| Portuguese | pt | | Italian | it | | Dutch | nl |
+| Russian | ru | | Japanese | ja | | Korean | ko |
+| Chinese (Simplified) | zh-CN | | Chinese (Traditional) | zh-TW | | Arabic | ar |
+| Hebrew | he | | Hindi | hi | | Thai | th |
 
-3. **Output Directory**: The solution automatically creates output directories as needed
+[View complete list](https://docs.oracle.com/en-us/iaas/language/using/translate.htm#supported-langs)
 
-## 6. Architecture
+## Command Reference
 
-The solution consists of modular components:
+### workflow.py
 
-- **workflow.py**: Main orchestration script
-- **generate_srt_from_audio.py**: OCI Speech service integration
-- **translate_srt.py**: OCI Language service integration
+| Option | Description | Example |
+|--------|-------------|---------|
+| `--audio-source` | Audio file (local or Object Storage path) | `--audio-source "audio/file.mp3"` |
+| `--target-language` | Single target language | `--target-language es` |
+| `--target-languages` | Multiple target languages | `--target-languages es fr de` |
+| `--transcribe-only` | Only transcribe (no translation) | `--transcribe-only` |
+| `--translate-only` | Only translate existing SRT | `--translate-only --srt-file file.srt` |
+| `--speech-language` | Override transcription language | `--speech-language es-ES` |
+| `--output-type` | Where to store output | `--output-type local` |
+| `--config` | Custom config file | `--config my-config.yaml` |
 
-This modular design allows you to:
-- Use individual components as needed
-- Integrate with existing workflows
-- Customize functionality for specific requirements
+### Output Storage Options
 
-## Supported Language Codes
+| Value | Description | Files Saved To |
+|-------|-------------|----------------|
+| `local` | Local filesystem only | `./output/` directory |
+| `object_storage` | Object Storage only | Your configured bucket |
+| `both` | Both locations (default) | Local directory + Object Storage |
 
-For the Speech-to-Text transcription service with GENERIC domain, the following language codes are supported:
+## Translation Methods
 
-| Language | Code |
-|----------|------|
-| US English | en-US |
-| British English | en-GB |
-| Australian English | en-AU |
-| Indian English | en-IN |
-| Spanish (Spain) | es-ES |
-| Brazilian Portuguese | pt-BR |
-| Hindi (India) | hi-IN |
-| French (France) | fr-FR |
-| German (Germany) | de-DE |
-| Italian (Italy) | it-IT |
+### Batch Translation (Recommended)
+- **Best for**: Multiple languages, larger files
+- **Limit**: 20MB per file
+- **Speed**: Faster for multiple languages
+- **Usage**: `--method batch` (default)
 
-Note: When using the service, make sure to use the exact language code format as shown above. Simple codes like 'en' or 'es' will not work.
+### Synchronous Translation
+- **Best for**: Single language, smaller files
+- **Limit**: No file size limit
+- **Speed**: Slower for multiple languages
+- **Usage**: `--method sync`
+
+## Troubleshooting
+
+### Common Issues
+
+**"BucketNotFound" Error:**
+- Verify bucket name and namespace in `config.yaml`
+- Ensure bucket exists in the correct region
+- Check IAM permissions for Object Storage
+
+**"ObjectNotFound" Error:**
+- Verify the object path in your bucket
+- Check if file was uploaded successfully
+- Ensure correct spelling and case
+
+**Authentication Issues:**
+```bash
+# Test OCI CLI configuration
+oci iam user get --user-id $(oci iam user list --query 'data[0].id' --raw-output)
+
+# Reconfigure if needed
+oci setup config
+```
+
+**Large File Handling:**
+- Audio files: No limit for OCI Speech
+- SRT files: 20MB limit for batch translation
+- Large files automatically use sync translation
+
+### Debug Mode
+
+Add verbose logging:
+```bash
+# Set environment variable for detailed logs
+export OCI_CLI_PROFILE=your-profile
+python workflow.py --audio-source audio.mp3 --target-language es
+```
+
+## Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Audio File    │ ──▶│   OCI Speech     │ ──▶│   SRT File      │
+│ (Local/Storage) │    │   Transcription  │    │   Generated     │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                                        │
+                                                        ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│ Translated SRT  │ ◀──│  OCI Language    │ ◀──│   SRT File      │
+│   Files (es,    │    │   Translation    │    │   Original      │
+│   fr, de, etc.) │    └──────────────────┘    └─────────────────┘
+└─────────────────┘
+```
 
 ## Contributing
 
@@ -303,7 +283,7 @@ This project is open source. Please submit your contributions by forking this re
 
 ## License
 
-Copyright (c) 2024 Oracle and/or its affiliates.
+Copyright (c) 2025 Oracle and/or its affiliates.
 
 Licensed under the Universal Permissive License (UPL), Version 1.0.
 

@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 """
-Enhanced SRT Translation Script
+OCI Language Translation for SRT Files
 
-Supports both local SRT files and files in OCI Object Storage.
-Provides both synchronous and batch translation methods.
-Flexible output options (local, object storage, or both).
+Translate SRT subtitle files to multiple languages using OCI Language service.
+Supports both local files and Object Storage inputs/outputs.
 """
 
 import oci
 import yaml
 import argparse
+import sys
 import os
 import time
 import tempfile
-from pathlib import Path
 from datetime import datetime
 
 
@@ -139,6 +138,117 @@ def parse_srt_file(file_path):
     return entries
 
 
+def search_for_actual_srt_file(object_storage_client, config, expected_object_name):
+    """Search for the actual SRT file in Object Storage when the expected path doesn't exist"""
+    namespace, bucket_name = get_translation_namespace_bucket(config)
+    
+    path_parts = expected_object_name.split('/')
+    if len(path_parts) >= 3 and path_parts[0] == 'transcriptions':
+        audio_filename = path_parts[1]
+        base_name = os.path.splitext(path_parts[-1])[0]
+        
+        search_prefix = f"transcriptions/{audio_filename}"
+        
+        try:
+            log_step(f"Searching for SRT file with prefix: {search_prefix}")
+            
+            list_response = object_storage_client.list_objects(
+                namespace_name=namespace,
+                bucket_name=bucket_name,
+                prefix=search_prefix,
+                limit=1000
+            )
+            
+            srt_files = []
+            for obj in list_response.data.objects:
+                if obj.name.endswith('.srt') and base_name in obj.name:
+                    srt_files.append(obj.name)
+            
+            if srt_files:
+                srt_files.sort()
+                found_file = srt_files[-1]
+                log_step(f"Found actual SRT file: {found_file}")
+                return found_file
+            else:
+                log_step(f"No SRT file found with prefix {search_prefix}")
+                return None
+                
+        except Exception as e:
+            log_step(f"Error searching for SRT file: {str(e)}", True)
+            return None
+    
+    return None
+
+
+def download_srt_from_object_storage(object_storage_client, config, object_name):
+    """Download SRT file from Object Storage to a temporary local file"""
+    import tempfile
+    
+    namespace, bucket_name = get_translation_namespace_bucket(config)
+    actual_object_name = object_name
+    
+    try:
+        log_step(f"Downloading SRT file from Object Storage: {actual_object_name}")
+        
+        get_response = object_storage_client.get_object(
+            namespace_name=namespace,
+            bucket_name=bucket_name,
+            object_name=actual_object_name
+        )
+        
+        with tempfile.NamedTemporaryFile(mode='w+', suffix='.srt', delete=False, encoding='utf-8') as tmp_f:
+            for chunk in get_response.data.raw.stream(1024 * 1024, decode_content=False):
+                tmp_f.write(chunk.decode('utf-8'))
+            temp_path = tmp_f.name
+        
+        log_step(f"Downloaded SRT file to temporary location: {temp_path}")
+        return temp_path
+        
+    except Exception as e:
+        if "ObjectNotFound" in str(e) or "404" in str(e):
+            log_step(f"SRT file not found at expected path, searching...")
+            actual_object_name = search_for_actual_srt_file(object_storage_client, config, object_name)
+            
+            if actual_object_name:
+                try:
+                    log_step(f"Downloading found SRT file: {actual_object_name}")
+                    
+                    get_response = object_storage_client.get_object(
+                        namespace_name=namespace,
+                        bucket_name=bucket_name,
+                        object_name=actual_object_name
+                    )
+                    
+                    with tempfile.NamedTemporaryFile(mode='w+', suffix='.srt', delete=False, encoding='utf-8') as tmp_f:
+                        for chunk in get_response.data.raw.stream(1024 * 1024, decode_content=False):
+                            tmp_f.write(chunk.decode('utf-8'))
+                        temp_path = tmp_f.name
+                    
+                    log_step(f"Downloaded SRT file to temporary location: {temp_path}")
+                    return temp_path
+                    
+                except Exception as retry_e:
+                    log_step(f"Failed to download found SRT file: {str(retry_e)}", True)
+                    raise
+            else:
+                log_step(f"Could not find SRT file in Object Storage", True)
+                raise
+        else:
+            log_step(f"Failed to download SRT file from Object Storage: {str(e)}", True)
+            raise
+
+
+def get_srt_file_for_parsing(object_storage_client, config, srt_file_path):
+    """Get SRT file ready for parsing - download from Object Storage if needed"""
+    if os.path.exists(srt_file_path):
+        # Local file, return as-is
+        return srt_file_path, False  # (file_path, is_temporary)
+    else:
+        # Object Storage path, download to temporary file
+        temp_path = download_srt_from_object_storage(object_storage_client, config, srt_file_path)
+        return temp_path, True  # (file_path, is_temporary)
+
+
 def translate_text_sync(language_client, text, source_lang, target_lang, compartment_id):
     """Translate text using synchronous API"""
     try:
@@ -184,87 +294,102 @@ def translate_srt_sync(language_client, object_storage_client, config, srt_file_
     """Translate SRT file using synchronous translation (subtitle by subtitle)"""
     log_step(f"Translating {srt_file_path} to {target_lang} using synchronous method...")
     
-    entries = parse_srt_file(srt_file_path)
-    translated_entries = []
-    compartment_id = config['language']['compartment_id']
+    # Get the SRT file for parsing (download from Object Storage if needed)
+    local_srt_path, is_temporary = get_srt_file_for_parsing(object_storage_client, config, srt_file_path)
     
-    for i, entry in enumerate(entries):
-        log_step(f"Translating subtitle {i+1}/{len(entries)}")
-        translated_text = translate_text_sync(language_client, entry['text'], source_lang, target_lang, compartment_id)
+    try:
+        entries = parse_srt_file(local_srt_path)
+        translated_entries = []
+        compartment_id = config['language']['compartment_id']
         
-        if translated_text:
-            translated_entry = entry.copy()
-            translated_entry['text'] = translated_text
-            translated_entries.append(translated_entry)
-        else:
-            log_step(f"Failed to translate subtitle {i+1}, keeping original", True)
-            translated_entries.append(entry)
-    
-    # Generate output filename
-    base_name = os.path.splitext(os.path.basename(srt_file_path))[0]
-    output_filename = f"{base_name}_{target_lang}.srt"
-    
-    # Save locally if configured
-    storage_type = config.get('output', {}).get('storage_type', 'both')
-    result = {'target_language': target_lang}
-    
-    if storage_type in ['local', 'both']:
-        output_dir = config.get('output', {}).get('local_directory', './output')
-        local_output_path = os.path.join(output_dir, output_filename)
-        save_translated_srt(translated_entries, local_output_path)
-        result['local_file_path'] = local_output_path
-        log_step(f"Saved translated SRT locally: {local_output_path}")
-    
-    # Upload to object storage if configured
-    if storage_type in ['object_storage', 'both']:
-        namespace, bucket_name = get_translation_namespace_bucket(config)
-        prefix = config.get('output', {}).get('object_storage_prefix', 'translations')
-        object_name = f"{prefix}/{output_filename}"
-        
-        # Create temporary file for upload
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.srt', delete=False, encoding='utf-8') as tmp_f:
-            for entry in translated_entries:
-                tmp_f.write(f"{entry['number']}\n")
-                tmp_f.write(f"{entry['timestamp']}\n")
-                tmp_f.write(f"{entry['text']}\n\n")
-            temp_path = tmp_f.name
-        
-        try:
-            with open(temp_path, 'rb') as f:
-                object_storage_client.put_object(
-                    namespace_name=namespace,
-                    bucket_name=bucket_name,
-                    object_name=object_name,
-                    put_object_body=f
-                )
+        for i, entry in enumerate(entries):
+            log_step(f"Translating subtitle {i+1}/{len(entries)}")
+            translated_text = translate_text_sync(language_client, entry['text'], source_lang, target_lang, compartment_id)
             
-            result['object_storage_path'] = object_name
-            log_step(f"Uploaded translated SRT to object storage: {object_name}")
+            if translated_text:
+                translated_entry = entry.copy()
+                translated_entry['text'] = translated_text
+                translated_entries.append(translated_entry)
+            else:
+                log_step(f"Failed to translate subtitle {i+1}, keeping original", True)
+                translated_entries.append(entry)
+        
+        # Generate output filename
+        base_name = os.path.splitext(os.path.basename(srt_file_path))[0]
+        output_filename = f"{base_name}_{target_lang}.srt"
+        
+        # Save locally if configured
+        storage_type = config.get('output', {}).get('storage_type', 'both')
+        result = {'target_language': target_lang}
+        
+        if storage_type in ['local', 'both']:
+            output_dir = config.get('output', {}).get('local_directory', './output')
+            local_output_path = os.path.join(output_dir, output_filename)
+            save_translated_srt(translated_entries, local_output_path)
+            result['local_file_path'] = local_output_path
+            log_step(f"Saved translated SRT locally: {local_output_path}")
+        
+        # Upload to object storage if configured
+        if storage_type in ['object_storage', 'both']:
+            namespace, bucket_name = get_translation_namespace_bucket(config)
+            prefix = config.get('output', {}).get('object_storage_prefix', 'translations')
+            object_name = f"{prefix}/{output_filename}"
             
-        finally:
-            # Clean up temporary file
-            os.unlink(temp_path)
-    
-    return result
+            # Create temporary file for upload
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.srt', delete=False, encoding='utf-8') as tmp_f:
+                for entry in translated_entries:
+                    tmp_f.write(f"{entry['number']}\n")
+                    tmp_f.write(f"{entry['timestamp']}\n")
+                    tmp_f.write(f"{entry['text']}\n\n")
+                temp_path = tmp_f.name
+            
+            try:
+                with open(temp_path, 'rb') as f:
+                    object_storage_client.put_object(
+                        namespace_name=namespace,
+                        bucket_name=bucket_name,
+                        object_name=object_name,
+                        put_object_body=f
+                    )
+                
+                result['object_storage_path'] = object_name
+                log_step(f"Uploaded translated SRT to object storage: {object_name}")
+                
+            finally:
+                # Clean up temporary file
+                os.unlink(temp_path)
+        
+        return result
+        
+    finally:
+        # Clean up temporary SRT file if we downloaded it
+        if is_temporary and os.path.exists(local_srt_path):
+            os.unlink(local_srt_path)
 
 
 def translate_srt_batch(language_client, object_storage_client, config, srt_file_path, source_lang, target_lang):
     """Translate SRT file using batch/async translation"""
     log_step(f"Translating {srt_file_path} to {target_lang} using batch method...")
     
-    # Determine if the SRT file is local or in object storage
+    # Get the actual SRT file for processing (handles both local and Object Storage)
+    local_srt_path, is_temporary = get_srt_file_for_parsing(object_storage_client, config, srt_file_path)
+    
+    # Validate file size (20MB limit for batch translation)
+    file_size = os.path.getsize(local_srt_path)
+    if file_size > 20 * 1024 * 1024:  # 20MB in bytes
+        log_step("File exceeds 20MB limit, falling back to synchronous translation")
+        # Clean up temporary file if needed
+        if is_temporary and os.path.exists(local_srt_path):
+            os.unlink(local_srt_path)
+        return translate_srt_sync(language_client, object_storage_client, config, srt_file_path, source_lang, target_lang)
+    
+    # Determine object storage path for batch processing
     if os.path.exists(srt_file_path):
-        # Validate file size (20MB limit for batch translation)
-        file_size = os.path.getsize(srt_file_path)
-        if file_size > 20 * 1024 * 1024:  # 20MB in bytes
-            log_step("File exceeds 20MB limit, falling back to synchronous translation")
-            return translate_srt_sync(language_client, object_storage_client, config, srt_file_path, source_lang, target_lang)
-        
         # Local file - upload to object storage first
         input_object_name = upload_srt_file(object_storage_client, config, srt_file_path)
         base_name = os.path.splitext(os.path.basename(srt_file_path))[0]
     else:
-        # Assume it's already in object storage
+        # Already in object storage
         input_object_name = srt_file_path
         base_name = os.path.splitext(os.path.basename(srt_file_path))[0]
     
@@ -356,6 +481,11 @@ def translate_srt_batch(language_client, object_storage_client, config, srt_file
             log_step("Falling back to synchronous translation...")
             return translate_srt_sync(language_client, object_storage_client, config, srt_file_path, source_lang, target_lang)
         return None
+    
+    finally:
+        # Clean up temporary SRT file if we downloaded it
+        if is_temporary and os.path.exists(local_srt_path):
+            os.unlink(local_srt_path)
 
 def main():
     parser = argparse.ArgumentParser(

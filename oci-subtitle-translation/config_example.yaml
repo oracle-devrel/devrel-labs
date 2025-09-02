@@ -1,40 +1,32 @@
 # OCI Subtitle Translation Configuration
-# Copy this file and update with your specific settings
+# Copy this file to config.yaml and update with your specific settings
 
 # OCI Profile Configuration
-profile: "DEFAULT"  # OCI CLI profile name
+profile: "DEFAULT"  # OCI CLI profile name from ~/.oci/config
 
 # Speech Service Configuration
 speech:
   compartment_id: "ocid1.compartment.oc1..your-compartment-id"
-  bucket_name: "your-speech-bucket-name"
+  bucket_name: "your-bucket-name"
   namespace: "your-namespace"
-  language_code: "en-US"  # Default language for transcription
-  # Supported: en-US, en-GB, en-AU, en-IN, es-ES, pt-BR, hi-IN, fr-FR, de-DE, it-IT
+  language_code: "en-US"
 
-# Language Translation Configuration
+# Language Translation Configuration  
 language:
   compartment_id: "ocid1.compartment.oc1..your-compartment-id"
-  # Optional: separate bucket for translations (if not specified, uses speech bucket)
-  bucket_name: ""  # Leave empty to use speech bucket
-  namespace: ""    # Leave empty to use speech namespace
+  # Optional: Leave empty to use same bucket/namespace as speech service
+  bucket_name: ""
+  namespace: ""
 
 # Output Configuration
 output:
-  # Where to store output files: "local", "object_storage", or "both"
-  storage_type: "both"
-  # Local directory for output files (used when storage_type is "local" or "both")
+  storage_type: "both"  # "local", "object_storage", or "both"
   local_directory: "./output"
-  # Object storage prefix for output files
-  object_storage_prefix: "translations"
 
 # Translation Settings
 translation:
-  # Default target languages (can be overridden via command line)
   target_languages:
     - "es"    # Spanish
-    - "fr"    # French
+    - "fr"    # French  
     - "de"    # German
-    - "pt"    # Portuguese
-  # Translation method: "batch" (for large files) or "sync" (for small files < 1000 chars per subtitle)
-  method: "batch"
+  method: "batch"  # "batch" or "sync"

@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 """
-Complete Subtitle Workflow Script
+OCI Subtitle Translation Workflow
 
-This script provides a unified interface to:
-1. Transcribe audio files to SRT subtitles using OCI Speech
-2. Translate SRT files to multiple languages using OCI Language
-
-Can be used for the complete workflow or individual steps.
+Complete workflow for transcribing audio files and translating subtitles
+using OCI Speech and Language services.
 """
 
 import argparse
@@ -107,24 +104,29 @@ def run_translation(args, config):
 
 def find_generated_srt(config, audio_file):
     """Find the SRT file generated from audio transcription"""
-    # Check local output directory first
-    output_dir = config.get('output', {}).get('local_directory', './output')
     audio_filename = os.path.basename(audio_file)
     base_name = os.path.splitext(audio_filename)[0]
     
-    # Look for SRT file with similar name
-    if os.path.exists(output_dir):
-        for file in os.listdir(output_dir):
-            if file.endswith('.srt') and base_name in file:
-                return os.path.join(output_dir, file)
+    output_dir = config.get('output', {}).get('local_directory', './output')
+    expected_local_path = os.path.join(output_dir, f"{base_name}.srt")
     
-    # If not found locally, assume it's in object storage with standard naming
-    return f"transcriptions/{audio_filename}/{audio_filename}.srt"
+    if os.path.exists(expected_local_path):
+        log_step(f"Found generated SRT file locally: {expected_local_path}")
+        return expected_local_path
+    
+    storage_type = config.get('output', {}).get('storage_type', 'both')
+    if storage_type in ['object_storage', 'both']:
+        object_storage_path = f"transcriptions/{audio_filename}/{base_name}.srt"
+        log_step(f"Using Object Storage SRT path: {object_storage_path}")
+        return object_storage_path
+    
+    log_step(f"Using fallback local SRT path: {expected_local_path}")
+    return expected_local_path
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Complete OCI Subtitle Translation Workflow',
+        description='OCI Subtitle Translation Workflow',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -137,8 +139,8 @@ Examples:
   # Translation only
   python workflow.py --translate-only --srt-file subtitles.srt --target-languages es fr
 
-  # Use specific languages and methods
-  python workflow.py --audio-source audio.mp3 --speech-language es-ES --target-languages en fr --translation-method sync
+  # Object Storage audio file
+  python workflow.py --audio-source "audio/recording.mp3" --target-language es
         """
     )
     
@@ -162,6 +164,8 @@ Examples:
                        help='Source language code (default: en)')
     parser.add_argument('--target-languages', nargs='+', type=str,
                        help='Target language codes (default: from config)')
+    parser.add_argument('--target-language', type=str,
+                       help='Single target language code (alternative to --target-languages)')
     parser.add_argument('--translation-method', choices=['sync', 'batch'],
                        help='Translation method (default: from config)')
     
@@ -173,9 +177,7 @@ Examples:
     
     args = parser.parse_args()
     
-    # Validate arguments
     if not args.transcribe_only and not args.translate_only:
-        # Complete workflow - need audio source
         if not args.audio_source:
             log_step("ERROR: --audio-source is required for complete workflow", True)
             parser.print_help()
@@ -191,33 +193,39 @@ Examples:
             parser.print_help()
             sys.exit(1)
     
-    # Load configuration
     config = load_config(args.config)
     if not config:
         sys.exit(1)
+    
+    if args.target_language and args.target_languages:
+        log_step("ERROR: Cannot specify both --target-language and --target-languages", True)
+        sys.exit(1)
+    elif args.target_language:
+        args.target_languages = [args.target_language]
+    elif not args.target_languages and not args.transcribe_only:
+        default_langs = config.get('translation', {}).get('target_languages', [])
+        if default_langs:
+            args.target_languages = default_langs
+            log_step(f"Using default target languages from config: {default_langs}")
     
     log_step("Starting OCI Subtitle Translation workflow")
     log_step(f"Configuration: {args.config}")
     
     success = True
     
-    # Execute transcription workflow
     if not args.translate_only:
         success = run_transcription(args, config)
         if not success and not args.transcribe_only:
             log_step("Transcription failed, cannot proceed with translation", True)
             sys.exit(1)
     
-    # Execute translation workflow
     if not args.transcribe_only and success:
-        # If we just did transcription, find the generated SRT file
         if not args.translate_only:
             args.srt_file = find_generated_srt(config, args.audio_source)
             log_step(f"Using generated SRT file: {args.srt_file}")
         
         success = run_translation(args, config)
     
-    # Final summary
     log_step("\n" + "="*60)
     log_step("WORKFLOW SUMMARY")
     log_step("="*60)
