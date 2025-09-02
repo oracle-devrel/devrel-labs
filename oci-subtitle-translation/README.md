@@ -10,8 +10,18 @@ The solution combines two powerful OCI services:
 
 This automated approach significantly reduces the time and effort required to create multilingual subtitles, making content more accessible to a global audience.
 
-PUT IMAGE HERE
-join oracle profile
+## Features
+
+- **Flexible Input Sources**: Accept both local audio files (MP3, WAV, etc.) and files already stored in OCI Object Storage
+- **Multiple Output Options**: Store generated SRT files locally, in Object Storage, or both
+- **Complete Workflow**: Single command to transcribe audio and translate to multiple languages
+- **Standalone Scripts**: Individual scripts for transcription-only or translation-only workflows
+- **Translation Methods**: 
+  - Synchronous translation for smaller files (subtitle-by-subtitle)
+  - Batch translation for larger files (up to 20MB)
+- **Language Support**: 30+ supported languages for translation
+- **Configurable**: Comprehensive YAML configuration with sensible defaults
+
 ## 0. Prerequisites and setup
 
 ### Prerequisites
@@ -57,39 +67,115 @@ join oracle profile
    pip install -r requirements.txt
    ```
 
-3. Update `config.yaml` with your settings:
-   ```yaml
-   # Speech Service Configuration
-   speech:
-     compartment_id: "ocid1.compartment.oc1..your-compartment-id"
-     bucket_name: "your-bucket-name"
-     namespace: "your-namespace"
-
-   # Language Translation Configuration
-   language:
-     compartment_id: "ocid1.compartment.oc1..your-compartment-id"
+3. Copy the example configuration and update with your settings:
+   ```bash
+   cp config_example.yaml config.yaml
+   # Edit config.yaml with your OCI details
    ```
 
 ## 2. Usage
 
-> Before running the script, make sure your input `.mp3` file has already been uploaded to the OCI Object Storage **input bucket** defined in your `config.yaml`.  
-> The script does **not** accept local files it looks for the file in the cloud bucket only.
+The solution provides three main ways to use it:
 
-This solution works in two steps:
+### Option 1: Complete Workflow (Recommended)
 
-1. First, we generate SRT from audio:
+Use the main workflow script to transcribe audio and translate in one command:
 
-   ```bash
-   python generate_srt_from_audio.py --input-file your_audio.mp3
-   ```
+```bash
+# Transcribe local audio file and translate to multiple languages
+python workflow.py --audio-source audio.mp3 --target-languages es fr de
 
-2. Then, we translate the generated SRT file to multiple languages:
+# Use audio file already in Object Storage
+python workflow.py --audio-source "audio/myfile.mp3" --target-languages es fr de pt
 
-   ```bash
-   python translate_srt.py --input-file input.srt
-   ```
+# Transcribe only (no translation)
+python workflow.py --transcribe-only --audio-source audio.mp3
 
-## Annex: Supported Languages
+# Translate only (use existing SRT file)
+python workflow.py --translate-only --srt-file subtitles.srt --target-languages es fr
+```
+
+### Option 2: Individual Scripts
+
+Use individual scripts for specific tasks:
+
+#### Transcription Only
+
+```bash
+# Transcribe local audio file
+python generate_srt_from_audio.py --input-file audio.mp3
+
+# Transcribe with specific language
+python generate_srt_from_audio.py --input-file audio.mp3 --language es-ES
+
+# Output to local only
+python generate_srt_from_audio.py --input-file audio.mp3 --output-type local
+```
+
+#### Translation Only
+
+```bash
+# Translate local SRT file to multiple languages
+python translate_srt.py --input-file subtitles.srt --target-languages es fr de
+
+# Use synchronous translation method
+python translate_srt.py --input-file subtitles.srt --target-languages es --method sync
+
+# Translate SRT file in Object Storage
+python translate_srt.py --input-file "srt_files/subtitles.srt" --target-languages es fr
+```
+
+## 3. Configuration
+
+The `config.yaml` file controls all aspects of the workflow. Key sections include:
+
+### Speech Configuration
+```yaml
+speech:
+  compartment_id: "ocid1.compartment.oc1..your-compartment-id"
+  bucket_name: "your-speech-bucket-name"
+  namespace: "your-namespace"
+  language_code: "en-US"  # Default transcription language
+```
+
+### Output Configuration
+```yaml
+output:
+  storage_type: "both"  # "local", "object_storage", or "both"
+  local_directory: "./output"
+  object_storage_prefix: "translations"
+```
+
+### Translation Configuration
+```yaml
+translation:
+  target_languages:
+    - "es"    # Spanish
+    - "fr"    # French
+    - "de"    # German
+  method: "batch"  # "batch" or "sync"
+```
+
+## 4. Supported Languages
+
+### Speech-to-Text (Transcription)
+
+The following language codes are supported for audio transcription:
+
+| Language | Code |
+|----------|------|
+| US English | en-US |
+| British English | en-GB |
+| Australian English | en-AU |
+| Indian English | en-IN |
+| Spanish (Spain) | es-ES |
+| Brazilian Portuguese | pt-BR |
+| Hindi (India) | hi-IN |
+| French (France) | fr-FR |
+| German (Germany) | de-DE |
+| Italian (Italy) | it-IT |
+
+### Translation
 
 The solution supports translation to the following languages:
 
@@ -128,6 +214,69 @@ The solution supports translation to the following languages:
 | Vietnamese | vi |
 
 For an updated list of supported languages, refer to [the OCI Documentation](https://docs.oracle.com/en-us/iaas/language/using/translate.htm#supported-langs).
+
+## 5. Advanced Usage
+
+### Custom Configuration Files
+
+```bash
+# Use a different configuration file
+python workflow.py --config my-config.yaml --audio-source audio.mp3
+```
+
+### Working with Object Storage
+
+```bash
+# Use files already in Object Storage (no local upload needed)
+python workflow.py --audio-source "audio/recording.mp3" --target-languages es fr
+
+# Store output only in Object Storage
+python generate_srt_from_audio.py --input-file audio.mp3 --output-type object_storage
+```
+
+### Translation Methods
+
+**Batch Translation** (default):
+- Best for larger files (up to 20MB)
+- More efficient for multiple languages
+- Uses OCI Language batch processing
+
+**Synchronous Translation**:
+- Best for smaller files or individual subtitles
+- Processes subtitle by subtitle
+- More reliable for very small files
+
+```bash
+# Force synchronous translation
+python translate_srt.py --input-file subtitles.srt --target-languages es --method sync
+```
+
+### Troubleshooting
+
+1. **Authentication Issues**: Ensure your OCI CLI is properly configured
+   ```bash
+   oci iam user get --user-id $(oci iam user list --query 'data[0].id' --raw-output)
+   ```
+
+2. **File Size Limits**: 
+   - Audio files: No specific limit for OCI Speech
+   - SRT files for batch translation: 20MB maximum
+   - Large files automatically fall back to synchronous translation
+
+3. **Output Directory**: The solution automatically creates output directories as needed
+
+## 6. Architecture
+
+The solution consists of modular components:
+
+- **workflow.py**: Main orchestration script
+- **generate_srt_from_audio.py**: OCI Speech service integration
+- **translate_srt.py**: OCI Language service integration
+
+This modular design allows you to:
+- Use individual components as needed
+- Integrate with existing workflows
+- Customize functionality for specific requirements
 
 ## Supported Language Codes
 
