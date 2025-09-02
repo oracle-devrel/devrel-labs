@@ -10,9 +10,8 @@ def load_config():
     with open('config.yaml', 'r') as f:
         return yaml.safe_load(f)
 
-def get_language_client():
+def get_language_client(config):
     """Initialize and return the OCI Language client"""
-    config = oci.config.from_file()
     return oci.ai_language.AIServiceLanguageClient(config)
 
 def upload_to_object_storage(object_storage_client, namespace, bucket_name, file_path):
@@ -63,22 +62,30 @@ def translate_srt(client, object_storage_client, config, input_file, source_lang
             input_file
         )
 
-        # Create document details
-        document_details = oci.ai_language.models.ObjectLocation(
+        # Create document details for input and output locations
+        input_location_details = oci.ai_language.models.ObjectStorageFileNameLocation(
             namespace_name=config['speech']['namespace'],
             bucket_name=config['speech']['bucket_name'],
             object_names=[input_object_name]
         )
 
+        output_location_details = oci.ai_language.models.ObjectPrefixOutputLocation(
+            namespace_name=config['speech']['namespace'],
+            bucket_name=config['speech']['bucket_name']
+        )
+
         # Create job details
-        create_job_details = oci.ai_language.models.CreateBatchLanguageTranslationJobDetails(
+        translation_task_details = oci.ai_language.models.BatchLanguageTranslationDetails(
+            target_language_code=target_lang
+        )
+
+        # 2. Define the generic job details, nesting the translation task inside.
+        create_job_details = oci.ai_language.models.CreateJobDetails(
             compartment_id=config['language']['compartment_id'],
             display_name=f"Translate_{os.path.basename(input_file)}_{target_lang}",
-            source_language_code=source_lang,
-            target_language_code=target_lang,
-            input_location=document_details,
-            output_location=document_details,
-            model_id="PRETRAINED_LANGUAGE_TRANSLATION"
+            input_location=input_location_details,
+            output_location=output_location_details,
+            job_details=translation_task_details 
         )
 
         # Create translation job
@@ -126,12 +133,22 @@ def main():
         print(f"Error: Input file {args.input_file} not found")
         return
 
-    # Load configuration
-    config = load_config()
+    # Load YAML configuration
+    config_yaml = load_config()
+
+    # Load OCI config from the profile specified in the YAML
+    profile_name = config_yaml.get("profile", "DEFAULT")
+    try:
+        oci_config = oci.config.from_file(profile_name=profile_name)
+        region = oci_config.get("region", "unknown")
+        print(f"INFO: Loaded OCI profile '{profile_name}' (region '{region}')")
+    except Exception as e:
+        print(f"ERROR: Failed to load OCI configuration: {e}")
+        return
 
     # Initialize clients
-    language_client = get_language_client()
-    object_storage_client = oci.object_storage.ObjectStorageClient(oci.config.from_file())
+    language_client = get_language_client(oci_config)
+    object_storage_client = oci.object_storage.ObjectStorageClient(oci_config)
 
     # If no target languages specified, translate to all supported languages
     target_langs = args.target_langs if args.target_langs else SUPPORTED_LANGUAGES.keys()
@@ -147,7 +164,7 @@ def main():
             translate_srt(
                 language_client,
                 object_storage_client,
-                config,
+                config_yaml,
                 args.input_file,
                 args.source_lang,
                 lang

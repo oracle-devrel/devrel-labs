@@ -10,6 +10,8 @@ The solution combines two powerful OCI services:
 
 This automated approach significantly reduces the time and effort required to create multilingual subtitles, making content more accessible to a global audience.
 
+PUT IMAGE HERE
+join oracle profile
 ## 0. Prerequisites and setup
 
 ### Prerequisites
