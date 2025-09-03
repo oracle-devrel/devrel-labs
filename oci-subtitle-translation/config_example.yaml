@@ -1,11 +1,32 @@
-# Speech Service Configuration
-profile: "your-profile"
+# OCI Subtitle Translation Configuration
+# Copy this file to config.yaml and update with your specific settings
 
+# OCI Profile Configuration
+profile: "DEFAULT"  # OCI CLI profile name from ~/.oci/config
+
+# Speech Service Configuration
 speech:
   compartment_id: "ocid1.compartment.oc1..your-compartment-id"
   bucket_name: "your-bucket-name"
   namespace: "your-namespace"
+  language_code: "en-US"
 
-# Language Translation Configuration
+# Language Translation Configuration  
 language:
   compartment_id: "ocid1.compartment.oc1..your-compartment-id"
+  # Optional: Leave empty to use same bucket/namespace as speech service
+  bucket_name: ""
+  namespace: ""
+
+# Output Configuration
+output:
+  storage_type: "both"  # "local", "object_storage", or "both"
+  local_directory: "./output"
+
+# Translation Settings
+translation:
+  target_languages:
+    - "es"    # Spanish
+    - "fr"    # French  
+    - "de"    # German
+  method: "batch"  # "batch" or "sync"
