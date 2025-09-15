@@ -74,8 +74,8 @@ This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python 
 2. Let's start indexing the files  
   2.1 - On your shell machine, get the code and create your .env file 
     ````
-    git clone https://github.com/jctarla/articles-oci_genai_file_indexer_agent.git  
-    cd articles-oci_genai_file_indexer_agent/src
+    git clone https://github.com/oracle-devrel/devrel-labs.git
+    cd langgraph_agent_with_genai/src
     ## Create your .env file from the template
     cp .env_template .env 
     ```` 
