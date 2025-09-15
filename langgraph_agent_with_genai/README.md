@@ -234,7 +234,7 @@ This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python 
 
 <br>  
 
-**Conclusion**  
+## Conclusion
 
 
 This project demonstrates how combining LangGraph, Oracle Generative AI, and Oracle Database 23ai can transform the way we interact with our files—making search faster, smarter, and more intuitive. While the implementation here focuses on document indexing and retrieval, the same principles can be extended to many other real-world scenarios. By experimenting with additional tools, refining thresholds, and expanding metadata extraction, you can evolve this agent into a powerful foundation for building AI-driven knowledge management systems. The journey does not end here—this is just the starting point for reimagining how we connect with our data.  
