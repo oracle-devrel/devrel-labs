@@ -238,3 +238,17 @@ This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python 
 
 
 This project demonstrates how combining LangGraph, Oracle Generative AI, and Oracle Database 23ai can transform the way we interact with our files—making search faster, smarter, and more intuitive. While the implementation here focuses on document indexing and retrieval, the same principles can be extended to many other real-world scenarios. By experimenting with additional tools, refining thresholds, and expanding metadata extraction, you can evolve this agent into a powerful foundation for building AI-driven knowledge management systems. The journey does not end here—this is just the starting point for reimagining how we connect with our data.  
+
+## Contributing
+
+This project is open source. Please submit your contributions by forking this repository and submitting a pull request! Oracle appreciates any contributions that are made by the open source community.
+
+## License
+
+Copyright (c) 2025 Oracle and/or its affiliates.
+
+Licensed under the Universal Permissive License (UPL), Version 1.0.
+
+See [LICENSE](../LICENSE) for more details.
+
+ORACLE AND ITS AFFILIATES DO NOT PROVIDE ANY WARRANTY WHATSOEVER, EXPRESS OR IMPLIED, FOR ANY SOFTWARE, MATERIAL OR CONTENT OF ANY KIND CONTAINED OR PRODUCED WITHIN THIS REPOSITORY, AND IN PARTICULAR SPECIFICALLY DISCLAIM ANY AND ALL IMPLIED WARRANTIES OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE. FURTHERMORE, ORACLE AND ITS AFFILIATES DO NOT REPRESENT THAT ANY CUSTOMARY SECURITY REVIEW HAS BEEN PERFORMED WITH RESPECT TO ANY SOFTWARE, MATERIAL OR CONTENT CONTAINED OR PRODUCED WITHIN THIS REPOSITORY. IN ADDITION, AND WITHOUT LIMITING THE FOREGOING, THIRD PARTIES MAY HAVE POSTED SOFTWARE, MATERIAL OR CONTENT TO THIS REPOSITORY WITHOUT ANY REVIEW. USE AT YOUR OWN RISK.
