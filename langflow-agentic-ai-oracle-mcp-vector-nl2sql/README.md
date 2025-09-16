@@ -14,6 +14,7 @@ As a bonus, we'll also show you how to create custom components and use custom m
 
 - Oracle Database 23ai
 - A Langflow account
+- Python environment with dependencies installed (conda, venv...)
 
 ### Docs
 
