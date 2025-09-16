@@ -140,25 +140,6 @@ def parse_date(date_str):
     logger.warning(f"Invalid date format: {date_str}")
     return None
 
-
-def parse_date_old(date_str):
-    if not date_str:
-        return None
-    input_formats = ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S")
-    for fmt in input_formats:
-        try:
-            dt = datetime.strptime(date_str, fmt)
-            # Escolhe o formato de saída com ou sem hora
-            if fmt == "%Y-%m-%d":
-                return dt.strftime("%Y-%m-%d")
-            else:
-                return dt.strftime("%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            continue
-    logger.warning(f"Invalid date format: {date_str}")
-    return None
-
-
 def execute_ddl(sql):
     try:
         conn = getOracleConnection()
