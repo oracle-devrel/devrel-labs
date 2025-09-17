@@ -41,7 +41,7 @@ This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python 
     # Install OpenGL 
     sudo dnf install -y mesa-libGL
    ```
- 
+   >**Note**: If you're using MacOS you don't need to install OpenGL.  
 
 ## Quick Start  
 
