@@ -454,6 +454,217 @@ Query a specific collection:
 python local_rag_agent.py --query "How to implement a queue?" --collection "Repository Collection"
 ```
 
+## 3. Agent2Agent (A2A) Protocol Integration
+
+The agentic_rag system now includes full support for the Agent2Agent (A2A) protocol, enabling seamless communication and collaboration with other AI agents. This integration transforms the system into an interoperable agent that can participate in multi-agent workflows and ecosystems.
+
+### 3.1 Why A2A Protocol Implementation?
+
+**Enhanced Interoperability**: The A2A protocol enables the agentic_rag system to communicate with other AI agents using a standardized protocol, breaking down silos between different AI systems and frameworks.
+
+**Scalable Multi-Agent Workflows**: By implementing A2A, the system can participate in complex multi-agent workflows where different agents handle specialized tasks (document processing, analysis, synthesis) and collaborate to solve complex problems.
+
+**Industry Standard Compliance**: A2A is an open standard developed by Google, ensuring compatibility with other A2A-compliant agents and future-proofing the system.
+
+**Enterprise-Grade Security**: A2A includes built-in security mechanisms including authentication, authorization, and secure communication protocols.
+
+**Agent Discovery**: The protocol enables automatic discovery of other agents and their capabilities, allowing for dynamic agent composition and task delegation.
+
+### 3.2 A2A Implementation Architecture
+
+The A2A implementation consists of several key components:
+
+#### 3.2.1 Core A2A Infrastructure
+
+- **A2A Models** (`a2a_models.py`): Pydantic models for JSON-RPC 2.0 communication
+- **A2A Handler** (`a2a_handler.py`): Main request handler and method router
+- **Task Manager** (`task_manager.py`): Long-running task execution and status tracking
+- **Agent Registry** (`agent_registry.py`): Agent discovery and capability management
+- **Agent Card** (`agent_card.py`): Capability advertisement and metadata
+
+#### 3.2.2 Supported A2A Methods
+
+The system supports the following A2A protocol methods:
+
+- `document.query`: Query documents using RAG with intelligent routing
+- `document.upload`: Process and store documents in vector database
+- `task.create`: Create long-running tasks for complex operations
+- `task.status`: Check status of running tasks
+- `task.cancel`: Cancel running tasks
+- `agent.discover`: Discover other agents and their capabilities
+- `agent.card`: Get agent capability information
+- `health.check`: System health and status check
+
+### 3.3 A2A Endpoints
+
+The system exposes the following A2A endpoints:
+
+- `POST /a2a`: Main A2A protocol endpoint for agent communication
+- `GET /agent_card`: Get the agent's capability card
+- `GET /a2a/health`: A2A health check endpoint
+
+### 3.4 Usage Examples
+
+#### 3.4.1 Basic A2A Communication
+
+```bash
+# Query documents via A2A protocol
+curl -X POST http://localhost:8000/a2a \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "document.query",
+    "params": {
+      "query": "What is machine learning?",
+      "collection": "PDF",
+      "use_cot": true
+    },
+    "id": "1"
+  }'
+```
+
+#### 3.4.2 Task Management
+
+```bash
+# Create a long-running task
+curl -X POST http://localhost:8000/a2a \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "task.create",
+    "params": {
+      "task_type": "document_processing",
+      "params": {
+        "document": "large_document.pdf",
+        "chunk_count": 100
+      }
+    },
+    "id": "2"
+  }'
+
+# Check task status
+curl -X POST http://localhost:8000/a2a \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "task.status",
+    "params": {
+      "task_id": "task-id-from-previous-response"
+    },
+    "id": "3"
+  }'
+```
+
+#### 3.4.3 Agent Discovery
+
+```bash
+# Discover agents with specific capabilities
+curl -X POST http://localhost:8000/a2a \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "agent.discover",
+    "params": {
+      "capability": "document.query"
+    },
+    "id": "4"
+  }'
+
+# Get agent card
+curl -X GET http://localhost:8000/agent_card
+```
+
+### 3.5 Testing A2A Implementation
+
+The A2A implementation includes comprehensive tests covering all functionality:
+
+#### 3.5.1 Running Tests
+
+```bash
+# Run all A2A tests
+python run_a2a_tests.py
+
+# Run specific test categories
+python -m pytest test_a2a.py::TestA2AModels -v
+python -m pytest test_a2a.py::TestA2AHandler -v
+python -m pytest test_a2a.py::TestTaskManager -v
+python -m pytest test_a2a.py::TestAgentRegistry -v
+```
+
+#### 3.5.2 Test Coverage
+
+The test suite includes:
+
+- **Unit Tests**: Individual component testing
+- **Integration Tests**: End-to-end workflow testing
+- **Async Tests**: Asynchronous operation testing
+- **Error Handling**: Error condition testing
+- **Model Validation**: Data model testing
+
+### 3.6 A2A Agent Card
+
+The system publishes its capabilities through an agent card:
+
+```json
+{
+  "agent_id": "agentic_rag_v1",
+  "name": "Agentic RAG System",
+  "version": "1.0.0",
+  "description": "Intelligent RAG system with multi-agent reasoning",
+  "capabilities": [
+    {
+      "name": "document.query",
+      "description": "Query documents using RAG with context retrieval",
+      "input_schema": { ... },
+      "output_schema": { ... }
+    }
+  ],
+  "endpoints": {
+    "base_url": "http://localhost:8000",
+    "authentication": { ... }
+  }
+}
+```
+
+### 3.7 Benefits of A2A Integration
+
+1. **Interoperability**: Seamless communication with other A2A-compliant agents
+2. **Scalability**: Support for complex multi-agent workflows
+3. **Standardization**: Industry-standard communication protocol
+4. **Discovery**: Automatic agent and capability discovery
+5. **Security**: Built-in authentication and authorization
+6. **Future-Proofing**: Compatibility with evolving agent ecosystems
+
+### 3.8 Configuration
+
+No additional configuration is required for A2A functionality. The system automatically:
+
+- Initializes A2A handlers on startup
+- Registers available capabilities
+- Starts task management services
+- Enables agent discovery
+
+### 3.9 Troubleshooting
+
+#### Common Issues
+
+1. **Async Test Failures**: Ensure `pytest-asyncio` is installed
+2. **Import Errors**: Verify all A2A modules are in the Python path
+3. **Task Timeouts**: Check task manager configuration for long-running tasks
+
+#### Debug Commands
+
+```bash
+# Check A2A health
+curl -X GET http://localhost:8000/a2a/health
+
+# View agent capabilities
+curl -X GET http://localhost:8000/agent_card
+
+# Test basic functionality
+python -c "from a2a_models import A2ARequest; print('A2A models working')"
+```
+
 ## Contributing
 
 This project is open source. Please submit your contributions by forking this repository and submitting a pull request! Oracle appreciates any contributions that are made by the open source community.

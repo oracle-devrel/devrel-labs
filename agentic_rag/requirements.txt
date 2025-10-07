@@ -20,3 +20,5 @@ bitsandbytes
 ollama
 oracledb
 sentence-transformers
+pytest
+pytest-asyncio

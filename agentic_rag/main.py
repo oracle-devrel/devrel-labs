@@ -11,13 +11,18 @@ from store import VectorStore
 from local_rag_agent import LocalRAGAgent
 from rag_agent import RAGAgent
 
+# A2A Protocol imports
+from a2a_models import A2ARequest, A2AResponse
+from a2a_handler import A2AHandler
+from agent_card import get_agent_card
+
 # Load environment variables
 load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Agentic RAG API",
-    description="API for processing PDFs and answering queries using an agentic RAG system",
+    title="Agentic RAG API with A2A Protocol",
+    description="API for processing PDFs and answering queries using an agentic RAG system with Agent2Agent (A2A) protocol support",
     version="1.0.0"
 )
 
@@ -70,6 +75,11 @@ else:
         else:
             print("\nNo available models. Please check your configuration.")
             raise e
+
+# Initialize A2A handler
+print("\nInitializing A2A Protocol handler...")
+a2a_handler = A2AHandler(rag_agent, vector_store)
+print("A2A Protocol handler initialized successfully.")
 
 class QueryRequest(BaseModel):
     query: str
@@ -152,6 +162,25 @@ async def query(request: QueryRequest):
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# A2A Protocol endpoints
+@app.post("/a2a", response_model=A2AResponse)
+async def a2a_endpoint(request: A2ARequest):
+    """A2A Protocol endpoint for agent-to-agent communication"""
+    return await a2a_handler.handle_request(request)
+
+@app.get("/agent_card")
+async def get_agent_card_endpoint():
+    """Get the agent card for this agent"""
+    return get_agent_card()
+
+@app.get("/a2a/health")
+async def a2a_health_check():
+    """A2A health check endpoint"""
+    return await a2a_handler.handle_request(A2ARequest(
+        method="health.check",
+        params={}
+    ))
 
 if __name__ == "__main__":
     import uvicorn
