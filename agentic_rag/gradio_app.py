@@ -7,6 +7,11 @@ from dotenv import load_dotenv
 import yaml
 import torch
 import time
+import requests
+import json
+import asyncio
+import threading
+from datetime import datetime
 
 from pdf_processor import PDFProcessor
 from web_processor import WebProcessor
@@ -69,6 +74,67 @@ except Exception as e:
     print("Falling back to Local Mistral model" if hf_token else "No local model available")
     
 openai_agent = RAGAgent(vector_store, openai_api_key=openai_key, use_cot=True) if openai_key else None
+
+# A2A Client for testing
+class A2AClient:
+    """A2A client for testing A2A protocol functionality"""
+    
+    def __init__(self, base_url: str = "http://localhost:8000"):
+        self.base_url = base_url
+        self.session = requests.Session()
+        self.session.timeout = 30
+    
+    def make_request(self, method: str, params: Dict[str, Any], request_id: str = "1") -> Dict[str, Any]:
+        """Make an A2A request"""
+        payload = {
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": params,
+            "id": request_id
+        }
+        
+        try:
+            response = self.session.post(
+                f"{self.base_url}/a2a",
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Request failed: {str(e)}"
+                },
+                "id": request_id
+            }
+    
+    def get_agent_card(self) -> Dict[str, Any]:
+        """Get the agent card"""
+        try:
+            response = self.session.get(f"{self.base_url}/agent_card")
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {"error": f"Failed to get agent card: {str(e)}"}
+    
+    def health_check(self) -> Dict[str, Any]:
+        """Check system health"""
+        try:
+            response = self.session.get(f"{self.base_url}/a2a/health")
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {"error": f"Health check failed: {str(e)}"}
+
+# Initialize A2A client
+a2a_client = A2AClient()
+
+# Global task tracking for A2A testing
+a2a_tasks = {}
+a2a_task_counter = 0
 
 def process_pdf(file: tempfile._TemporaryFileWrapper) -> str:
     """Process uploaded PDF file"""
@@ -272,6 +338,344 @@ def chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool,
         history.append([message, error_msg])
         return history
 
+# A2A Testing Functions
+def test_a2a_health() -> str:
+    """Test A2A health check"""
+    try:
+        response = a2a_client.health_check()
+        if "error" in response:
+            return f"❌ Health Check Failed: {response['error']}"
+        else:
+            return f"✅ Health Check Passed: {json.dumps(response, indent=2)}"
+    except Exception as e:
+        return f"❌ Health Check Error: {str(e)}"
+
+def test_a2a_agent_card() -> str:
+    """Test A2A agent card retrieval"""
+    try:
+        response = a2a_client.get_agent_card()
+        if "error" in response:
+            return f"❌ Agent Card Failed: {response['error']}"
+        else:
+            return f"✅ Agent Card Retrieved: {json.dumps(response, indent=2)}"
+    except Exception as e:
+        return f"❌ Agent Card Error: {str(e)}"
+
+def test_a2a_document_query(query: str, collection: str, use_cot: bool) -> str:
+    """Test A2A document query"""
+    try:
+        # Map collection names to A2A collection format
+        collection_mapping = {
+            "PDF Collection": "PDF",
+            "Repository Collection": "Repository", 
+            "Web Knowledge Base": "Web",
+            "General Knowledge": "General"
+        }
+        a2a_collection = collection_mapping.get(collection, "General")
+        
+        response = a2a_client.make_request(
+            "document.query",
+            {
+                "query": query,
+                "collection": a2a_collection,
+                "use_cot": use_cot,
+                "max_results": 3
+            },
+            f"query-{int(time.time())}"
+        )
+        
+        if "error" in response:
+            return f"❌ Document Query Failed: {json.dumps(response['error'], indent=2)}"
+        else:
+            result = response.get("result", {})
+            answer = result.get("answer", "No answer provided")
+            sources = result.get("sources", {})
+            reasoning = result.get("reasoning_steps", [])
+            
+            response_text = f"✅ Document Query Success:\n\n"
+            response_text += f"Answer: {answer}\n\n"
+            
+            if reasoning:
+                response_text += f"Reasoning Steps:\n"
+                for i, step in enumerate(reasoning, 1):
+                    response_text += f"{i}. {step}\n"
+                response_text += "\n"
+            
+            if sources:
+                response_text += f"Sources: {json.dumps(sources, indent=2)}\n"
+            
+            return response_text
+    except Exception as e:
+        return f"❌ Document Query Error: {str(e)}"
+
+def test_a2a_task_create(task_type: str, task_params: str) -> str:
+    """Test A2A task creation"""
+    global a2a_task_counter
+    try:
+        # Parse task parameters
+        try:
+            params = json.loads(task_params) if task_params.strip() else {}
+        except json.JSONDecodeError:
+            params = {"description": task_params}
+        
+        a2a_task_counter += 1
+        task_id = f"gradio-task-{a2a_task_counter}"
+        
+        response = a2a_client.make_request(
+            "task.create",
+            {
+                "task_type": task_type,
+                "params": params
+            },
+            task_id
+        )
+        
+        if "error" in response:
+            return f"❌ Task Creation Failed: {json.dumps(response['error'], indent=2)}"
+        else:
+            result = response.get("result", {})
+            created_task_id = result.get("task_id", "unknown")
+            
+            # Store task for tracking
+            a2a_tasks[created_task_id] = {
+                "id": created_task_id,
+                "type": task_type,
+                "params": params,
+                "created_at": datetime.now().isoformat(),
+                "status": "created"
+            }
+            
+            return f"✅ Task Created Successfully:\n\nTask ID: {created_task_id}\nType: {task_type}\nParams: {json.dumps(params, indent=2)}\nStatus: {result.get('status', 'unknown')}"
+    except Exception as e:
+        return f"❌ Task Creation Error: {str(e)}"
+
+def test_a2a_task_status(task_id: str) -> str:
+    """Test A2A task status check"""
+    try:
+        response = a2a_client.make_request(
+            "task.status",
+            {"task_id": task_id},
+            f"status-{int(time.time())}"
+        )
+        
+        if "error" in response:
+            return f"❌ Task Status Failed: {json.dumps(response['error'], indent=2)}"
+        else:
+            result = response.get("result", {})
+            return f"✅ Task Status Retrieved:\n\n{json.dumps(result, indent=2)}"
+    except Exception as e:
+        return f"❌ Task Status Error: {str(e)}"
+
+def test_a2a_agent_discover(capability: str) -> str:
+    """Test A2A agent discovery"""
+    try:
+        response = a2a_client.make_request(
+            "agent.discover",
+            {"capability": capability},
+            f"discover-{int(time.time())}"
+        )
+        
+        if "error" in response:
+            return f"❌ Agent Discovery Failed: {json.dumps(response['error'], indent=2)}"
+        else:
+            result = response.get("result", {})
+            agents = result.get("agents", [])
+            
+            response_text = f"✅ Agent Discovery Success:\n\n"
+            response_text += f"Capability: {capability}\n"
+            response_text += f"Found {len(agents)} agents:\n\n"
+            
+            for i, agent in enumerate(agents, 1):
+                response_text += f"{i}. {json.dumps(agent, indent=2)}\n\n"
+            
+            return response_text
+    except Exception as e:
+        return f"❌ Agent Discovery Error: {str(e)}"
+
+def get_a2a_task_list() -> str:
+    """Get list of tracked A2A tasks"""
+    if not a2a_tasks:
+        return "No tasks tracked yet. Create a task first."
+    
+    response_text = "📋 Tracked A2A Tasks:\n\n"
+    for task_id, task_info in a2a_tasks.items():
+        response_text += f"Task ID: {task_id}\n"
+        response_text += f"Type: {task_info['type']}\n"
+        response_text += f"Created: {task_info['created_at']}\n"
+        response_text += f"Status: {task_info['status']}\n"
+        response_text += f"Params: {json.dumps(task_info['params'], indent=2)}\n"
+        response_text += "-" * 50 + "\n"
+    
+    return response_text
+
+def refresh_a2a_tasks() -> str:
+    """Refresh status of all tracked tasks"""
+    if not a2a_tasks:
+        return "No tasks to refresh."
+    
+    response_text = "🔄 Refreshing Task Statuses:\n\n"
+    for task_id in list(a2a_tasks.keys()):
+        try:
+            status_response = a2a_client.make_request(
+                "task.status",
+                {"task_id": task_id},
+                f"refresh-{int(time.time())}"
+            )
+            
+            if "error" not in status_response:
+                result = status_response.get("result", {})
+                a2a_tasks[task_id]["status"] = result.get("status", "unknown")
+                response_text += f"✅ {task_id}: {result.get('status', 'unknown')}\n"
+            else:
+                response_text += f"❌ {task_id}: Error checking status\n"
+        except Exception as e:
+            response_text += f"❌ {task_id}: {str(e)}\n"
+    
+    return response_text
+
+# Individual test functions for quick test suite
+def test_individual_health() -> str:
+    """Individual health test"""
+    return test_a2a_health()
+
+def test_individual_card() -> str:
+    """Individual agent card test"""
+    return test_a2a_agent_card()
+
+def test_individual_discover() -> str:
+    """Individual agent discovery test"""
+    return test_a2a_agent_discover("document.query")
+
+def test_individual_query() -> str:
+    """Individual document query test"""
+    return test_a2a_document_query("What is machine learning?", "General Knowledge", False)
+
+def test_individual_task() -> str:
+    """Individual task creation test"""
+    return test_a2a_task_create("individual_test", '{"description": "Individual test task", "test_type": "quick"}')
+
+# A2A Chat Interface Functions
+def a2a_chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool, collection: str) -> List[List[str]]:
+    """Process chat message using A2A protocol instead of direct agent calls"""
+    try:
+        print("\n" + "="*50)
+        print(f"A2A Chat - New message: {message}")
+        print(f"Agent: {agent_type}, CoT: {use_cot}, Collection: {collection}")
+        print("="*50 + "\n")
+        
+        # Map collection names to A2A collection format
+        collection_mapping = {
+            "PDF Collection": "PDF",
+            "Repository Collection": "Repository", 
+            "Web Knowledge Base": "Web",
+            "General Knowledge": "General"
+        }
+        a2a_collection = collection_mapping.get(collection, "General")
+        
+        # Make A2A document query request
+        response = a2a_client.make_request(
+            "document.query",
+            {
+                "query": message,
+                "collection": a2a_collection,
+                "use_cot": use_cot,
+                "max_results": 5
+            },
+            f"chat-{int(time.time())}"
+        )
+        
+        if "error" in response:
+            error_msg = f"A2A Error: {json.dumps(response['error'], indent=2)}"
+            print(f"A2A Error: {error_msg}")
+            history.append([message, error_msg])
+            return history
+        
+        # Extract result from A2A response
+        result = response.get("result", {})
+        answer = result.get("answer", "No answer provided")
+        sources = result.get("sources", {})
+        reasoning_steps = result.get("reasoning_steps", [])
+        context = result.get("context", [])
+        
+        # Format response similar to standard chat interface
+        if use_cot and reasoning_steps:
+            formatted_response = "🤔 Let me think about this step by step:\n\n"
+            print("\nA2A Chain of Thought Reasoning Steps:")
+            print("-" * 50)
+            
+            # Add each reasoning step
+            for i, step in enumerate(reasoning_steps, 1):
+                step_text = f"Step {i}:\n{step}\n"
+                formatted_response += step_text
+                print(step_text)
+                
+                # Add intermediate response to chat history
+                history.append([None, f"🔄 Step {i} Conclusion:\n{step}"])
+            
+            # Add final answer
+            print("\nFinal Answer:")
+            print("-" * 50)
+            final_answer = "\n🎯 Final Answer:\n" + answer
+            formatted_response += final_answer
+            print(final_answer)
+            
+            # Add sources if available
+            if sources:
+                print("\nSources Used:")
+                print("-" * 50)
+                sources_text = "\n📚 Sources used:\n"
+                formatted_response += sources_text
+                print(sources_text)
+                
+                for source, details in sources.items():
+                    if isinstance(details, str):
+                        source_line = f"- {source}: {details}\n"
+                    else:
+                        source_line = f"- {source}\n"
+                    formatted_response += source_line
+                    print(source_line)
+            
+            # Add final formatted response to history
+            history.append([message, formatted_response])
+        else:
+            # For standard response (no CoT)
+            formatted_response = answer
+            print("\nA2A Standard Response:")
+            print("-" * 50)
+            print(formatted_response)
+            
+            # Add sources if available
+            if sources:
+                print("\nSources Used:")
+                print("-" * 50)
+                sources_text = "\n\n📚 Sources used:\n"
+                formatted_response += sources_text
+                print(sources_text)
+                
+                for source, details in sources.items():
+                    if isinstance(details, str):
+                        source_line = f"- {source}: {details}\n"
+                    else:
+                        source_line = f"- {source}\n"
+                    formatted_response += source_line
+                    print(source_line)
+            
+            history.append([message, formatted_response])
+        
+        print("\n" + "="*50)
+        print("A2A Response complete")
+        print("="*50 + "\n")
+        
+        return history
+    except Exception as e:
+        error_msg = f"A2A Chat Error: {str(e)}"
+        print(f"\nA2A Chat Error:")
+        print("-" * 50)
+        print(error_msg)
+        print("="*50 + "\n")
+        history.append([message, error_msg])
+        return history
+
 def create_interface():
     """Create Gradio interface"""
     with gr.Blocks(title="Agentic RAG System", theme=gr.themes.Soft()) as interface:
@@ -441,6 +845,176 @@ def create_interface():
                 cot_send = gr.Button("Send", scale=1)
             cot_clear = gr.Button("Clear Chat")
         
+        # A2A Chat Interface Tab
+        with gr.Tab("A2A Chat Interface"):
+            gr.Markdown("""
+            # 🤖 A2A Chat Interface
+            
+            Chat with your documents using the A2A (Agent2Agent) protocol. This interface provides the same 
+            experience as the standard chat interfaces but communicates through the A2A server.
+            
+            > **Prerequisites**: A2A server must be running (`python main.py` on port 8000)
+            > **Note**: This interface uses A2A protocol for all communication, providing agent-to-agent 
+            > interaction capabilities while maintaining the familiar chat experience.
+            """)
+            
+            with gr.Row():
+                with gr.Column(scale=1):
+                    a2a_agent_dropdown = gr.Dropdown(
+                        choices=model_choices,
+                        value=default_model if default_model in model_choices else model_choices[0] if model_choices else None,
+                        label="Select Agent",
+                        info="Agent selection (for display purposes - A2A server handles the actual model)"
+                    )
+                with gr.Column(scale=1):
+                    a2a_collection_dropdown = gr.Dropdown(
+                        choices=collection_choices,
+                        value=collection_choices[0],
+                        label="Select Knowledge Base",
+                        info="Choose which knowledge base to use for answering questions"
+                    )
+            
+            gr.Markdown("""
+            > **Collection Selection**: 
+            > - When a specific collection is selected, the A2A server will use that collection:
+            >   - "PDF Collection": Will search the PDF documents via A2A
+            >   - "Repository Collection": Will search the repository code via A2A
+            >   - "Web Knowledge Base": Will search web content via A2A
+            >   - "General Knowledge": Will use the model's built-in knowledge via A2A
+            > - All communication goes through the A2A protocol for agent-to-agent interaction
+            """)
+            
+            with gr.Row():
+                with gr.Column(scale=1):
+                    a2a_use_cot_checkbox = gr.Checkbox(
+                        label="Use Chain of Thought", 
+                        value=False,
+                        info="Enable step-by-step reasoning through A2A"
+                    )
+                with gr.Column(scale=1):
+                    a2a_clear_button = gr.Button("Clear Chat", variant="secondary")
+            
+            a2a_chatbot = gr.Chatbot(height=400, label="A2A Chat")
+            with gr.Row():
+                a2a_msg = gr.Textbox(label="Your Message", scale=9, placeholder="Ask a question...")
+                a2a_send = gr.Button("Send", scale=1, variant="primary")
+            
+            # A2A Status indicator
+            with gr.Row():
+                a2a_status_button = gr.Button("🔍 Check A2A Status", variant="secondary", size="sm")
+                a2a_status_output = gr.Textbox(label="A2A Status", lines=2, interactive=False, visible=False)
+        
+        # A2A Testing Tab
+        with gr.Tab("A2A Protocol Testing"):
+            gr.Markdown("""
+            # 🤖 A2A Protocol Testing Interface
+            
+            Test the Agent2Agent (A2A) protocol functionality. Make sure the A2A server is running on `localhost:8000`.
+            
+            > **Note**: This interface tests the A2A protocol by making HTTP requests to the A2A server. 
+            > The server must be running separately using `python main.py`.
+            """)
+            
+            with gr.Row():
+                with gr.Column(scale=1):
+                    gr.Markdown("### 🔍 Basic A2A Tests")
+                    
+                    # Health Check
+                    health_button = gr.Button("🏥 Health Check", variant="secondary")
+                    health_output = gr.Textbox(label="Health Check Result", lines=5, interactive=False)
+                    
+                    # Agent Card
+                    agent_card_button = gr.Button("🃏 Get Agent Card", variant="secondary")
+                    agent_card_output = gr.Textbox(label="Agent Card Result", lines=8, interactive=False)
+                    
+                    # Agent Discovery
+                    with gr.Row():
+                        discover_capability = gr.Textbox(
+                            label="Capability to Discover", 
+                            value="document.query",
+                            placeholder="e.g., document.query, task.create"
+                        )
+                        discover_button = gr.Button("🔍 Discover Agents", variant="secondary")
+                    discover_output = gr.Textbox(label="Agent Discovery Result", lines=6, interactive=False)
+                
+                with gr.Column(scale=1):
+                    gr.Markdown("### 📄 Document Query Testing")
+                    
+                    with gr.Row():
+                        a2a_query = gr.Textbox(
+                            label="Query", 
+                            value="What is artificial intelligence?",
+                            placeholder="Enter your question"
+                        )
+                        a2a_collection = gr.Dropdown(
+                            choices=["PDF Collection", "Repository Collection", "Web Knowledge Base", "General Knowledge"],
+                            value="General Knowledge",
+                            label="Collection"
+                        )
+                    
+                    a2a_use_cot = gr.Checkbox(label="Use Chain of Thought", value=False)
+                    a2a_query_button = gr.Button("🔍 Query Documents", variant="primary")
+                    a2a_query_output = gr.Textbox(label="Document Query Result", lines=10, interactive=False)
+            
+            gr.Markdown("---")
+            
+            with gr.Row():
+                with gr.Column(scale=1):
+                    gr.Markdown("### 📋 Task Management")
+                    
+                    with gr.Row():
+                        task_type = gr.Textbox(
+                            label="Task Type", 
+                            value="document_processing",
+                            placeholder="e.g., document_processing, analysis_task"
+                        )
+                        task_params = gr.Textbox(
+                            label="Task Parameters (JSON)", 
+                            value='{"document": "test.pdf", "chunk_count": 10}',
+                            placeholder='{"key": "value"}'
+                        )
+                    
+                    task_create_button = gr.Button("➕ Create Task", variant="primary")
+                    task_create_output = gr.Textbox(label="Task Creation Result", lines=6, interactive=False)
+                    
+                    with gr.Row():
+                        task_id_input = gr.Textbox(
+                            label="Task ID to Check", 
+                            placeholder="Enter task ID from creation result"
+                        )
+                        task_status_button = gr.Button("📊 Check Task Status", variant="secondary")
+                    task_status_output = gr.Textbox(label="Task Status Result", lines=6, interactive=False)
+                
+                with gr.Column(scale=1):
+                    gr.Markdown("### 📊 Task Management Dashboard")
+                    
+                    task_list_button = gr.Button("📋 Show All Tasks", variant="secondary")
+                    task_refresh_button = gr.Button("🔄 Refresh Task Statuses", variant="secondary")
+                    task_dashboard_output = gr.Textbox(label="Task Dashboard", lines=12, interactive=False)
+            
+            gr.Markdown("---")
+            
+            with gr.Row():
+                gr.Markdown("""
+                ### 🚀 Quick Test Suite
+                
+                Run individual A2A tests or all tests in sequence to verify the complete functionality.
+                """)
+                
+                with gr.Column(scale=1):
+                    gr.Markdown("**Individual Tests:**")
+                    individual_health_button = gr.Button("🏥 Test Health", variant="secondary", size="sm")
+                    individual_card_button = gr.Button("🃏 Test Agent Card", variant="secondary", size="sm")
+                    individual_discover_button = gr.Button("🔍 Test Discovery", variant="secondary", size="sm")
+                    individual_query_button = gr.Button("📄 Test Query", variant="secondary", size="sm")
+                    individual_task_button = gr.Button("📋 Test Task", variant="secondary", size="sm")
+                
+                with gr.Column(scale=1):
+                    gr.Markdown("**Complete Test Suite:**")
+                    run_all_tests_button = gr.Button("🧪 Run All A2A Tests", variant="primary", size="lg")
+                
+                all_tests_output = gr.Textbox(label="Test Results", lines=15, interactive=False)
+        
         # Event handlers
         pdf_button.click(process_pdf, inputs=[pdf_file], outputs=[pdf_output])
         url_button.click(process_url, inputs=[url_input], outputs=[url_output])
@@ -499,6 +1073,108 @@ def create_interface():
         )
         cot_clear.click(lambda: None, None, cot_chatbot, queue=False)
         
+        # A2A Testing Event Handlers
+        health_button.click(test_a2a_health, outputs=[health_output])
+        agent_card_button.click(test_a2a_agent_card, outputs=[agent_card_output])
+        discover_button.click(test_a2a_agent_discover, inputs=[discover_capability], outputs=[discover_output])
+        a2a_query_button.click(test_a2a_document_query, inputs=[a2a_query, a2a_collection, a2a_use_cot], outputs=[a2a_query_output])
+        task_create_button.click(test_a2a_task_create, inputs=[task_type, task_params], outputs=[task_create_output])
+        task_status_button.click(test_a2a_task_status, inputs=[task_id_input], outputs=[task_status_output])
+        task_list_button.click(get_a2a_task_list, outputs=[task_dashboard_output])
+        task_refresh_button.click(refresh_a2a_tasks, outputs=[task_dashboard_output])
+        
+        # Run all tests function
+        def run_all_a2a_tests():
+            """Run all A2A tests in sequence"""
+            results = []
+            results.append("🧪 Running Complete A2A Test Suite")
+            results.append("=" * 60)
+            
+            # Test 1: Health Check
+            results.append("\n1. 🏥 Health Check")
+            results.append("-" * 30)
+            health_result = test_a2a_health()
+            results.append(health_result)
+            
+            # Test 2: Agent Card
+            results.append("\n2. 🃏 Agent Card")
+            results.append("-" * 30)
+            card_result = test_a2a_agent_card()
+            results.append(card_result)
+            
+            # Test 3: Agent Discovery
+            results.append("\n3. 🔍 Agent Discovery")
+            results.append("-" * 30)
+            discover_result = test_a2a_agent_discover("document.query")
+            results.append(discover_result)
+            
+            # Test 4: Document Query
+            results.append("\n4. 📄 Document Query")
+            results.append("-" * 30)
+            query_result = test_a2a_document_query("What is machine learning?", "General Knowledge", False)
+            results.append(query_result)
+            
+            # Test 5: Task Creation
+            results.append("\n5. 📋 Task Creation")
+            results.append("-" * 30)
+            task_result = test_a2a_task_create("test_task", '{"description": "A2A test task", "priority": "high"}')
+            results.append(task_result)
+            
+            # Test 6: Task Status (if task was created)
+            if "Task ID:" in task_result and "gradio-task-" in task_result:
+                # Extract task ID from result
+                task_id = None
+                for line in task_result.split('\n'):
+                    if "Task ID:" in line:
+                        task_id = line.split("Task ID:")[1].strip()
+                        break
+                
+                if task_id:
+                    results.append("\n6. 📊 Task Status Check")
+                    results.append("-" * 30)
+                    status_result = test_a2a_task_status(task_id)
+                    results.append(status_result)
+            
+            results.append("\n" + "=" * 60)
+            results.append("🎉 A2A Test Suite Complete!")
+            
+            return "\n".join(results)
+        
+        run_all_tests_button.click(run_all_a2a_tests, outputs=[all_tests_output])
+        
+        # Individual test event handlers
+        individual_health_button.click(test_individual_health, outputs=[all_tests_output])
+        individual_card_button.click(test_individual_card, outputs=[all_tests_output])
+        individual_discover_button.click(test_individual_discover, outputs=[all_tests_output])
+        individual_query_button.click(test_individual_query, outputs=[all_tests_output])
+        individual_task_button.click(test_individual_task, outputs=[all_tests_output])
+        
+        # A2A Chat Interface Event Handlers
+        a2a_msg.submit(
+            a2a_chat,
+            inputs=[
+                a2a_msg,
+                a2a_chatbot,
+                a2a_agent_dropdown,
+                a2a_use_cot_checkbox,
+                a2a_collection_dropdown
+            ],
+            outputs=[a2a_chatbot]
+        )
+        a2a_send.click(
+            a2a_chat,
+            inputs=[
+                a2a_msg,
+                a2a_chatbot,
+                a2a_agent_dropdown,
+                a2a_use_cot_checkbox,
+                a2a_collection_dropdown
+            ],
+            outputs=[a2a_chatbot]
+        )
+        a2a_clear_button.click(lambda: None, None, a2a_chatbot, queue=False)
+        a2a_status_button.click(test_a2a_health, outputs=[a2a_status_output])
+        
         # Instructions
         gr.Markdown("""
         ## Instructions
@@ -525,16 +1201,39 @@ def create_interface():
            - May take longer but provides more detailed and thorough answers
            - Same collection selection options as the Standard Chat Interface
         
-        4. **Performance Expectations**:
+        4. **A2A Chat Interface**:
+           - Same chat experience as standard interfaces but uses A2A protocol
+           - **Prerequisites**: A2A server must be running (`python main.py` on port 8000)
+           - **Agent-to-Agent Communication**: All queries go through A2A protocol
+           - **Collection Support**: PDF, Repository, Web, and General Knowledge collections
+           - **Chain of Thought**: Step-by-step reasoning through A2A
+           - **Status Monitoring**: Check A2A server connectivity
+           - **Same UI**: Familiar chat interface with A2A backend
+        
+        5. **A2A Protocol Testing**:
+           - Test the Agent2Agent (A2A) protocol functionality
+           - **Prerequisites**: A2A server must be running (`python main.py` on port 8000)
+           - **Health Check**: Verify A2A server connectivity
+           - **Agent Card**: Get agent capability information
+           - **Agent Discovery**: Find agents with specific capabilities
+           - **Document Query**: Test A2A document querying with different collections
+           - **Task Management**: Create, monitor, and track long-running tasks
+           - **Task Dashboard**: View all tracked tasks and their statuses
+           - **Complete Test Suite**: Run all A2A tests in sequence
+        
+        6. **Performance Expectations**:
            - **Ollama models**: Typically faster inference, default is qwen2
            - **Local (Mistral) model**: Initial loading takes 1-5 minutes, each query takes 30-60 seconds
            - **OpenAI model**: Fast responses, typically a few seconds per query
            - Chain of Thought reasoning takes longer for all models
+           - **A2A requests**: Depends on A2A server performance and network latency
+           - **A2A Chat Interface**: Same performance as A2A server + network overhead
         
         Note: The interface will automatically detect available models based on your configuration:
         - Ollama models are the default option (requires Ollama to be installed and running)
         - Local Mistral model requires HuggingFace token in `config.yaml` (fallback option)
         - OpenAI model requires API key in `.env` file
+        - A2A testing requires the A2A server to be running separately
         """)
     
     return interface
