@@ -91,6 +91,8 @@ class A2ATester:
                 {"capability": "document.query"}
             )
             
+            print(f"Discovery response: {json.dumps(response, indent=2)}")
+            
             if "error" in response:
                 print(f"❌ Agent Discovery: FAILED - {response['error']}")
                 self.test_results.append(("Agent Discovery", False, str(response['error'])))
@@ -100,10 +102,15 @@ class A2ATester:
                 agents = result.get("agents", [])
                 if agents:
                     print(f"✅ Agent Discovery: PASSED - Found {len(agents)} agents")
+                    for i, agent in enumerate(agents, 1):
+                        agent_id = agent.get('agent_id', 'unknown')
+                        agent_name = agent.get('name', 'unknown')
+                        print(f"  Agent {i}: {agent_id} - {agent_name}")
                     self.test_results.append(("Agent Discovery", True, f"Found {len(agents)} agents"))
                     return True
                 else:
                     print("❌ Agent Discovery: FAILED - No agents found")
+                    print(f"  Result: {result}")
                     self.test_results.append(("Agent Discovery", False, "No agents found"))
                     return False
         except Exception as e:

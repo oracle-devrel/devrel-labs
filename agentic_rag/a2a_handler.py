@@ -40,6 +40,54 @@ class A2AHandler:
             "task.cancel": self.handle_task_cancel,
             "health.check": self.handle_health_check,
         }
+        
+        # Register this agent in the registry
+        self._register_self()
+    
+    def _register_self(self):
+        """Register this agent in the agent registry"""
+        try:
+            from agent_card import get_agent_card
+            agent_card_data = get_agent_card()
+            
+            # Convert the agent card data to AgentCard object
+            from a2a_models import AgentCard, AgentCapability, AgentEndpoints
+            
+            # Extract capabilities
+            capabilities = []
+            for cap_data in agent_card_data.get("capabilities", []):
+                capability = AgentCapability(
+                    name=cap_data["name"],
+                    description=cap_data["description"],
+                    input_schema=cap_data.get("input_schema", {}),
+                    output_schema=cap_data.get("output_schema", {})
+                )
+                capabilities.append(capability)
+            
+            # Create endpoints
+            endpoints_data = agent_card_data.get("endpoints", {})
+            endpoints = AgentEndpoints(
+                base_url=endpoints_data.get("base_url", "http://localhost:8000"),
+                authentication=endpoints_data.get("authentication", {})
+            )
+            
+            # Create agent card
+            agent_card = AgentCard(
+                agent_id=agent_card_data["agent_id"],
+                name=agent_card_data["name"],
+                version=agent_card_data["version"],
+                description=agent_card_data["description"],
+                capabilities=capabilities,
+                endpoints=endpoints,
+                metadata=agent_card_data.get("metadata", {})
+            )
+            
+            # Register the agent
+            self.agent_registry.register_agent(agent_card)
+            logger.info(f"Registered self as agent: {agent_card.agent_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to register self as agent: {str(e)}")
     
     async def handle_request(self, request: A2ARequest) -> A2AResponse:
         """Handle incoming A2A request"""
@@ -123,19 +171,43 @@ class A2AHandler:
     
     async def handle_agent_discover(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle agent discovery requests"""
-        discover_params = AgentDiscoverParams(**params)
-        
-        if discover_params.agent_id:
-            # Return specific agent
-            agent = self.agent_registry.get_agent(discover_params.agent_id)
-            if agent:
-                return {"agents": [agent]}
+        try:
+            discover_params = AgentDiscoverParams(**params)
+            logger.info(f"Agent discovery request: capability={discover_params.capability}, agent_id={discover_params.agent_id}")
+            
+            if discover_params.agent_id:
+                # Return specific agent
+                agent = self.agent_registry.get_agent(discover_params.agent_id)
+                if agent:
+                    logger.info(f"Found specific agent: {discover_params.agent_id}")
+                    return {"agents": [agent.model_dump()]}
+                else:
+                    logger.info(f"Agent not found: {discover_params.agent_id}")
+                    return {"agents": []}
             else:
-                return {"agents": []}
-        else:
-            # Return agents with specific capability
-            agents = self.agent_registry.discover_agents(discover_params.capability)
-            return {"agents": agents}
+                # Return agents with specific capability
+                agents = self.agent_registry.discover_agents(discover_params.capability)
+                logger.info(f"Found {len(agents)} agents with capability: {discover_params.capability}")
+                
+                # Convert AgentCard objects to dictionaries
+                agents_data = []
+                for agent in agents:
+                    try:
+                        agents_data.append(agent.model_dump())
+                    except Exception as e:
+                        logger.error(f"Error converting agent to dict: {str(e)}")
+                        # Fallback to basic info
+                        agents_data.append({
+                            "agent_id": getattr(agent, 'agent_id', 'unknown'),
+                            "name": getattr(agent, 'name', 'unknown'),
+                            "version": getattr(agent, 'version', 'unknown'),
+                            "description": getattr(agent, 'description', 'unknown')
+                        })
+                
+                return {"agents": agents_data}
+        except Exception as e:
+            logger.error(f"Error in agent discovery: {str(e)}")
+            return {"agents": []}
     
     async def handle_agent_card(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle agent card requests"""
