@@ -83,11 +83,18 @@ class A2AHandler:
             )
             
             # Register the agent
-            self.agent_registry.register_agent(agent_card)
-            logger.info(f"Registered self as agent: {agent_card.agent_id}")
+            success = self.agent_registry.register_agent(agent_card)
+            if success:
+                logger.info(f"Successfully registered self as agent: {agent_card.agent_id}")
+                logger.info(f"Registry now has {len(self.agent_registry.registered_agents)} agents")
+                logger.info(f"Available capabilities: {list(self.agent_registry.capability_index.keys())}")
+            else:
+                logger.error("Failed to register agent in registry")
             
         except Exception as e:
             logger.error(f"Failed to register self as agent: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
     
     async def handle_request(self, request: A2ARequest) -> A2AResponse:
         """Handle incoming A2A request"""
@@ -175,6 +182,10 @@ class A2AHandler:
             discover_params = AgentDiscoverParams(**params)
             logger.info(f"Agent discovery request: capability={discover_params.capability}, agent_id={discover_params.agent_id}")
             
+            # Debug registry state
+            logger.info(f"Registry has {len(self.agent_registry.registered_agents)} agents")
+            logger.info(f"Available capabilities: {list(self.agent_registry.capability_index.keys())}")
+            
             if discover_params.agent_id:
                 # Return specific agent
                 agent = self.agent_registry.get_agent(discover_params.agent_id)
@@ -204,9 +215,12 @@ class A2AHandler:
                             "description": getattr(agent, 'description', 'unknown')
                         })
                 
+                logger.info(f"Returning {len(agents_data)} agents")
                 return {"agents": agents_data}
         except Exception as e:
             logger.error(f"Error in agent discovery: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return {"agents": []}
     
     async def handle_agent_card(self, params: Dict[str, Any]) -> Dict[str, Any]:
