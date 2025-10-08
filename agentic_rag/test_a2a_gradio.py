@@ -50,7 +50,11 @@ def test_a2a_functionality():
         response = requests.get("http://localhost:8000/a2a/health", timeout=10)
         if response.status_code == 200:
             health_data = response.json()
-            print(f"✅ Health Check: {health_data}")
+            if "result" in health_data and health_data["result"].get("status") == "healthy":
+                print(f"✅ Health Check: {health_data['result']}")
+            else:
+                print(f"❌ Health Check failed: {health_data}")
+                return False
         else:
             print(f"❌ Health Check failed: {response.status_code}")
             return False
@@ -63,12 +67,46 @@ def test_a2a_functionality():
         response = requests.get("http://localhost:8000/agent_card", timeout=10)
         if response.status_code == 200:
             card_data = response.json()
-            print(f"✅ Agent Card: {json.dumps(card_data, indent=2)}")
+            print(f"✅ Agent Card: Retrieved successfully")
+            print(f"   Agent ID: {card_data.get('agent_id', 'Unknown')}")
+            print(f"   Capabilities: {len(card_data.get('capabilities', []))} found")
         else:
             print(f"❌ Agent Card failed: {response.status_code}")
             return False
     except Exception as e:
         print(f"❌ Agent Card error: {str(e)}")
+        return False
+    
+    # Test agent discovery
+    try:
+        discover_payload = {
+            "jsonrpc": "2.0",
+            "method": "agent.discover",
+            "params": {"capability": "document.query"},
+            "id": "test-discover"
+        }
+        
+        response = requests.post(
+            "http://localhost:8000/a2a",
+            json=discover_payload,
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            discover_data = response.json()
+            if "error" in discover_data:
+                print(f"❌ Agent Discovery failed: {discover_data['error']}")
+                return False
+            else:
+                result = discover_data.get("result", {})
+                agents = result.get("agents", [])
+                print(f"✅ Agent Discovery: Found {len(agents)} agents")
+        else:
+            print(f"❌ Agent Discovery failed: {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"❌ Agent Discovery error: {str(e)}")
         return False
     
     # Test document query
@@ -99,13 +137,89 @@ def test_a2a_functionality():
                 return False
             else:
                 result = query_data.get("result", {})
-                answer = result.get("answer", "No answer")
-                print(f"✅ Document Query: {answer[:100]}...")
+                answer = result.get("answer", "")
+                if answer and answer != "No answer provided":
+                    print(f"✅ Document Query: {answer[:100]}...")
+                else:
+                    print(f"❌ Document Query failed: No valid answer - {result}")
+                    return False
         else:
             print(f"❌ Document Query failed: {response.status_code}")
             return False
     except Exception as e:
         print(f"❌ Document Query error: {str(e)}")
+        return False
+    
+    # Test task creation
+    try:
+        task_payload = {
+            "jsonrpc": "2.0",
+            "method": "task.create",
+            "params": {
+                "task_type": "document_processing",
+                "params": {
+                    "command": "test_command",
+                    "description": "Test task for A2A testing",
+                    "priority": "high"
+                }
+            },
+            "id": "test-task"
+        }
+        
+        response = requests.post(
+            "http://localhost:8000/a2a",
+            json=task_payload,
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            task_data = response.json()
+            if "error" in task_data:
+                print(f"❌ Task Creation failed: {task_data['error']}")
+                return False
+            else:
+                result = task_data.get("result", {})
+                task_id = result.get("task_id")
+                if task_id:
+                    print(f"✅ Task Creation: Created task {task_id}")
+                    
+                    # Test task status
+                    time.sleep(1)  # Wait a moment
+                    status_payload = {
+                        "jsonrpc": "2.0",
+                        "method": "task.status",
+                        "params": {"task_id": task_id},
+                        "id": "test-status"
+                    }
+                    
+                    status_response = requests.post(
+                        "http://localhost:8000/a2a",
+                        json=status_payload,
+                        headers={"Content-Type": "application/json"},
+                        timeout=10
+                    )
+                    
+                    if status_response.status_code == 200:
+                        status_data = status_response.json()
+                        if "error" not in status_data:
+                            status_result = status_data.get("result", {})
+                            task_status = status_result.get("status", "unknown")
+                            print(f"✅ Task Status: {task_status}")
+                        else:
+                            print(f"❌ Task Status failed: {status_data['error']}")
+                            return False
+                    else:
+                        print(f"❌ Task Status failed: {status_response.status_code}")
+                        return False
+                else:
+                    print(f"❌ Task Creation failed: No task ID returned")
+                    return False
+        else:
+            print(f"❌ Task Creation failed: {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"❌ Task Operations error: {str(e)}")
         return False
     
     return True

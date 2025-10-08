@@ -71,6 +71,19 @@ class A2AHandler:
         """Handle document query requests"""
         query_params = DocumentQueryParams(**params)
         
+        # Map A2A collection names to RAG agent collection names
+        collection_mapping = {
+            "PDF": "PDF Collection",
+            "Repository": "Repository Collection", 
+            "Web": "Web Knowledge Base",
+            "General": "General Knowledge"
+        }
+        rag_collection = collection_mapping.get(query_params.collection, "General Knowledge")
+        
+        # Set collection on RAG agent if it supports it
+        if hasattr(self.rag_agent, 'collection'):
+            self.rag_agent.collection = rag_collection
+        
         # Process query using RAG agent
         response = self.rag_agent.process_query(query_params.query)
         
@@ -79,7 +92,7 @@ class A2AHandler:
             "context": response.get("context", []),
             "sources": response.get("sources", {}),
             "reasoning_steps": response.get("reasoning_steps", []),
-            "collection_used": query_params.collection or "auto"
+            "collection_used": query_params.collection or "General"
         }
     
     async def handle_document_upload(self, params: Dict[str, Any]) -> Dict[str, Any]:
