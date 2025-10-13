@@ -41,8 +41,8 @@ class A2AHandler:
             "health.check": self.handle_health_check,
         }
         
-        # Register this agent in the registry
-        self._register_self()
+        # Initialize registration flag
+        self._self_registered = False
     
     def _register_self(self):
         """Register this agent in the agent registry"""
@@ -179,6 +179,12 @@ class A2AHandler:
     async def handle_agent_discover(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle agent discovery requests"""
         try:
+            # Ensure self is registered
+            if not self._self_registered:
+                logger.info("Self not registered yet, registering now...")
+                self._register_self()
+                self._self_registered = True
+            
             discover_params = AgentDiscoverParams(**params)
             logger.info(f"Agent discovery request: capability={discover_params.capability}, agent_id={discover_params.agent_id}")
             

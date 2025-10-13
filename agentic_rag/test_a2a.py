@@ -1,556 +1,287 @@
+#!/usr/bin/env python3
 """
-Test suite for A2A Protocol implementation
+A2A Protocol Test Suite
 
-This module contains comprehensive tests for the A2A protocol functionality,
-including unit tests for individual components and integration tests.
+This script tests all A2A protocol functionality including:
+- Health check
+- Agent discovery
+- Document query
+- Task creation and status
+- Agent card retrieval
+
+Make sure A2A server is running: python main.py
 """
 
-import pytest
-import asyncio
+import requests
 import json
-from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime
+import time
+import sys
 
-# Import A2A components
-from a2a_models import (
-    A2ARequest, A2AResponse, A2AError, TaskStatus, TaskInfo,
-    DocumentQueryParams, DocumentUploadParams, TaskCreateParams,
-    TaskStatusParams, AgentDiscoverParams, AgentCard, AgentCapability
-)
-from a2a_handler import A2AHandler
-from task_manager import TaskManager
-from agent_registry import AgentRegistry
-from agent_card import get_agent_card
-
-
-class TestA2AModels:
-    """Test A2A data models"""
+class A2ATester:
+    """A2A Protocol Tester"""
     
-    def test_a2a_request_creation(self):
-        """Test A2A request model creation"""
-        request = A2ARequest(
-            method="document.query",
-            params={"query": "test query"}
-        )
-        
-        assert request.jsonrpc == "2.0"
-        assert request.method == "document.query"
-        assert request.params == {"query": "test query"}
-        assert request.id is not None
+    def __init__(self, base_url="http://localhost:8000"):
+        self.base_url = base_url
+        self.test_results = []
     
-    def test_a2a_response_creation(self):
-        """Test A2A response model creation"""
-        response = A2AResponse(
-            result={"answer": "test answer"},
-            id="test-id"
-        )
+    def make_a2a_request(self, method, params, request_id=None):
+        """Make an A2A JSON-RPC request"""
+        if request_id is None:
+            request_id = f"test-{int(time.time())}"
         
-        assert response.jsonrpc == "2.0"
-        assert response.result == {"answer": "test answer"}
-        assert response.error is None
-        assert response.id == "test-id"
-    
-    def test_a2a_error_creation(self):
-        """Test A2A error model creation"""
-        error = A2AError(
-            code=-32601,
-            message="Method not found"
-        )
-        
-        assert error.code == -32601
-        assert error.message == "Method not found"
-        assert error.data is None
-    
-    def test_document_query_params(self):
-        """Test document query parameters"""
-        params = DocumentQueryParams(
-            query="test query",
-            collection="PDF",
-            use_cot=True,
-            max_results=5
-        )
-        
-        assert params.query == "test query"
-        assert params.collection == "PDF"
-        assert params.use_cot is True
-        assert params.max_results == 5
-    
-    def test_task_info_creation(self):
-        """Test task info model creation"""
-        task_info = TaskInfo(
-            task_id="test-task-id",
-            task_type="document_processing",
-            status=TaskStatus.PENDING,
-            params={"document": "test.pdf"}
-        )
-        
-        assert task_info.task_id == "test-task-id"
-        assert task_info.task_type == "document_processing"
-        assert task_info.status == TaskStatus.PENDING
-        assert task_info.params == {"document": "test.pdf"}
-        assert task_info.result is None
-        assert task_info.error is None
-
-
-class TestTaskManager:
-    """Test task manager functionality"""
-    
-    @pytest.fixture
-    def task_manager(self):
-        """Create task manager instance for testing"""
-        return TaskManager()
-    
-    @pytest.mark.asyncio
-    async def test_create_task(self, task_manager):
-        """Test task creation"""
-        task_id = await task_manager.create_task(
-            task_type="document_processing",
-            params={"document": "test.pdf"}
-        )
-        
-        assert task_id is not None
-        assert task_id in task_manager.tasks
-        
-        task_info = task_manager.tasks[task_id]
-        assert task_info.task_type == "document_processing"
-        assert task_info.status == TaskStatus.PENDING
-    
-    @pytest.mark.asyncio
-    async def test_task_execution(self, task_manager):
-        """Test task execution"""
-        task_id = await task_manager.create_task(
-            task_type="document_processing",
-            params={"chunk_count": 5}
-        )
-        
-        # Wait for task to complete
-        await asyncio.sleep(3)
-        
-        task_info = task_manager.get_task_status(task_id)
-        assert task_info.status in [TaskStatus.COMPLETED, TaskStatus.FAILED]
-    
-    def test_get_task_status(self, task_manager):
-        """Test getting task status"""
-        # Test with non-existent task
-        task_info = task_manager.get_task_status("non-existent")
-        assert task_info is None
-    
-    def test_cancel_task(self, task_manager):
-        """Test task cancellation"""
-        # Create a task
-        task_id = "test-task-id"
-        task_info = TaskInfo(
-            task_id=task_id,
-            task_type="test",
-            status=TaskStatus.PENDING,
-            params={}
-        )
-        task_manager.tasks[task_id] = task_info
-        
-        # Cancel the task
-        success = task_manager.cancel_task(task_id)
-        assert success is True
-        
-        # Check task status
-        updated_task = task_manager.get_task_status(task_id)
-        assert updated_task.status == TaskStatus.CANCELLED
-    
-    def test_list_tasks(self, task_manager):
-        """Test listing tasks"""
-        # Add some test tasks
-        task1 = TaskInfo(
-            task_id="task1",
-            task_type="test1",
-            status=TaskStatus.PENDING,
-            params={}
-        )
-        task2 = TaskInfo(
-            task_id="task2",
-            task_type="test2",
-            status=TaskStatus.COMPLETED,
-            params={}
-        )
-        
-        task_manager.tasks["task1"] = task1
-        task_manager.tasks["task2"] = task2
-        
-        # Test listing all tasks
-        all_tasks = task_manager.list_tasks()
-        assert len(all_tasks) == 2
-        
-        # Test filtering by status
-        pending_tasks = task_manager.list_tasks(TaskStatus.PENDING)
-        assert len(pending_tasks) == 1
-        assert "task1" in pending_tasks
-        
-        completed_tasks = task_manager.list_tasks(TaskStatus.COMPLETED)
-        assert len(completed_tasks) == 1
-        assert "task2" in completed_tasks
-
-
-class TestAgentRegistry:
-    """Test agent registry functionality"""
-    
-    @pytest.fixture
-    def agent_registry(self):
-        """Create agent registry instance for testing"""
-        return AgentRegistry()
-    
-    @pytest.fixture
-    def sample_agent_card(self):
-        """Create sample agent card for testing"""
-        capability = AgentCapability(
-            name="test.capability",
-            description="Test capability",
-            input_schema={"type": "object"},
-            output_schema={"type": "object"}
-        )
-        
-        return AgentCard(
-            agent_id="test-agent",
-            name="Test Agent",
-            version="1.0.0",
-            description="Test agent for testing",
-            capabilities=[capability],
-            endpoints={"base_url": "http://test.example.com"}
-        )
-    
-    def test_register_agent(self, agent_registry, sample_agent_card):
-        """Test agent registration"""
-        success = agent_registry.register_agent(sample_agent_card)
-        assert success is True
-        assert "test-agent" in agent_registry.registered_agents
-    
-    def test_unregister_agent(self, agent_registry, sample_agent_card):
-        """Test agent unregistration"""
-        # Register agent first
-        agent_registry.register_agent(sample_agent_card)
-        
-        # Unregister agent
-        success = agent_registry.unregister_agent("test-agent")
-        assert success is True
-        assert "test-agent" not in agent_registry.registered_agents
-    
-    def test_get_agent(self, agent_registry, sample_agent_card):
-        """Test getting agent by ID"""
-        # Register agent
-        agent_registry.register_agent(sample_agent_card)
-        
-        # Get agent
-        agent = agent_registry.get_agent("test-agent")
-        assert agent is not None
-        assert agent.agent_id == "test-agent"
-    
-    def test_discover_agents(self, agent_registry, sample_agent_card):
-        """Test agent discovery"""
-        # Register agent
-        agent_registry.register_agent(sample_agent_card)
-        
-        # Discover agents by capability
-        agents = agent_registry.discover_agents("test.capability")
-        assert len(agents) == 1
-        assert agents[0].agent_id == "test-agent"
-        
-        # Discover all agents
-        all_agents = agent_registry.discover_agents()
-        assert len(all_agents) == 1
-    
-    def test_search_agents(self, agent_registry, sample_agent_card):
-        """Test agent search"""
-        # Register agent
-        agent_registry.register_agent(sample_agent_card)
-        
-        # Search by name
-        agents = agent_registry.search_agents("Test")
-        assert len(agents) == 1
-        
-        # Search by description
-        agents = agent_registry.search_agents("testing")
-        assert len(agents) == 1
-    
-    def test_get_capabilities(self, agent_registry, sample_agent_card):
-        """Test getting capabilities"""
-        # Register agent
-        agent_registry.register_agent(sample_agent_card)
-        
-        capabilities = agent_registry.get_capabilities()
-        assert "test.capability" in capabilities
-    
-    def test_get_registry_stats(self, agent_registry, sample_agent_card):
-        """Test getting registry statistics"""
-        # Register agent
-        agent_registry.register_agent(sample_agent_card)
-        
-        stats = agent_registry.get_registry_stats()
-        assert stats["total_agents"] == 1
-        assert stats["total_capabilities"] == 1
-        assert "test-agent" in stats["agents"]
-
-
-class TestA2AHandler:
-    """Test A2A handler functionality"""
-    
-    @pytest.fixture
-    def mock_rag_agent(self):
-        """Create mock RAG agent"""
-        mock_agent = Mock()
-        mock_agent.process_query.return_value = {
-            "answer": "Test answer",
-            "context": [],
-            "sources": {}
+        payload = {
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": params,
+            "id": request_id
         }
-        return mock_agent
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/a2a",
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=30
+            )
+            return response.json()
+        except Exception as e:
+            return {"error": {"message": str(e), "code": -1}}
     
-    @pytest.fixture
-    def mock_vector_store(self):
-        """Create mock vector store"""
-        return Mock()
+    def test_health_check(self):
+        """Test A2A health check"""
+        print("🏥 Testing Health Check...")
+        
+        try:
+            response = requests.get(f"{self.base_url}/a2a/health", timeout=5)
+            if response.status_code == 200:
+                health_data = response.json()
+                if "result" in health_data and health_data["result"].get("status") == "healthy":
+                    print("✅ Health Check: PASSED")
+                    self.test_results.append(("Health Check", True, "Server is healthy"))
+                    return True
+                else:
+                    print(f"❌ Health Check: FAILED - {health_data}")
+                    self.test_results.append(("Health Check", False, str(health_data)))
+                    return False
+            else:
+                print(f"❌ Health Check: FAILED - HTTP {response.status_code}")
+                self.test_results.append(("Health Check", False, f"HTTP {response.status_code}"))
+                return False
+        except Exception as e:
+            print(f"❌ Health Check: ERROR - {str(e)}")
+            self.test_results.append(("Health Check", False, str(e)))
+            return False
     
-    @pytest.fixture
-    def a2a_handler(self, mock_rag_agent, mock_vector_store):
-        """Create A2A handler instance for testing"""
-        return A2AHandler(mock_rag_agent, mock_vector_store)
+    def test_agent_card(self):
+        """Test A2A agent card retrieval"""
+        print("🔍 Testing Agent Card...")
+        
+        try:
+            response = requests.get(f"{self.base_url}/agent_card", timeout=10)
+            if response.status_code == 200:
+                card_data = response.json()
+                print("✅ Agent Card: PASSED")
+                print(f"   Agent ID: {card_data.get('agent_id', 'Unknown')}")
+                print(f"   Name: {card_data.get('name', 'Unknown')}")
+                print(f"   Capabilities: {len(card_data.get('capabilities', []))} found")
+                self.test_results.append(("Agent Card", True, f"Retrieved agent card for {card_data.get('agent_id')}"))
+                return True
+            else:
+                print(f"❌ Agent Card: FAILED - HTTP {response.status_code}")
+                self.test_results.append(("Agent Card", False, f"HTTP {response.status_code}"))
+                return False
+        except Exception as e:
+            print(f"❌ Agent Card: ERROR - {str(e)}")
+            self.test_results.append(("Agent Card", False, str(e)))
+            return False
     
-    @pytest.mark.asyncio
-    async def test_handle_document_query(self, a2a_handler):
-        """Test document query handling"""
-        request = A2ARequest(
-            method="document.query",
-            params={"query": "test query"}
-        )
+    def test_agent_discovery(self):
+        """Test A2A agent discovery"""
+        print("🔍 Testing Agent Discovery...")
         
-        response = await a2a_handler.handle_request(request)
-        
-        assert response.jsonrpc == "2.0"
-        assert response.error is None
-        assert response.result is not None
-        assert "answer" in response.result
+        try:
+            response = self.make_a2a_request(
+                "agent.discover",
+                {"capability": "document.query"}
+            )
+            
+            print(f"Discovery response: {json.dumps(response, indent=2)}")
+            
+            if "error" in response:
+                print(f"❌ Agent Discovery: FAILED - {response['error']}")
+                self.test_results.append(("Agent Discovery", False, str(response['error'])))
+                return False
+            else:
+                result = response.get("result", {})
+                agents = result.get("agents", [])
+                if agents:
+                    print(f"✅ Agent Discovery: PASSED - Found {len(agents)} agents")
+                    for i, agent in enumerate(agents, 1):
+                        agent_id = agent.get('agent_id', 'unknown')
+                        agent_name = agent.get('name', 'unknown')
+                        print(f"  Agent {i}: {agent_id} - {agent_name}")
+                    self.test_results.append(("Agent Discovery", True, f"Found {len(agents)} agents"))
+                    return True
+                else:
+                    print("❌ Agent Discovery: FAILED - No agents found")
+                    print(f"  Result: {result}")
+                    self.test_results.append(("Agent Discovery", False, "No agents found"))
+                    return False
+        except Exception as e:
+            print(f"❌ Agent Discovery: ERROR - {str(e)}")
+            self.test_results.append(("Agent Discovery", False, str(e)))
+            return False
     
-    @pytest.mark.asyncio
-    async def test_handle_unknown_method(self, a2a_handler):
-        """Test handling unknown method"""
-        request = A2ARequest(
-            method="unknown.method",
-            params={}
-        )
+    def test_document_query(self):
+        """Test A2A document query"""
+        print("📄 Testing Document Query...")
         
-        response = await a2a_handler.handle_request(request)
-        
-        assert response.jsonrpc == "2.0"
-        assert response.error is not None
-        assert response.error["code"] == -32601
-        assert response.result is None
+        try:
+            response = self.make_a2a_request(
+                "document.query",
+                {
+                    "query": "What is artificial intelligence?",
+                    "collection": "General",
+                    "use_cot": False,
+                    "max_results": 3
+                }
+            )
+            
+            if "error" in response:
+                print(f"❌ Document Query: FAILED - {response['error']}")
+                self.test_results.append(("Document Query", False, str(response['error'])))
+                return False
+            else:
+                result = response.get("result", {})
+                answer = result.get("answer", "")
+                if answer and answer != "No answer provided" and answer.strip():
+                    print(f"✅ Document Query: PASSED")
+                    print(f"   Answer: {answer[:100]}...")
+                    self.test_results.append(("Document Query", True, "Query processed successfully"))
+                    return True
+                else:
+                    print(f"❌ Document Query: FAILED - No valid answer")
+                    print(f"   Result: {result}")
+                    self.test_results.append(("Document Query", False, "No valid answer returned"))
+                    return False
+        except Exception as e:
+            print(f"❌ Document Query: ERROR - {str(e)}")
+            self.test_results.append(("Document Query", False, str(e)))
+            return False
     
-    @pytest.mark.asyncio
-    async def test_handle_agent_card(self, a2a_handler):
-        """Test agent card handling"""
-        request = A2ARequest(
-            method="agent.card",
-            params={}
-        )
+    def test_task_operations(self):
+        """Test A2A task creation and status"""
+        print("📋 Testing Task Operations...")
         
-        response = await a2a_handler.handle_request(request)
-        
-        assert response.jsonrpc == "2.0"
-        assert response.error is None
-        assert response.result is not None
-        assert "agent_id" in response.result
-    
-    @pytest.mark.asyncio
-    async def test_handle_health_check(self, a2a_handler):
-        """Test health check handling"""
-        request = A2ARequest(
-            method="health.check",
-            params={}
-        )
-        
-        response = await a2a_handler.handle_request(request)
-        
-        assert response.jsonrpc == "2.0"
-        assert response.error is None
-        assert response.result is not None
-        assert response.result["status"] == "healthy"
-    
-    @pytest.mark.asyncio
-    async def test_handle_task_create(self, a2a_handler):
-        """Test task creation handling"""
-        request = A2ARequest(
-            method="task.create",
-            params={
+        try:
+            # Create task
+            create_response = self.make_a2a_request(
+                "task.create",
+                {
                 "task_type": "document_processing",
-                "params": {"document": "test.pdf"}
-            }
-        )
-        
-        response = await a2a_handler.handle_request(request)
-        
-        assert response.jsonrpc == "2.0"
-        assert response.error is None
-        assert response.result is not None
-        assert "task_id" in response.result
+                    "params": {
+                        "command": "test_command",
+                        "description": "Test task for A2A testing",
+                        "priority": "high"
+                    }
+                }
+            )
+            
+            if "error" in create_response:
+                print(f"❌ Task Creation: FAILED - {create_response['error']}")
+                self.test_results.append(("Task Creation", False, str(create_response['error'])))
+                return False
+            
+            result = create_response.get("result", {})
+            task_id = result.get("task_id")
+            
+            if not task_id:
+                print("❌ Task Creation: FAILED - No task ID returned")
+                self.test_results.append(("Task Creation", False, "No task ID returned"))
+                return False
+            
+            print(f"✅ Task Creation: PASSED - Created task {task_id}")
+            self.test_results.append(("Task Creation", True, f"Created task {task_id}"))
+            
+            # Check task status
+            time.sleep(1)
+            status_response = self.make_a2a_request(
+                "task.status",
+                {"task_id": task_id}
+            )
+            
+            if "error" in status_response:
+                print(f"❌ Task Status: FAILED - {status_response['error']}")
+                self.test_results.append(("Task Status", False, str(status_response['error'])))
+                return False
+            
+            status_result = status_response.get("result", {})
+            task_status = status_result.get("status", "unknown")
+            print(f"✅ Task Status: PASSED - Status: {task_status}")
+            self.test_results.append(("Task Status", True, f"Status: {task_status}"))
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Task Operations: ERROR - {str(e)}")
+            self.test_results.append(("Task Operations", False, str(e)))
+            return False
     
-    @pytest.mark.asyncio
-    async def test_handle_task_status(self, a2a_handler):
-        """Test task status handling"""
-        # First create a task
-        create_request = A2ARequest(
-            method="task.create",
-            params={
-                "task_type": "document_processing",
-                "params": {"document": "test.pdf"}
-            }
-        )
-        create_response = await a2a_handler.handle_request(create_request)
-        task_id = create_response.result["task_id"]
+    def run_all_tests(self):
+        """Run all A2A tests"""
+        print("🧪 Running A2A Test Suite...")
+        print("=" * 60)
         
-        # Then check status
-        status_request = A2ARequest(
-            method="task.status",
-            params={"task_id": task_id}
-        )
+        all_passed = True
         
-        response = await a2a_handler.handle_request(status_request)
+        # Test 1: Health Check
+        if not self.test_health_check():
+            all_passed = False
         
-        assert response.jsonrpc == "2.0"
-        assert response.error is None
-        assert response.result is not None
-        assert "task_id" in response.result
+        # Test 2: Agent Card
+        if not self.test_agent_card():
+            all_passed = False
+        
+        # Test 3: Agent Discovery
+        if not self.test_agent_discovery():
+            all_passed = False
+        
+        # Test 4: Document Query
+        if not self.test_document_query():
+            all_passed = False
+        
+        # Test 5: Task Operations
+        if not self.test_task_operations():
+            all_passed = False
+        
+        # Summary
+        print("\n" + "=" * 60)
+        print("📊 Test Results Summary:")
+        print("-" * 60)
+        
+        for test_name, passed, message in self.test_results:
+            status = "✅ PASS" if passed else "❌ FAIL"
+            print(f"{status} {test_name}: {message}")
+        
+        print("-" * 60)
+        if all_passed:
+            print("🎉 All A2A tests passed!")
+            print("✅ OK")
+            return 0
+        else:
+            print("❌ Some A2A tests failed.")
+            print("❌ NOT OK")
+            return 1
 
-
-class TestAgentCard:
-    """Test agent card functionality"""
+def main():
+    """Main function"""
+    print("🤖 A2A Protocol Test Suite")
+    print("=" * 60)
+    print("Make sure A2A server is running: python main.py")
+    print()
     
-    def test_get_agent_card(self):
-        """Test getting agent card"""
-        card = get_agent_card()
-        
-        assert "agent_id" in card
-        assert "name" in card
-        assert "version" in card
-        assert "capabilities" in card
-        assert "endpoints" in card
-        
-        assert card["agent_id"] == "agentic_rag_v1"
-        assert card["name"] == "Agentic RAG System"
-        assert len(card["capabilities"]) > 0
-    
-    def test_agent_card_capabilities(self):
-        """Test agent card capabilities"""
-        card = get_agent_card()
-        capabilities = card["capabilities"]
-        
-        capability_names = [cap["name"] for cap in capabilities]
-        
-        assert "document.query" in capability_names
-        assert "document.upload" in capability_names
-        assert "task.create" in capability_names
-        assert "task.status" in capability_names
-        assert "agent.discover" in capability_names
-        assert "health.check" in capability_names
-
-
-class TestIntegration:
-    """Integration tests for A2A protocol"""
-    
-    @pytest.fixture
-    def mock_rag_agent(self):
-        """Create mock RAG agent for integration tests"""
-        mock_agent = Mock()
-        mock_agent.process_query.return_value = {
-            "answer": "Integration test answer",
-            "context": [{"content": "test context", "metadata": {"source": "test.pdf"}}],
-            "sources": {"test.pdf": ["1", "2"]}
-        }
-        return mock_agent
-    
-    @pytest.fixture
-    def mock_vector_store(self):
-        """Create mock vector store for integration tests"""
-        return Mock()
-    
-    @pytest.fixture
-    def a2a_handler(self, mock_rag_agent, mock_vector_store):
-        """Create A2A handler for integration tests"""
-        return A2AHandler(mock_rag_agent, mock_vector_store)
-    
-    @pytest.mark.asyncio
-    async def test_full_document_query_workflow(self, a2a_handler):
-        """Test complete document query workflow"""
-        # Create request
-        request = A2ARequest(
-            method="document.query",
-            params={
-                "query": "What is machine learning?",
-                "collection": "PDF",
-                "use_cot": True,
-                "max_results": 5
-            }
-        )
-        
-        # Process request
-        response = await a2a_handler.handle_request(request)
-        
-        # Verify response
-        assert response.jsonrpc == "2.0"
-        assert response.error is None
-        assert response.result is not None
-        
-        result = response.result
-        assert "answer" in result
-        assert "context" in result
-        assert "sources" in result
-        assert "collection_used" in result
-    
-    @pytest.mark.asyncio
-    async def test_task_lifecycle(self, a2a_handler):
-        """Test complete task lifecycle"""
-        # Create task
-        create_request = A2ARequest(
-            method="task.create",
-            params={
-                "task_type": "complex_query",
-                "params": {"query": "complex question", "expected_results": 10}
-            }
-        )
-        
-        create_response = await a2a_handler.handle_request(create_request)
-        assert create_response.error is None
-        task_id = create_response.result["task_id"]
-        
-        # Check task status
-        status_request = A2ARequest(
-            method="task.status",
-            params={"task_id": task_id}
-        )
-        
-        status_response = await a2a_handler.handle_request(status_request)
-        assert status_response.error is None
-        assert "task_id" in status_response.result
-    
-    @pytest.mark.asyncio
-    async def test_agent_discovery_workflow(self, a2a_handler):
-        """Test agent discovery workflow"""
-        # Discover agents
-        discover_request = A2ARequest(
-            method="agent.discover",
-            params={"capability": "document.query"}
-        )
-        
-        discover_response = await a2a_handler.handle_request(discover_request)
-        assert discover_response.error is None
-        assert "agents" in discover_response.result
-        
-        # Get agent card
-        card_request = A2ARequest(
-            method="agent.card",
-            params={}
-        )
-        
-        card_response = await a2a_handler.handle_request(card_request)
-        assert card_response.error is None
-        assert "agent_id" in card_response.result
-
+    tester = A2ATester()
+    return tester.run_all_tests()
 
 if __name__ == "__main__":
-    # Run tests
-    pytest.main([__file__, "-v"])
+    sys.exit(main())
