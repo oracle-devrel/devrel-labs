@@ -34,6 +34,7 @@ class A2AHandler:
             "document.query": self.handle_document_query,
             "document.upload": self.handle_document_upload,
             "agent.discover": self.handle_agent_discover,
+            "agent.register": self.handle_agent_register,
             "agent.card": self.handle_agent_card,
             "task.create": self.handle_task_create,
             "task.status": self.handle_task_status,
@@ -47,8 +48,10 @@ class A2AHandler:
     def _register_self(self):
         """Register this agent in the agent registry"""
         try:
+            logger.info("Starting agent self-registration...")
             from agent_card import get_agent_card
             agent_card_data = get_agent_card()
+            logger.info(f"Retrieved agent card data: {agent_card_data.get('agent_id', 'unknown')}")
             
             # Convert the agent card data to AgentCard object
             from a2a_models import AgentCard, AgentCapability, AgentEndpoint
@@ -64,12 +67,16 @@ class A2AHandler:
                 )
                 capabilities.append(capability)
             
+            logger.info(f"Created {len(capabilities)} capabilities")
+            
             # Create endpoints
             endpoints_data = agent_card_data.get("endpoints", {})
             endpoints = AgentEndpoint(
                 base_url=endpoints_data.get("base_url", "http://localhost:8000"),
                 authentication=endpoints_data.get("authentication", {})
             )
+            
+            logger.info(f"Created endpoints: {endpoints.base_url}")
             
             # Create agent card
             agent_card = AgentCard(
@@ -81,6 +88,8 @@ class A2AHandler:
                 endpoints=endpoints,
                 metadata=agent_card_data.get("metadata", {})
             )
+            
+            logger.info(f"Created agent card for: {agent_card.agent_id}")
             
             # Register the agent
             success = self.agent_registry.register_agent(agent_card)
@@ -228,6 +237,86 @@ class A2AHandler:
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
             return {"agents": []}
+    
+    async def handle_agent_register(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle agent registration requests"""
+        try:
+            logger.info("Handling agent registration request")
+            
+            # Extract agent card data from params
+            agent_card_data = params.get("agent_card", {})
+            if not agent_card_data:
+                logger.error("No agent_card provided in registration request")
+                return {
+                    "success": False,
+                    "message": "No agent_card provided",
+                    "agent_id": None
+                }
+            
+            # Convert to AgentCard object
+            from a2a_models import AgentCard, AgentCapability, AgentEndpoint
+            
+            # Extract capabilities
+            capabilities = []
+            for cap_data in agent_card_data.get("capabilities", []):
+                capability = AgentCapability(
+                    name=cap_data["name"],
+                    description=cap_data["description"],
+                    input_schema=cap_data.get("input_schema", {}),
+                    output_schema=cap_data.get("output_schema", {})
+                )
+                capabilities.append(capability)
+            
+            # Create endpoints
+            endpoints_data = agent_card_data.get("endpoints", {})
+            endpoints = AgentEndpoint(
+                base_url=endpoints_data.get("base_url", "http://localhost:8000"),
+                authentication=endpoints_data.get("authentication", {})
+            )
+            
+            # Create agent card
+            agent_card = AgentCard(
+                agent_id=agent_card_data["agent_id"],
+                name=agent_card_data["name"],
+                version=agent_card_data["version"],
+                description=agent_card_data["description"],
+                capabilities=capabilities,
+                endpoints=endpoints,
+                metadata=agent_card_data.get("metadata", {})
+            )
+            
+            # Register the agent
+            success = self.agent_registry.register_agent(agent_card)
+            
+            if success:
+                logger.info(f"Successfully registered agent: {agent_card.agent_id}")
+                logger.info(f"Registry now has {len(self.agent_registry.registered_agents)} agents")
+                logger.info(f"Available capabilities: {list(self.agent_registry.capability_index.keys())}")
+                
+                return {
+                    "success": True,
+                    "message": "Agent registered successfully",
+                    "agent_id": agent_card.agent_id,
+                    "capabilities": len(capabilities),
+                    "registry_size": len(self.agent_registry.registered_agents)
+                }
+            else:
+                logger.error(f"Failed to register agent: {agent_card.agent_id}")
+                return {
+                    "success": False,
+                    "message": "Failed to register agent",
+                    "agent_id": agent_card.agent_id
+                }
+                
+        except Exception as e:
+            logger.error(f"Error in agent registration: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return {
+                "success": False,
+                "message": f"Registration error: {str(e)}",
+                "agent_id": None
+            }
     
     async def handle_agent_card(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle agent card requests"""
