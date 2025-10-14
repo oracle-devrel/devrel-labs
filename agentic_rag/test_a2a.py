@@ -108,12 +108,13 @@ class A2ATester:
             print(f"Discovery response: {json.dumps(response, indent=2)}")
             
             if "error" in response:
-                print(f"❌ Agent Discovery: FAILED - {response['error']}")
-                self.test_results.append(("Agent Discovery", False, str(response['error'])))
+                print(f"❌ Agent Discovery: FAILED - Full response: {json.dumps(response, indent=2)}")
+                self.test_results.append(("Agent Discovery", False, str(response)))
                 return False
             else:
                 result = response.get("result", {})
                 agents = result.get("agents", [])
+                print(f"Full discovery result: {json.dumps(result, indent=2)}")
                 if agents:
                     print(f"✅ Agent Discovery: PASSED - Found {len(agents)} agents")
                     for i, agent in enumerate(agents, 1):
@@ -124,7 +125,7 @@ class A2ATester:
                     return True
                 else:
                     print("❌ Agent Discovery: FAILED - No agents found")
-                    print(f"  Result: {result}")
+                    print(f"  Full result: {json.dumps(result, indent=2)}")
                     self.test_results.append(("Agent Discovery", False, "No agents found"))
                     return False
         except Exception as e:
@@ -148,11 +149,12 @@ class A2ATester:
             )
             
             if "error" in response:
-                print(f"❌ Document Query: FAILED - {response['error']}")
-                self.test_results.append(("Document Query", False, str(response['error'])))
+                print(f"❌ Document Query: FAILED - Full response: {json.dumps(response, indent=2)}")
+                self.test_results.append(("Document Query", False, str(response)))
                 return False
             else:
                 result = response.get("result", {})
+                print(f"Full document query result: {json.dumps(result, indent=2)}")
                 answer = result.get("answer", "")
                 if answer and answer != "No answer provided" and answer.strip():
                     print(f"✅ Document Query: PASSED")
@@ -161,7 +163,7 @@ class A2ATester:
                     return True
                 else:
                     print(f"❌ Document Query: FAILED - No valid answer")
-                    print(f"   Result: {result}")
+                    print(f"   Full result: {json.dumps(result, indent=2)}")
                     self.test_results.append(("Document Query", False, "No valid answer returned"))
                     return False
         except Exception as e:
@@ -188,15 +190,17 @@ class A2ATester:
             )
             
             if "error" in create_response:
-                print(f"❌ Task Creation: FAILED - {create_response['error']}")
-                self.test_results.append(("Task Creation", False, str(create_response['error'])))
+                print(f"❌ Task Creation: FAILED - Full response: {json.dumps(create_response, indent=2)}")
+                self.test_results.append(("Task Creation", False, str(create_response)))
                 return False
             
             result = create_response.get("result", {})
+            print(f"Full task creation result: {json.dumps(result, indent=2)}")
             task_id = result.get("task_id")
             
             if not task_id:
                 print("❌ Task Creation: FAILED - No task ID returned")
+                print(f"   Full result: {json.dumps(result, indent=2)}")
                 self.test_results.append(("Task Creation", False, "No task ID returned"))
                 return False
             
@@ -211,11 +215,12 @@ class A2ATester:
             )
             
             if "error" in status_response:
-                print(f"❌ Task Status: FAILED - {status_response['error']}")
-                self.test_results.append(("Task Status", False, str(status_response['error'])))
+                print(f"❌ Task Status: FAILED - Full response: {json.dumps(status_response, indent=2)}")
+                self.test_results.append(("Task Status", False, str(status_response)))
                 return False
             
             status_result = status_response.get("result", {})
+            print(f"Full task status result: {json.dumps(status_result, indent=2)}")
             task_status = status_result.get("status", "unknown")
             print(f"✅ Task Status: PASSED - Status: {task_status}")
             self.test_results.append(("Task Status", True, f"Status: {task_status}"))
