@@ -51,7 +51,7 @@ class A2AHandler:
             agent_card_data = get_agent_card()
             
             # Convert the agent card data to AgentCard object
-            from a2a_models import AgentCard, AgentCapability, AgentEndpoints
+            from a2a_models import AgentCard, AgentCapability, AgentEndpoint
             
             # Extract capabilities
             capabilities = []
@@ -66,7 +66,7 @@ class A2AHandler:
             
             # Create endpoints
             endpoints_data = agent_card_data.get("endpoints", {})
-            endpoints = AgentEndpoints(
+            endpoints = AgentEndpoint(
                 base_url=endpoints_data.get("base_url", "http://localhost:8000"),
                 authentication=endpoints_data.get("authentication", {})
             )
