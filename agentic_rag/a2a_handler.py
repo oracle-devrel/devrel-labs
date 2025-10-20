@@ -367,9 +367,13 @@ Step 4: [Fourth step description] (if needed)
 
 Steps:"""
                 
-                logger.info(f"Calling Planner with model: {model}")
+                logger.info(f"🎯 Calling Planner with model: {model}")
+                logger.info(f"📋 System Prompt:\n{system_prompt}")
+                logger.info(f"💬 User Prompt:\n{user_prompt}")
+                
                 plan = self._call_ollama_api(model, user_prompt, system_prompt)
-                logger.info(f"Planner response: {plan[:200]}...")
+                
+                logger.info(f"✅ Planner response: {plan[:200]}...")
                 
                 # Extract steps from plan
                 steps = []
@@ -415,9 +419,13 @@ Based on this context, extract and summarize key findings relevant to this resea
 
 Key Findings:"""
                 
-                logger.info(f"Calling Researcher with model: {model}")
+                logger.info(f"🔍 Calling Researcher with model: {model}")
+                logger.info(f"📋 System Prompt:\n{system_prompt}")
+                logger.info(f"💬 User Prompt:\n{user_prompt}")
+                
                 summary = self._call_ollama_api(model, user_prompt, system_prompt)
-                logger.info(f"Researcher response: {summary[:200]}...")
+                
+                logger.info(f"✅ Researcher response: {summary[:200]}...")
                 
                 findings = [{"content": summary, "metadata": {"source": "Research Summary"}}]
                 findings.extend(all_results[:3])
@@ -450,9 +458,13 @@ Analyze this information and draw a clear, logical conclusion for this step. Be 
 
 Conclusion:"""
                 
-                logger.info(f"Calling Reasoner with model: {model}")
+                logger.info(f"🤔 Calling Reasoner with model: {model}")
+                logger.info(f"📋 System Prompt:\n{system_prompt}")
+                logger.info(f"💬 User Prompt:\n{user_prompt}")
+                
                 conclusion = self._call_ollama_api(model, user_prompt, system_prompt)
-                logger.info(f"Reasoner response: {conclusion[:200]}...")
+                
+                logger.info(f"✅ Reasoner response: {conclusion[:200]}...")
                 
                 return {
                     "conclusion": conclusion,
@@ -481,9 +493,13 @@ Combine these reasoning steps into a clear, comprehensive final answer. Be integ
 
 Final Answer:"""
                 
-                logger.info(f"Calling Synthesizer with model: {model}")
+                logger.info(f"📝 Calling Synthesizer with model: {model}")
+                logger.info(f"📋 System Prompt:\n{system_prompt}")
+                logger.info(f"💬 User Prompt:\n{user_prompt}")
+                
                 answer = self._call_ollama_api(model, user_prompt, system_prompt)
-                logger.info(f"Synthesizer response: {answer[:200]}...")
+                
+                logger.info(f"✅ Synthesizer response: {answer[:200]}...")
                 
                 return {
                     "answer": answer,
