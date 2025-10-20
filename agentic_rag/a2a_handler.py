@@ -24,10 +24,11 @@ logger = logging.getLogger(__name__)
 class A2AHandler:
     """Handler for A2A protocol requests"""
     
-    def __init__(self, rag_agent, vector_store=None):
+    def __init__(self, rag_agent, vector_store=None, event_logger=None):
         """Initialize A2A handler with RAG agent and dependencies"""
         self.rag_agent = rag_agent
         self.vector_store = vector_store
+        self.event_logger = event_logger
         self.task_manager = TaskManager()
         self.agent_registry = AgentRegistry()
         
@@ -228,6 +229,9 @@ class A2AHandler:
     
     async def handle_document_query(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle document query requests"""
+        import time
+        start_time = time.time()
+        
         query_params = DocumentQueryParams(**params)
         
         # Map A2A collection names to RAG agent collection names
@@ -245,6 +249,26 @@ class A2AHandler:
         
         # Process query using RAG agent
         response = self.rag_agent.process_query(query_params.query)
+        
+        # Log the event
+        duration_ms = (time.time() - start_time) * 1000
+        if self.event_logger:
+            answer = response.get("answer", "")
+            self.event_logger.log_a2a_event(
+                agent_id="main_rag_agent",
+                agent_name="Main RAG Agent",
+                method="document.query",
+                user_prompt=query_params.query,
+                response=answer[:1000],  # Truncate to 1000 chars
+                metadata={
+                    "collection": query_params.collection,
+                    "use_cot": query_params.use_cot,
+                    "max_results": query_params.max_results,
+                    "context_count": len(response.get("context", []))
+                },
+                duration_ms=duration_ms,
+                status="success"
+            )
         
         return {
             "answer": response.get("answer", ""),
@@ -315,6 +339,9 @@ class A2AHandler:
     
     async def handle_agent_query(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle agent query requests - routes to specialized agents using Ollama API"""
+        import time
+        start_time = time.time()
+        
         try:
             # Extract agent_id from params
             agent_id = params.get("agent_id")
@@ -337,6 +364,7 @@ class A2AHandler:
             personality = metadata.get("personality", "")
             role = metadata.get("role", "")
             expertise = metadata.get("expertise", [])
+            agent_name = agent_card.get("name", agent_id)
             
             # Extract query parameters
             query = params.get("query")
@@ -385,6 +413,21 @@ Steps:"""
                         if clean_step and len(clean_step) > 10:
                             steps.append(clean_step)
                 
+                # Log the event
+                duration_ms = (time.time() - start_time) * 1000
+                if self.event_logger:
+                    self.event_logger.log_a2a_event(
+                        agent_id=agent_id,
+                        agent_name=agent_name,
+                        method="agent.query",
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
+                        response=plan[:1000],  # Truncate to 1000 chars
+                        metadata={"query": query, "steps_generated": len(steps)},
+                        duration_ms=duration_ms,
+                        status="success"
+                    )
+                
                 return {
                     "plan": plan,
                     "steps": steps[:4],  # Limit to 4 steps
@@ -430,6 +473,21 @@ Key Findings:"""
                 findings = [{"content": summary, "metadata": {"source": "Research Summary"}}]
                 findings.extend(all_results[:3])
                 
+                # Log the event
+                duration_ms = (time.time() - start_time) * 1000
+                if self.event_logger:
+                    self.event_logger.log_a2a_event(
+                        agent_id=agent_id,
+                        agent_name=agent_name,
+                        method="agent.query",
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
+                        response=summary[:1000],  # Truncate to 1000 chars
+                        metadata={"query": query, "step": step, "findings_count": len(findings)},
+                        duration_ms=duration_ms,
+                        status="success"
+                    )
+                
                 return {
                     "findings": findings,
                     "summary": summary,
@@ -466,6 +524,21 @@ Conclusion:"""
                 
                 logger.info(f"✅ Reasoner response: {conclusion[:200]}...")
                 
+                # Log the event
+                duration_ms = (time.time() - start_time) * 1000
+                if self.event_logger:
+                    self.event_logger.log_a2a_event(
+                        agent_id=agent_id,
+                        agent_name=agent_name,
+                        method="agent.query",
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
+                        response=conclusion[:1000],  # Truncate to 1000 chars
+                        metadata={"query": query, "step": step},
+                        duration_ms=duration_ms,
+                        status="success"
+                    )
+                
                 return {
                     "conclusion": conclusion,
                     "reasoning": conclusion,
@@ -500,6 +573,21 @@ Final Answer:"""
                 answer = self._call_ollama_api(model, user_prompt, system_prompt)
                 
                 logger.info(f"✅ Synthesizer response: {answer[:200]}...")
+                
+                # Log the event
+                duration_ms = (time.time() - start_time) * 1000
+                if self.event_logger:
+                    self.event_logger.log_a2a_event(
+                        agent_id=agent_id,
+                        agent_name=agent_name,
+                        method="agent.query",
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
+                        response=answer[:1000],  # Truncate to 1000 chars
+                        metadata={"query": query, "reasoning_steps_count": len(reasoning_steps)},
+                        duration_ms=duration_ms,
+                        status="success"
+                    )
                 
                 return {
                     "answer": answer,

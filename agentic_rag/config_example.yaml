@@ -19,5 +19,5 @@ AGENT_ENDPOINTS:
   reasoner_url: http://localhost:8000
   synthesizer_url: http://localhost:8000
 
-# Model configuration for specialized agents (via Ollama API)
+# Model configuration for specialized agents (via Ollama API) (only necessary if not using the GUI)
 SPECIALIZED_AGENT_MODEL: deepseek-r1  # Options: qwq, deepseek-r1, llama3.3, phi4, gemma3, etc.
