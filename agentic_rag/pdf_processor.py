@@ -8,6 +8,8 @@ from urllib.parse import urlparse
 import warnings
 import transformers
 import uuid  # Add at the top with other imports
+import os
+os.environ['HF_HUB_DISABLE_XET'] = '1'
 
 # Suppress the token length warning
 warnings.filterwarnings('ignore', category=UserWarning, module='transformers.generation.utils')
