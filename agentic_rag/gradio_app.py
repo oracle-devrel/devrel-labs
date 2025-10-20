@@ -343,7 +343,7 @@ def test_a2a_health() -> str:
     """Test A2A health check"""
     try:
         response = a2a_client.health_check()
-        if "error" in response:
+        if response.get("error"):
             return f"❌ Health Check Failed: {response['error']}"
         else:
             return f"✅ Health Check Passed: {json.dumps(response, indent=2)}"
@@ -354,7 +354,7 @@ def test_a2a_agent_card() -> str:
     """Test A2A agent card retrieval"""
     try:
         response = a2a_client.get_agent_card()
-        if "error" in response:
+        if response.get("error"):
             return f"❌ Agent Card Failed: {response['error']}"
         else:
             return f"✅ Agent Card Retrieved: {json.dumps(response, indent=2)}"
@@ -384,7 +384,7 @@ def test_a2a_document_query(query: str, collection: str, use_cot: bool) -> str:
             f"query-{int(time.time())}"
         )
         
-        if "error" in response:
+        if response.get("error"):
             return f"❌ Document Query Failed: {json.dumps(response['error'], indent=2)}"
         else:
             result = response.get("result", {})
@@ -430,7 +430,7 @@ def test_a2a_task_create(task_type: str, task_params: str) -> str:
             task_id
         )
         
-        if "error" in response:
+        if response.get("error"):
             return f"❌ Task Creation Failed: {json.dumps(response['error'], indent=2)}"
         else:
             result = response.get("result", {})
@@ -458,7 +458,7 @@ def test_a2a_task_status(task_id: str) -> str:
             f"status-{int(time.time())}"
         )
         
-        if "error" in response:
+        if response.get("error"):
             return f"❌ Task Status Failed: {json.dumps(response['error'], indent=2)}"
         else:
             result = response.get("result", {})
@@ -475,7 +475,7 @@ def test_a2a_agent_discover(capability: str) -> str:
             f"discover-{int(time.time())}"
         )
         
-        if "error" in response:
+        if response.get("error"):
             return f"❌ Agent Discovery Failed: {json.dumps(response['error'], indent=2)}"
         else:
             result = response.get("result", {})
@@ -522,7 +522,7 @@ def refresh_a2a_tasks() -> str:
                 f"refresh-{int(time.time())}"
             )
             
-            if "error" not in status_response:
+            if not status_response.get("error"):
                 result = status_response.get("result", {})
                 a2a_tasks[task_id]["status"] = result.get("status", "unknown")
                 response_text += f"✅ {task_id}: {result.get('status', 'unknown')}\n"
@@ -584,9 +584,16 @@ def a2a_chat(message: str, history: List[List[str]], agent_type: str, use_cot: b
             f"chat-{int(time.time())}"
         )
         
-        if "error" in response:
+        # Print full response for debugging
+        print("\n📥 A2A Response Received:")
+        print("-" * 50)
+        print(json.dumps(response, indent=2))
+        print("-" * 50 + "\n")
+        
+        # Check if there's an actual error (not just null/None)
+        if response.get("error"):
             error_msg = f"A2A Error: {json.dumps(response['error'], indent=2)}"
-            print(f"A2A Error: {error_msg}")
+            print(f"❌ A2A Error detected: {error_msg}")
             history.append([message, error_msg])
             return history
         
@@ -596,6 +603,13 @@ def a2a_chat(message: str, history: List[List[str]], agent_type: str, use_cot: b
         sources = result.get("sources", {})
         reasoning_steps = result.get("reasoning_steps", [])
         context = result.get("context", [])
+        
+        print("📊 Extracted Response Data:")
+        print(f"  - Answer length: {len(answer)} chars")
+        print(f"  - Sources count: {len(sources)}")
+        print(f"  - Reasoning steps: {len(reasoning_steps)}")
+        print(f"  - Context chunks: {len(context)}")
+        print()
         
         # Format response similar to standard chat interface
         if use_cot and reasoning_steps:
@@ -663,7 +677,8 @@ def a2a_chat(message: str, history: List[List[str]], agent_type: str, use_cot: b
             history.append([message, formatted_response])
         
         print("\n" + "="*50)
-        print("A2A Response complete")
+        print("✅ A2A Response complete")
+        print(f"📝 Added to history - Response length: {len(formatted_response)} chars")
         print("="*50 + "\n")
         
         return history
