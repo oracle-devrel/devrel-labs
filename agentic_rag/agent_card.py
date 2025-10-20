@@ -167,6 +167,52 @@ def get_agent_card() -> dict:
             }
         ),
         AgentCapability(
+            name="agent.query",
+            description="Query specialized Chain of Thought agents (Planner, Researcher, Reasoner, Synthesizer) for distributed multi-agent reasoning",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "agent_id": {
+                        "type": "string",
+                        "enum": ["planner_agent_v1", "researcher_agent_v1", "reasoner_agent_v1", "synthesizer_agent_v1"],
+                        "description": "ID of the specialized agent to query"
+                    },
+                    "query": {
+                        "type": "string",
+                        "description": "The query or problem to process"
+                    },
+                    "step": {
+                        "type": "string",
+                        "description": "Specific step to process (for Researcher/Reasoner)"
+                    },
+                    "context": {
+                        "type": "array",
+                        "items": {"type": "object"},
+                        "description": "Context from previous agents"
+                    },
+                    "reasoning_steps": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "All reasoning steps (for Synthesizer)"
+                    }
+                },
+                "required": ["agent_id", "query"]
+            },
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "plan": {"type": "string"},
+                    "steps": {"type": "array"},
+                    "findings": {"type": "array"},
+                    "summary": {"type": "string"},
+                    "conclusion": {"type": "string"},
+                    "reasoning": {"type": "string"},
+                    "answer": {"type": "string"},
+                    "agent_id": {"type": "string"}
+                }
+            }
+        ),
+        AgentCapability(
             name="health.check",
             description="Check agent health and status",
             input_schema={

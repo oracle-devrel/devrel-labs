@@ -458,6 +458,112 @@ python local_rag_agent.py --query "How to implement a queue?" --collection "Repo
 
 The agentic_rag system now includes full support for the Agent2Agent (A2A) protocol, enabling seamless communication and collaboration with other AI agents. This integration transforms the system into an interoperable agent that can participate in multi-agent workflows and ecosystems.
 
+### 3.0 Distributed Chain of Thought Architecture
+
+The system implements a **distributed multi-agent Chain of Thought (CoT)** architecture where each specialized agent can run on separate servers and communicate via the A2A protocol. This enables:
+
+- **True Distributed Processing**: Each agent (Planner, Researcher, Reasoner, Synthesizer) can run on different servers
+- **Scalable Agent Deployment**: Deploy agents independently based on resource requirements
+- **Agent-to-Agent Communication**: All communication happens via A2A protocol using agent IDs and remote URLs
+- **Load Balancing**: Distribute workload across multiple servers for better performance
+
+#### Distributed Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        User Query via Gradio                        │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │   A2A Orchestrator   │
+                  │  (localhost:8000)    │
+                  └──────────────────────┘
+                             │
+            ┌────────────────┼────────────────┐
+            │                │                │
+            ▼                ▼                ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│ Planner Agent   │  │Researcher Agent │  │ Reasoner Agent  │
+│ Agent ID:       │  │ Agent ID:       │  │ Agent ID:       │
+│planner_agent_v1 │  │researcher_a_v1  │  │reasoner_a_v1    │
+│                 │  │                 │  │                 │
+│ URL: http://    │  │ URL: http://    │  │ URL: http://    │
+│ localhost:8000  │  │ localhost:8000  │  │ localhost:8000  │
+│ OR              │  │ OR              │  │ OR              │
+│ server1:8001 ◄──┼──► server2:8002 ◄──┼──► server3:8003   │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+                             │
+                             ▼
+                  ┌─────────────────┐
+                  │Synthesizer Agent│
+                  │ Agent ID:       │
+                  │synthesizer_a_v1 │
+                  │                 │
+                  │ URL: http://    │
+                  │ localhost:8000  │
+                  │ OR              │
+                  │ server4:8004    │
+                  └─────────────────┘
+                             │
+                             ▼
+                  ┌──────────────────┐
+                  │  Final Answer    │
+                  │  to User         │
+                  └──────────────────┘
+```
+
+#### How Distributed Communication Works
+
+1. **Agent Discovery**: Agents register their capabilities and endpoints with the A2A registry
+2. **Agent Addressing**: Each agent is addressable via `{base_url}/a2a` + `agent_id`
+3. **Remote Communication**: 
+   - Orchestrator sends A2A request to: `http://server1:8001/a2a`
+   - Request body includes: `{"method": "agent.query", "params": {"agent_id": "planner_agent_v1", ...}}`
+   - Agent processes and returns result via A2A response
+4. **Sequential Flow**: Planner → Researcher → Reasoner → Synthesizer (each via A2A protocol)
+
+#### Configuration for Distributed Deployment
+
+To deploy agents on different servers, update `config.yaml`:
+
+```yaml
+AGENT_ENDPOINTS:
+  planner_url: http://server1.example.com:8001
+  researcher_url: http://server2.example.com:8002
+  reasoner_url: http://server3.example.com:8003
+  synthesizer_url: http://server4.example.com:8004
+```
+
+**Local Development** (default):
+```yaml
+AGENT_ENDPOINTS:
+  planner_url: http://localhost:8000
+  researcher_url: http://localhost:8000
+  reasoner_url: http://localhost:8000
+  synthesizer_url: http://localhost:8000
+```
+
+#### Specialized Agent Cards
+
+Each specialized agent has its own agent card describing its capabilities:
+
+| Agent ID | Name | Role | Capability |
+|----------|------|------|------------|
+| `planner_agent_v1` | Strategic Planner | Problem decomposition | Breaks queries into 3-4 actionable steps |
+| `researcher_agent_v1` | Information Researcher | Knowledge gathering | Searches vector stores and extracts findings |
+| `reasoner_agent_v1` | Logic & Reasoning | Logical analysis | Applies reasoning to draw conclusions |
+| `synthesizer_agent_v1` | Information Synthesizer | Response generation | Combines steps into coherent final answer |
+
+#### Benefits of Distributed Architecture
+
+1. **Resource Optimization**: Deploy resource-intensive agents (Researcher) on GPU servers, lighter agents on CPU servers
+2. **Fault Tolerance**: If one agent fails, others continue functioning
+3. **Independent Scaling**: Scale specific agents based on load (e.g., multiple Researcher instances)
+4. **Technology Flexibility**: Each agent can use different LLM backends (GPT-4, Claude, Ollama, etc.)
+5. **Security Isolation**: Sensitive operations can run in isolated environments
+6. **Geographic Distribution**: Deploy agents closer to data sources for lower latency
+
 ### 3.1 Why A2A Protocol Implementation?
 
 **Enhanced Interoperability**: The A2A protocol enables the agentic_rag system to communicate with other AI agents using a standardized protocol, breaking down silos between different AI systems and frameworks.
@@ -488,10 +594,12 @@ The system supports the following A2A protocol methods:
 
 - `document.query`: Query documents using RAG with intelligent routing
 - `document.upload`: Process and store documents in vector database
+- `agent.query`: **NEW** - Query specialized CoT agents (Planner, Researcher, Reasoner, Synthesizer) for distributed reasoning
 - `task.create`: Create long-running tasks for complex operations
 - `task.status`: Check status of running tasks
 - `task.cancel`: Cancel running tasks
 - `agent.discover`: Discover other agents and their capabilities
+- `agent.register`: Register new agents with the A2A registry
 - `agent.card`: Get agent capability information
 - `health.check`: System health and status check
 
@@ -570,8 +678,84 @@ curl -X POST http://localhost:8000/a2a \
     "id": "4"
   }'
 
+# Discover specialized CoT agents
+curl -X POST http://localhost:8000/a2a \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "agent.discover",
+    "params": {
+      "capability": "agent.query"
+    },
+    "id": "5"
+  }'
+
 # Get agent card
 curl -X GET http://localhost:8000/agent_card
+```
+
+#### 3.4.4 Specialized Agent Query (Distributed CoT)
+
+```bash
+# Query the Planner Agent
+curl -X POST http://localhost:8000/a2a \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "agent.query",
+    "params": {
+      "agent_id": "planner_agent_v1",
+      "query": "How does machine learning work?"
+    },
+    "id": "6"
+  }'
+
+# Query the Researcher Agent
+curl -X POST http://localhost:8000/a2a \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "agent.query",
+    "params": {
+      "agent_id": "researcher_agent_v1",
+      "query": "How does machine learning work?",
+      "step": "Understand the basic concept of ML"
+    },
+    "id": "7"
+  }'
+
+# Query the Reasoner Agent
+curl -X POST http://localhost:8000/a2a \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "agent.query",
+    "params": {
+      "agent_id": "reasoner_agent_v1",
+      "query": "How does machine learning work?",
+      "step": "Analyze the key components",
+      "context": [{"content": "Research findings about ML algorithms..."}]
+    },
+    "id": "8"
+  }'
+
+# Query the Synthesizer Agent
+curl -X POST http://localhost:8000/a2a \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "agent.query",
+    "params": {
+      "agent_id": "synthesizer_agent_v1",
+      "query": "How does machine learning work?",
+      "reasoning_steps": [
+        "ML is a subset of AI...",
+        "It uses algorithms to learn from data...",
+        "Key components include training and inference..."
+      ]
+    },
+    "id": "9"
+  }'
 ```
 
 ### 3.5 Testing A2A Implementation
@@ -601,9 +785,11 @@ The test suite includes:
 - **Error Handling**: Error condition testing
 - **Model Validation**: Data model testing
 
-### 3.6 A2A Agent Card
+### 3.6 A2A Agent Cards
 
-The system publishes its capabilities through an agent card:
+The system publishes its capabilities through agent cards. There is a main agent card for the RAG system and individual cards for each specialized CoT agent:
+
+#### Main RAG Agent Card
 
 ```json
 {
@@ -617,6 +803,15 @@ The system publishes its capabilities through an agent card:
       "description": "Query documents using RAG with context retrieval",
       "input_schema": { ... },
       "output_schema": { ... }
+    },
+    {
+      "name": "agent.query",
+      "description": "Query specialized CoT agents for distributed reasoning",
+      "input_schema": {
+        "agent_id": "planner_agent_v1 | researcher_agent_v1 | reasoner_agent_v1 | synthesizer_agent_v1",
+        ...
+      },
+      "output_schema": { ... }
     }
   ],
   "endpoints": {
@@ -626,7 +821,57 @@ The system publishes its capabilities through an agent card:
 }
 ```
 
-### 3.7 Benefits of A2A Integration
+#### Specialized Agent Cards
+
+Each CoT agent has its own card accessible via agent discovery:
+
+```bash
+# Discover all specialized agents
+curl -X POST http://localhost:8000/a2a \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc": "2.0", "method": "agent.discover", "params": {"capability": "agent.query"}, "id": "1"}'
+```
+
+This returns agent cards for:
+- **Planner Agent** (`planner_agent_v1`): Problem decomposition and strategic planning
+- **Researcher Agent** (`researcher_agent_v1`): Information gathering from vector stores
+- **Reasoner Agent** (`reasoner_agent_v1`): Logical reasoning and analysis
+- **Synthesizer Agent** (`synthesizer_agent_v1`): Final answer synthesis
+
+### 3.7 Using A2A Chat Interface in Gradio
+
+The Gradio interface includes an **A2A Chat Interface** tab that allows you to interact with the distributed CoT agents:
+
+1. **Navigate to A2A Chat Interface tab** in the Gradio UI
+2. **Enable "Use Chain of Thought"** checkbox to activate distributed CoT reasoning
+3. **Ask a question** and watch as it orchestrates through all specialized agents:
+   - 🎯 Planner breaks down the query
+   - 🔍 Researcher gathers information for each step
+   - 🤔 Reasoner applies logical analysis
+   - 📝 Synthesizer combines into final answer
+4. **View step-by-step progress** as each agent processes via A2A protocol
+
+**Prerequisites**: 
+- A2A server must be running (`python main.py` on port 8000)
+- Specialized agents are automatically registered on server startup
+- All communication happens via A2A protocol (HTTP + JSON-RPC 2.0)
+
+**Example Query Flow**:
+```
+User: "What is machine learning?"
+  ↓ (A2A: agent.query → planner_agent_v1)
+Planner: Creates 4 steps
+  ↓ (A2A: agent.query → researcher_agent_v1) × 4
+Researcher: Gathers info for each step
+  ↓ (A2A: agent.query → reasoner_agent_v1) × 4
+Reasoner: Analyzes each step
+  ↓ (A2A: agent.query → synthesizer_agent_v1)
+Synthesizer: Combines into final answer
+  ↓
+User: Receives comprehensive answer with sources
+```
+
+### 3.8 Benefits of A2A Integration
 
 1. **Interoperability**: Seamless communication with other A2A-compliant agents
 2. **Scalability**: Support for complex multi-agent workflows
@@ -634,17 +879,32 @@ The system publishes its capabilities through an agent card:
 4. **Discovery**: Automatic agent and capability discovery
 5. **Security**: Built-in authentication and authorization
 6. **Future-Proofing**: Compatibility with evolving agent ecosystems
+7. **Distributed Processing**: Each agent can run on separate infrastructure
+8. **Load Balancing**: Distribute workload across multiple servers
 
-### 3.8 Configuration
+### 3.9 Configuration
 
-No additional configuration is required for A2A functionality. The system automatically:
+**A2A Endpoint Configuration** (for distributed deployment):
+
+Edit `config.yaml` to specify agent endpoints:
+
+```yaml
+AGENT_ENDPOINTS:
+  planner_url: http://localhost:8000      # or remote server
+  researcher_url: http://localhost:8000   # or remote server
+  reasoner_url: http://localhost:8000     # or remote server
+  synthesizer_url: http://localhost:8000  # or remote server
+```
+
+**Basic A2A functionality** requires no additional configuration. The system automatically:
 
 - Initializes A2A handlers on startup
-- Registers available capabilities
+- Registers main RAG agent and specialized CoT agents
 - Starts task management services
 - Enables agent discovery
+- Loads agent endpoint URLs from config
 
-### 3.9 Troubleshooting
+### 3.10 Troubleshooting
 
 #### Common Issues
 

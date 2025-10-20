@@ -7,14 +7,16 @@ JSON-RPC 2.0 requests and routes them to appropriate methods.
 
 import asyncio
 import logging
+import yaml
 from typing import Dict, Any, Optional
 from a2a_models import (
     A2ARequest, A2AResponse, A2AError, TaskInfo, TaskStatus,
     DocumentQueryParams, DocumentUploadParams, TaskCreateParams,
-    TaskStatusParams, AgentDiscoverParams
+    TaskStatusParams, AgentDiscoverParams, AgentCard, AgentCapability, AgentEndpoint
 )
 from task_manager import TaskManager
 from agent_registry import AgentRegistry
+from specialized_agent_cards import get_all_specialized_agent_cards, get_agent_card_by_id
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,12 @@ class A2AHandler:
         self.task_manager = TaskManager()
         self.agent_registry = AgentRegistry()
         
+        # Load agent endpoint configuration
+        self.agent_endpoints = self._load_agent_endpoints()
+        
+        # Initialize specialized agents (lazy loading)
+        self._specialized_agents = {}
+        
         # Register available methods
         self.methods = {
             "document.query": self.handle_document_query,
@@ -36,6 +44,7 @@ class A2AHandler:
             "agent.discover": self.handle_agent_discover,
             "agent.register": self.handle_agent_register,
             "agent.card": self.handle_agent_card,
+            "agent.query": self.handle_agent_query,
             "task.create": self.handle_task_create,
             "task.status": self.handle_task_status,
             "task.cancel": self.handle_task_cancel,
@@ -44,6 +53,25 @@ class A2AHandler:
         
         # Initialize registration flag
         self._self_registered = False
+        self._specialized_agents_registered = False
+    
+    def _load_agent_endpoints(self) -> Dict[str, str]:
+        """Load agent endpoint URLs from config"""
+        try:
+            with open('config.yaml', 'r') as f:
+                config = yaml.safe_load(f)
+                endpoints = config.get('AGENT_ENDPOINTS', {})
+                logger.info(f"Loaded agent endpoints: {endpoints}")
+                return endpoints
+        except Exception as e:
+            logger.warning(f"Could not load agent endpoints from config: {str(e)}")
+            # Return default localhost endpoints
+            return {
+                "planner_url": "http://localhost:8000",
+                "researcher_url": "http://localhost:8000",
+                "reasoner_url": "http://localhost:8000",
+                "synthesizer_url": "http://localhost:8000"
+            }
     
     def _register_self(self):
         """Register this agent in the agent registry"""
@@ -102,6 +130,61 @@ class A2AHandler:
             
         except Exception as e:
             logger.error(f"Failed to register self as agent: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    def _register_specialized_agents(self):
+        """Register all specialized Chain of Thought agents"""
+        try:
+            logger.info("Starting specialized agents registration...")
+            
+            # Get all specialized agent cards with configured URLs
+            specialized_cards = get_all_specialized_agent_cards(self.agent_endpoints)
+            
+            # Register each specialized agent
+            for agent_id, card_data in specialized_cards.items():
+                try:
+                    # Convert to AgentCard object
+                    capabilities = []
+                    for cap_data in card_data.get("capabilities", []):
+                        capability = AgentCapability(
+                            name=cap_data["name"],
+                            description=cap_data["description"],
+                            input_schema=cap_data.get("input_schema", {}),
+                            output_schema=cap_data.get("output_schema", {})
+                        )
+                        capabilities.append(capability)
+                    
+                    endpoints_data = card_data.get("endpoints", {})
+                    endpoints = AgentEndpoint(
+                        base_url=endpoints_data.get("base_url", "http://localhost:8000"),
+                        authentication=endpoints_data.get("authentication", {})
+                    )
+                    
+                    agent_card = AgentCard(
+                        agent_id=card_data["agent_id"],
+                        name=card_data["name"],
+                        version=card_data["version"],
+                        description=card_data["description"],
+                        capabilities=capabilities,
+                        endpoints=endpoints,
+                        metadata=card_data.get("metadata", {})
+                    )
+                    
+                    success = self.agent_registry.register_agent(agent_card)
+                    if success:
+                        logger.info(f"Successfully registered specialized agent: {agent_id}")
+                    else:
+                        logger.error(f"Failed to register specialized agent: {agent_id}")
+                        
+                except Exception as e:
+                    logger.error(f"Error registering specialized agent {agent_id}: {str(e)}")
+            
+            logger.info(f"Specialized agent registration complete. Registry has {len(self.agent_registry.registered_agents)} total agents")
+            logger.info(f"Available capabilities: {list(self.agent_registry.capability_index.keys())}")
+            
+        except Exception as e:
+            logger.error(f"Failed to register specialized agents: {str(e)}")
             import traceback
             logger.error(f"Traceback: {traceback.format_exc()}")
     
@@ -185,6 +268,129 @@ class A2AHandler:
                 "message": f"Unsupported document type: {upload_params.document_type}"
             }
     
+    def _get_specialized_agent(self, agent_id: str):
+        """Get or create a specialized agent instance"""
+        if agent_id in self._specialized_agents:
+            return self._specialized_agents[agent_id]
+        
+        # Import agent factory
+        from agents.agent_factory import create_agents
+        from langchain_openai import ChatOpenAI
+        import os
+        
+        # Create LLM (using OpenAI for now, can be configured)
+        openai_key = os.getenv("OPENAI_API_KEY")
+        if not openai_key:
+            # Try Ollama as fallback
+            try:
+                from langchain_community.llms import Ollama
+                llm = Ollama(model="qwq")
+                logger.info("Using Ollama qwq for specialized agents")
+            except Exception as e:
+                logger.error(f"Could not initialize LLM for specialized agents: {str(e)}")
+                raise ValueError("No LLM available for specialized agents")
+        else:
+            llm = ChatOpenAI(model="gpt-4", temperature=0.7, api_key=openai_key)
+            logger.info("Using OpenAI GPT-4 for specialized agents")
+        
+        # Create all agents
+        agents = create_agents(llm, self.vector_store)
+        
+        # Map agent_id to agent type
+        agent_map = {
+            "planner_agent_v1": agents["planner"],
+            "researcher_agent_v1": agents["researcher"],
+            "reasoner_agent_v1": agents["reasoner"],
+            "synthesizer_agent_v1": agents["synthesizer"]
+        }
+        
+        if agent_id not in agent_map:
+            raise ValueError(f"Unknown agent ID: {agent_id}")
+        
+        # Cache the agent
+        self._specialized_agents[agent_id] = agent_map[agent_id]
+        logger.info(f"Created and cached specialized agent: {agent_id}")
+        
+        return agent_map[agent_id]
+    
+    async def handle_agent_query(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle agent query requests - routes to specialized agents"""
+        try:
+            # Extract agent_id from params
+            agent_id = params.get("agent_id")
+            if not agent_id:
+                return {
+                    "error": "agent_id is required",
+                    "message": "Must specify which agent to query"
+                }
+            
+            # Get the specialized agent
+            agent = self._get_specialized_agent(agent_id)
+            
+            # Extract query parameters
+            query = params.get("query")
+            step = params.get("step")
+            context = params.get("context", [])
+            reasoning_steps = params.get("reasoning_steps", [])
+            
+            # Route to appropriate agent method based on agent_id
+            if agent_id == "planner_agent_v1":
+                # Planner: Break down the query into steps
+                plan = agent.plan(query, context)
+                return {
+                    "plan": plan,
+                    "steps": plan.split("\n") if plan else [],
+                    "agent_id": agent_id
+                }
+            
+            elif agent_id == "researcher_agent_v1":
+                # Researcher: Gather information for a specific step
+                if not step:
+                    return {"error": "step is required for researcher agent"}
+                findings = agent.research(query, step)
+                return {
+                    "findings": findings,
+                    "summary": findings[0]["content"] if findings else "",
+                    "agent_id": agent_id
+                }
+            
+            elif agent_id == "reasoner_agent_v1":
+                # Reasoner: Apply logical reasoning to the step
+                if not step:
+                    return {"error": "step is required for reasoner agent"}
+                conclusion = agent.reason(query, step, context)
+                return {
+                    "conclusion": conclusion,
+                    "reasoning": conclusion,
+                    "agent_id": agent_id
+                }
+            
+            elif agent_id == "synthesizer_agent_v1":
+                # Synthesizer: Combine all reasoning steps into final answer
+                if not reasoning_steps:
+                    return {"error": "reasoning_steps is required for synthesizer agent"}
+                answer = agent.synthesize(query, reasoning_steps)
+                return {
+                    "answer": answer,
+                    "summary": answer,
+                    "agent_id": agent_id
+                }
+            
+            else:
+                return {
+                    "error": f"Unknown agent ID: {agent_id}",
+                    "message": "Agent not found or not supported"
+                }
+                
+        except Exception as e:
+            logger.error(f"Error in agent query: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return {
+                "error": str(e),
+                "message": "Failed to process agent query"
+            }
+    
     async def handle_agent_discover(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle agent discovery requests"""
         try:
@@ -193,6 +399,12 @@ class A2AHandler:
                 logger.info("Self not registered yet, registering now...")
                 self._register_self()
                 self._self_registered = True
+            
+            # Ensure specialized agents are registered
+            if not self._specialized_agents_registered:
+                logger.info("Specialized agents not registered yet, registering now...")
+                self._register_specialized_agents()
+                self._specialized_agents_registered = True
             
             discover_params = AgentDiscoverParams(**params)
             logger.info(f"Agent discovery request: capability={discover_params.capability}, agent_id={discover_params.agent_id}")

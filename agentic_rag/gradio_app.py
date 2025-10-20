@@ -556,7 +556,7 @@ def test_individual_task() -> str:
 
 # A2A Chat Interface Functions
 def a2a_chat(message: str, history: List[List[str]], agent_type: str, use_cot: bool, collection: str) -> List[List[str]]:
-    """Process chat message using A2A protocol instead of direct agent calls"""
+    """Process chat message using A2A protocol with distributed specialized agents for CoT"""
     try:
         print("\n" + "="*50)
         print(f"A2A Chat - New message: {message}")
@@ -572,121 +572,192 @@ def a2a_chat(message: str, history: List[List[str]], agent_type: str, use_cot: b
         }
         a2a_collection = collection_mapping.get(collection, "General")
         
-        # Make A2A document query request
-        response = a2a_client.make_request(
-            "document.query",
-            {
-                "query": message,
-                "collection": a2a_collection,
-                "use_cot": use_cot,
-                "max_results": 5
-            },
-            f"chat-{int(time.time())}"
-        )
-        
-        # Print full response for debugging
-        print("\n📥 A2A Response Received:")
-        print("-" * 50)
-        print(json.dumps(response, indent=2))
-        print("-" * 50 + "\n")
-        
-        # Check if there's an actual error (not just null/None)
-        if response.get("error"):
-            error_msg = f"A2A Error: {json.dumps(response['error'], indent=2)}"
-            print(f"❌ A2A Error detected: {error_msg}")
-            history.append([message, error_msg])
-            return history
-        
-        # Extract result from A2A response
-        result = response.get("result", {})
-        answer = result.get("answer", "No answer provided")
-        sources = result.get("sources", {})
-        reasoning_steps = result.get("reasoning_steps", [])
-        context = result.get("context", [])
-        
-        print("📊 Extracted Response Data:")
-        print(f"  - Answer length: {len(answer)} chars")
-        print(f"  - Sources count: {len(sources)}")
-        print(f"  - Reasoning steps: {len(reasoning_steps)}")
-        print(f"  - Context chunks: {len(context)}")
-        print()
-        
-        # Format response similar to standard chat interface
-        if use_cot and reasoning_steps:
-            formatted_response = "🤔 Let me think about this step by step:\n\n"
-            print("\nA2A Chain of Thought Reasoning Steps:")
-            print("-" * 50)
+        if use_cot:
+            # Use distributed specialized agents via A2A protocol
+            print("🔄 Using distributed CoT agents via A2A protocol...")
             
-            # Add each reasoning step
-            for i, step in enumerate(reasoning_steps, 1):
-                step_text = f"Step {i}:\n{step}\n"
-                formatted_response += step_text
-                print(step_text)
+            # Step 1: Call Planner Agent via A2A
+            print("\n1️⃣ Calling Planner Agent...")
+            planner_response = a2a_client.make_request(
+                "agent.query",
+                {
+                    "agent_id": "planner_agent_v1",
+                    "query": message,
+                    "context": []
+                },
+                f"planner-{int(time.time())}"
+            )
+            
+            if planner_response.get("error"):
+                error_msg = f"Planner Error: {json.dumps(planner_response['error'], indent=2)}"
+                print(f"❌ {error_msg}")
+                history.append([message, error_msg])
+                return history
+            
+            planner_result = planner_response.get("result", {})
+            plan = planner_result.get("plan", "")
+            steps = planner_result.get("steps", [])
+            
+            # Extract clean steps from plan (filter out empty lines)
+            if not steps or len(steps) == 0:
+                steps = [s.strip() for s in plan.split("\n") if s.strip() and not s.strip().startswith("Step")]
+            
+            print(f"✅ Planner created {len(steps)} steps")
+            history.append([None, f"🎯 Planning:\n{plan}"])
+            
+            # Collect reasoning steps
+            reasoning_steps = []
+            all_context = []
+            
+            # Process each step: Research → Reason
+            for i, step in enumerate(steps[:4], 1):  # Limit to 4 steps
+                if not step.strip():
+                    continue
+                    
+                print(f"\n{i+1}️⃣ Processing Step {i}: {step[:50]}...")
                 
-                # Add intermediate response to chat history
-                history.append([None, f"🔄 Step {i} Conclusion:\n{step}"])
-            
-            # Add final answer
-            print("\nFinal Answer:")
-            print("-" * 50)
-            final_answer = "\n🎯 Final Answer:\n" + answer
-            formatted_response += final_answer
-            print(final_answer)
-            
-            # Add sources if available
-            if sources:
-                print("\nSources Used:")
-                print("-" * 50)
-                sources_text = "\n📚 Sources used:\n"
-                formatted_response += sources_text
-                print(sources_text)
+                # Step 2: Call Researcher Agent via A2A
+                print(f"   🔍 Researching...")
+                researcher_response = a2a_client.make_request(
+                    "agent.query",
+                    {
+                        "agent_id": "researcher_agent_v1",
+                        "query": message,
+                        "step": step,
+                        "context": []
+                    },
+                    f"researcher-{i}-{int(time.time())}"
+                )
                 
-                for source, details in sources.items():
-                    if isinstance(details, str):
-                        source_line = f"- {source}: {details}\n"
-                    else:
-                        source_line = f"- {source}\n"
-                    formatted_response += source_line
-                    print(source_line)
+                if researcher_response.get("error"):
+                    print(f"   ⚠️ Research skipped: {researcher_response.get('error')}")
+                    findings = []
+                else:
+                    researcher_result = researcher_response.get("result", {})
+                    findings = researcher_result.get("findings", [])
+                    print(f"   ✅ Found {len(findings)} research items")
+                
+                all_context.extend(findings)
+                
+                # Step 3: Call Reasoner Agent via A2A
+                print(f"   🤔 Reasoning...")
+                reasoner_response = a2a_client.make_request(
+                    "agent.query",
+                    {
+                        "agent_id": "reasoner_agent_v1",
+                        "query": message,
+                        "step": step,
+                        "context": findings
+                    },
+                    f"reasoner-{i}-{int(time.time())}"
+                )
+                
+                if reasoner_response.get("error"):
+                    print(f"   ⚠️ Reasoning skipped: {reasoner_response.get('error')}")
+                    conclusion = f"Unable to reason about: {step}"
+                else:
+                    reasoner_result = reasoner_response.get("result", {})
+                    conclusion = reasoner_result.get("conclusion", "")
+                    print(f"   ✅ Conclusion reached")
+                
+                reasoning_steps.append(conclusion)
+                history.append([None, f"🔄 Step {i} - {step[:50]}...\n{conclusion}"])
             
-            # Add final formatted response to history
-            history.append([message, formatted_response])
-        else:
-            # For standard response (no CoT)
-            formatted_response = answer
-            print("\nA2A Standard Response:")
-            print("-" * 50)
-            print(formatted_response)
+            # Step 4: Call Synthesizer Agent via A2A
+            print(f"\n5️⃣ Synthesizing final answer...")
+            synthesizer_response = a2a_client.make_request(
+                "agent.query",
+                {
+                    "agent_id": "synthesizer_agent_v1",
+                    "query": message,
+                    "reasoning_steps": reasoning_steps,
+                    "context": all_context
+                },
+                f"synthesizer-{int(time.time())}"
+            )
             
-            # Add sources if available
-            if sources:
-                print("\nSources Used:")
-                print("-" * 50)
+            if synthesizer_response.get("error"):
+                error_msg = f"Synthesizer Error: {json.dumps(synthesizer_response['error'], indent=2)}"
+                print(f"❌ {error_msg}")
+                history.append([message, error_msg])
+                return history
+            
+            synthesizer_result = synthesizer_response.get("result", {})
+            final_answer = synthesizer_result.get("answer", "No answer provided")
+            print(f"✅ Final answer synthesized")
+            
+            # Format final response
+            formatted_response = f"🎯 Final Answer:\n{final_answer}"
+            
+            # Add sources if available from context
+            if all_context:
                 sources_text = "\n\n📚 Sources used:\n"
+                seen_sources = set()
+                for ctx in all_context:
+                    if isinstance(ctx, dict) and "metadata" in ctx:
+                        source = ctx["metadata"].get("source", "Unknown")
+                        if source not in seen_sources:
+                            sources_text += f"- {source}\n"
+                            seen_sources.add(source)
                 formatted_response += sources_text
-                print(sources_text)
-                
-                for source, details in sources.items():
-                    if isinstance(details, str):
-                        source_line = f"- {source}: {details}\n"
-                    else:
-                        source_line = f"- {source}\n"
-                    formatted_response += source_line
-                    print(source_line)
             
             history.append([message, formatted_response])
-        
-        print("\n" + "="*50)
-        print("✅ A2A Response complete")
-        print(f"📝 Added to history - Response length: {len(formatted_response)} chars")
-        print("="*50 + "\n")
+            
+            print("\n" + "="*50)
+            print("✅ A2A CoT Response complete")
+            print("="*50 + "\n")
+            
+        else:
+            # Standard mode - use document.query without CoT
+            print("📝 Using standard A2A document query...")
+            response = a2a_client.make_request(
+                "document.query",
+                {
+                    "query": message,
+                    "collection": a2a_collection,
+                    "use_cot": False,
+                    "max_results": 5
+                },
+                f"chat-{int(time.time())}"
+            )
+            
+            if response.get("error"):
+                error_msg = f"A2A Error: {json.dumps(response['error'], indent=2)}"
+                print(f"❌ A2A Error detected: {error_msg}")
+                history.append([message, error_msg])
+                return history
+            
+            result = response.get("result", {})
+            answer = result.get("answer", "No answer provided")
+            sources = result.get("sources", {})
+            
+            formatted_response = answer
+            
+            # Add sources if available
+            if sources:
+                sources_text = "\n\n📚 Sources used:\n"
+                for source, details in sources.items():
+                    if isinstance(details, str):
+                        sources_text += f"- {source}: {details}\n"
+                    else:
+                        sources_text += f"- {source}\n"
+                formatted_response += sources_text
+            
+            history.append([message, formatted_response])
+            
+            print("\n" + "="*50)
+            print("✅ A2A Standard Response complete")
+            print("="*50 + "\n")
         
         return history
+        
     except Exception as e:
         error_msg = f"A2A Chat Error: {str(e)}"
         print(f"\nA2A Chat Error:")
         print("-" * 50)
         print(error_msg)
+        import traceback
+        print(traceback.format_exc())
         print("="*50 + "\n")
         history.append([message, error_msg])
         return history
