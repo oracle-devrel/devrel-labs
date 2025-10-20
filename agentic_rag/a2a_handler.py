@@ -73,6 +73,18 @@ class A2AHandler:
                 "synthesizer_url": "http://localhost:8000"
             }
     
+    def _load_specialized_agent_model(self) -> str:
+        """Load specialized agent model from config"""
+        try:
+            with open('config.yaml', 'r') as f:
+                config = yaml.safe_load(f)
+                model = config.get('SPECIALIZED_AGENT_MODEL', 'deepseek-r1')
+                logger.info(f"Loaded specialized agent model: {model}")
+                return model
+        except Exception as e:
+            logger.warning(f"Could not load model from config: {str(e)}")
+            return "deepseek-r1"  # Default model
+    
     def _register_self(self):
         """Register this agent in the agent registry"""
         try:
@@ -268,53 +280,41 @@ class A2AHandler:
                 "message": f"Unsupported document type: {upload_params.document_type}"
             }
     
-    def _get_specialized_agent(self, agent_id: str):
-        """Get or create a specialized agent instance"""
-        if agent_id in self._specialized_agents:
-            return self._specialized_agents[agent_id]
+    def _call_ollama_api(self, model: str, prompt: str, system_prompt: str = None) -> str:
+        """Call Ollama API directly for inference"""
+        import requests
         
-        # Import agent factory
-        from agents.agent_factory import create_agents
-        from langchain_openai import ChatOpenAI
-        import os
+        url = "http://127.0.0.1:11434/api/generate"
         
-        # Create LLM (using OpenAI for now, can be configured)
-        openai_key = os.getenv("OPENAI_API_KEY")
-        if not openai_key:
-            # Try Ollama as fallback
-            try:
-                from langchain_community.llms import Ollama
-                llm = Ollama(model="qwq")
-                logger.info("Using Ollama qwq for specialized agents")
-            except Exception as e:
-                logger.error(f"Could not initialize LLM for specialized agents: {str(e)}")
-                raise ValueError("No LLM available for specialized agents")
-        else:
-            llm = ChatOpenAI(model="gpt-4", temperature=0.7, api_key=openai_key)
-            logger.info("Using OpenAI GPT-4 for specialized agents")
-        
-        # Create all agents
-        agents = create_agents(llm, self.vector_store)
-        
-        # Map agent_id to agent type
-        agent_map = {
-            "planner_agent_v1": agents["planner"],
-            "researcher_agent_v1": agents["researcher"],
-            "reasoner_agent_v1": agents["reasoner"],
-            "synthesizer_agent_v1": agents["synthesizer"]
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "temperature": 0.7,
+                "num_predict": 512
+            }
         }
         
-        if agent_id not in agent_map:
-            raise ValueError(f"Unknown agent ID: {agent_id}")
+        if system_prompt:
+            payload["system"] = system_prompt
         
-        # Cache the agent
-        self._specialized_agents[agent_id] = agent_map[agent_id]
-        logger.info(f"Created and cached specialized agent: {agent_id}")
-        
-        return agent_map[agent_id]
+        try:
+            response = requests.post(url, json=payload, timeout=120)
+            response.raise_for_status()
+            result = response.json()
+            return result.get("response", "")
+        except Exception as e:
+            logger.error(f"Error calling Ollama API: {str(e)}")
+            raise
+    
+    def _get_specialized_agent_card(self, agent_id: str) -> dict:
+        """Get the agent card for a specialized agent"""
+        from specialized_agent_cards import get_agent_card_by_id
+        return get_agent_card_by_id(agent_id, self.agent_endpoints)
     
     async def handle_agent_query(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle agent query requests - routes to specialized agents"""
+        """Handle agent query requests - routes to specialized agents using Ollama API"""
         try:
             # Extract agent_id from params
             agent_id = params.get("agent_id")
@@ -324,8 +324,19 @@ class A2AHandler:
                     "message": "Must specify which agent to query"
                 }
             
-            # Get the specialized agent
-            agent = self._get_specialized_agent(agent_id)
+            # Get the agent card to extract personality and role
+            agent_card = self._get_specialized_agent_card(agent_id)
+            if not agent_card:
+                return {
+                    "error": f"Agent card not found for {agent_id}",
+                    "message": "Agent not registered"
+                }
+            
+            # Extract agent metadata
+            metadata = agent_card.get("metadata", {})
+            personality = metadata.get("personality", "")
+            role = metadata.get("role", "")
+            expertise = metadata.get("expertise", [])
             
             # Extract query parameters
             query = params.get("query")
@@ -333,13 +344,46 @@ class A2AHandler:
             context = params.get("context", [])
             reasoning_steps = params.get("reasoning_steps", [])
             
+            # Get model from config
+            model = self._load_specialized_agent_model()
+            
             # Route to appropriate agent method based on agent_id
             if agent_id == "planner_agent_v1":
                 # Planner: Break down the query into steps
-                plan = agent.plan(query, context)
+                system_prompt = f"""You are a {role} with expertise in {', '.join(expertise)}.
+Your personality: {personality}
+
+Your task is to break down complex problems into 3-4 clear, manageable steps for systematic problem-solving.
+Be strategic, analytical, and methodical in your planning."""
+                
+                user_prompt = f"""Query: {query}
+
+Break down this query into 3-4 clear, actionable steps. Format your response as:
+
+Step 1: [First step description]
+Step 2: [Second step description]
+Step 3: [Third step description]
+Step 4: [Fourth step description] (if needed)
+
+Steps:"""
+                
+                logger.info(f"Calling Planner with model: {model}")
+                plan = self._call_ollama_api(model, user_prompt, system_prompt)
+                logger.info(f"Planner response: {plan[:200]}...")
+                
+                # Extract steps from plan
+                steps = []
+                for line in plan.split("\n"):
+                    line = line.strip()
+                    if line and (line.startswith("Step") or line.startswith("-") or (len(line) > 10 and not line.startswith("Your"))):
+                        # Clean up the step
+                        clean_step = line.replace("Step 1:", "").replace("Step 2:", "").replace("Step 3:", "").replace("Step 4:", "").replace("-", "").strip()
+                        if clean_step and len(clean_step) > 10:
+                            steps.append(clean_step)
+                
                 return {
                     "plan": plan,
-                    "steps": plan.split("\n") if plan else [],
+                    "steps": steps[:4],  # Limit to 4 steps
                     "agent_id": agent_id
                 }
             
@@ -347,10 +391,40 @@ class A2AHandler:
                 # Researcher: Gather information for a specific step
                 if not step:
                     return {"error": "step is required for researcher agent"}
-                findings = agent.research(query, step)
+                
+                system_prompt = f"""You are a {role} with expertise in {', '.join(expertise)}.
+Your personality: {personality}
+
+Your task is to gather and analyze relevant information from the provided context, extracting key findings for each research step."""
+                
+                # Query vector store for relevant information
+                logger.info(f"Researching for step: {step}")
+                pdf_results = self.vector_store.query_pdf_collection(query) if self.vector_store else []
+                repo_results = self.vector_store.query_repo_collection(query) if self.vector_store else []
+                all_results = pdf_results + repo_results
+                
+                context_str = "\n\n".join([f"Source {i+1}:\n{item['content']}" for i, item in enumerate(all_results[:3])])
+                
+                user_prompt = f"""Original Query: {query}
+Research Step: {step}
+
+Context from knowledge base:
+{context_str if context_str else "No specific context found in knowledge base."}
+
+Based on this context, extract and summarize key findings relevant to this research step. Be thorough and detail-oriented.
+
+Key Findings:"""
+                
+                logger.info(f"Calling Researcher with model: {model}")
+                summary = self._call_ollama_api(model, user_prompt, system_prompt)
+                logger.info(f"Researcher response: {summary[:200]}...")
+                
+                findings = [{"content": summary, "metadata": {"source": "Research Summary"}}]
+                findings.extend(all_results[:3])
+                
                 return {
                     "findings": findings,
-                    "summary": findings[0]["content"] if findings else "",
+                    "summary": summary,
                     "agent_id": agent_id
                 }
             
@@ -358,7 +432,28 @@ class A2AHandler:
                 # Reasoner: Apply logical reasoning to the step
                 if not step:
                     return {"error": "step is required for reasoner agent"}
-                conclusion = agent.reason(query, step, context)
+                
+                system_prompt = f"""You are a {role} with expertise in {', '.join(expertise)}.
+Your personality: {personality}
+
+Your task is to apply logical reasoning and analysis to information, drawing clear conclusions for each step."""
+                
+                context_str = "\n\n".join([f"Context {i+1}:\n{item.get('content', str(item))}" for i, item in enumerate(context)])
+                
+                user_prompt = f"""Original Query: {query}
+Reasoning Step: {step}
+
+Research Findings:
+{context_str}
+
+Analyze this information and draw a clear, logical conclusion for this step. Be critical and analytical in your reasoning.
+
+Conclusion:"""
+                
+                logger.info(f"Calling Reasoner with model: {model}")
+                conclusion = self._call_ollama_api(model, user_prompt, system_prompt)
+                logger.info(f"Reasoner response: {conclusion[:200]}...")
+                
                 return {
                     "conclusion": conclusion,
                     "reasoning": conclusion,
@@ -369,7 +464,27 @@ class A2AHandler:
                 # Synthesizer: Combine all reasoning steps into final answer
                 if not reasoning_steps:
                     return {"error": "reasoning_steps is required for synthesizer agent"}
-                answer = agent.synthesize(query, reasoning_steps)
+                
+                system_prompt = f"""You are a {role} with expertise in {', '.join(expertise)}.
+Your personality: {personality}
+
+Your task is to combine multiple reasoning steps into a clear, comprehensive final answer."""
+                
+                steps_str = "\n\n".join([f"Step {i+1}:\n{step}" for i, step in enumerate(reasoning_steps)])
+                
+                user_prompt = f"""Original Query: {query}
+
+Reasoning Steps:
+{steps_str}
+
+Combine these reasoning steps into a clear, comprehensive final answer. Be integrative and ensure the answer is coherent.
+
+Final Answer:"""
+                
+                logger.info(f"Calling Synthesizer with model: {model}")
+                answer = self._call_ollama_api(model, user_prompt, system_prompt)
+                logger.info(f"Synthesizer response: {answer[:200]}...")
+                
                 return {
                     "answer": answer,
                     "summary": answer,
