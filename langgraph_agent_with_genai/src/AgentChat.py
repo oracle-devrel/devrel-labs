@@ -37,7 +37,7 @@ llm_final = ChatOCIGenAI(
 )
 
 def build_app(doc_stats: str):
-    sysmsg = SystemMessage(content=f"""You are a document-search assistant for an Oracle 23ai repository.
+    sysmsg = SystemMessage(content=f"""You are a document-search assistant for an Oracle 26ai repository.
 
 AVAILABLE DOCUMENTS SNAPSHOT:
 {doc_stats}

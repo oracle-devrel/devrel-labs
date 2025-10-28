@@ -1,7 +1,7 @@
-# Run Oracle Database 23ai Free on Mac computers with Apple silicon
+# Run Oracle Database 26ai Free on Mac computers with Apple silicon
 
 
-But what about Oracle 23ai and the newer M1/M2/M3 ARM based Apple silicon Macs I hear you ask, so here you go.
+But what about Oracle 26ai and the newer M1/M2/M3 ARM based Apple silicon Macs I hear you ask, so here you go.
 
 See the following blog to understand the complexity [Here](https://ronekins.com/2024/07/02/run-oracle-database-23ai-free-on-mac-computers-with-apple-silicon/)
 

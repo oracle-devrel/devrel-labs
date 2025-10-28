@@ -253,7 +253,7 @@ def test_event_logging():
     
     print_section("Test Complete")
     print("✅ All event types tested successfully!")
-    print("\nThe data lake is now storing all events in Oracle DB 23ai.")
+    print("\nThe data lake is now storing all events in Oracle AI Database 26ai.")
     print("You can query these events using:")
     print("  - SQL queries directly on the database")
     print("  - REST API endpoints (/events/statistics, /events/{type})")

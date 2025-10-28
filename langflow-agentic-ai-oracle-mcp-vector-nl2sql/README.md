@@ -4,7 +4,7 @@
 
 This solution will have you running Agentic AI Workflows with Langflow and Oracle Database MCP, Vector RAG, NL2SQL/”Select AI”, and AI Optimizer in no time.
 
-This is possible for free using Oracle Database 23ai either in the cloud or using the container image, so be sure to check them out [here](https://www.oracle.com/database/free/).
+This is possible for free using Oracle Database 26ai either in the cloud or using the container image, so be sure to check them out [here](https://www.oracle.com/database/free/).
 
 As a bonus, we'll also show you how to create custom components and use custom models in Langflow, how to front your agentic AI system with an interactive Unreal metahuman avatar/hologram, and how to run your models, etc. on **NVIDIA GPUs** and Inference Microservices.
 
@@ -12,7 +12,7 @@ As a bonus, we'll also show you how to create custom components and use custom m
 
 ### Prerequisites
 
-- Oracle Database 23ai
+- Oracle Database 26ai
 - A Langflow account
 - Python environment with dependencies installed (conda, venv...)
 
@@ -75,7 +75,7 @@ Note that an MCP server (or any tool) used in Langflow must be switched to “To
 
 ![6](./img/6-toolenabled.png)
 
-## 3. Oracle Database 23ai MCP - Creation and configuration
+## 3. Oracle Database 26ai MCP - Creation and configuration
 
 Oracle Database has an MCP server, and you can read the doc [here.](https://docs.oracle.com/en/database/oracle/sql-developer-command-line/25.2/sqcug/starting-and-managing-sqlcl-mcp-server.html)
 
@@ -85,11 +85,11 @@ Here is the screenshot of the Oracle SQL Developer extension:
 
 ![7](./img/7-vscode-oracleextension.png)
 
-And here is an example of a connection created for an [Oracle Database 23ai container/image](https://www.oracle.com/database/free/):
+And here is an example of a connection created for an [Oracle Database 26ai container/image](https://www.oracle.com/database/free/):
 
 ![8](./img/8-vscode-containerdb.png)
 
-Here is an example of a connection created for an Oracle Database 23ai running in the cloud (whatever cloud that may be, since Oracle Database now runs in all of them):
+Here is an example of a connection created for an Oracle Database 26ai running in the cloud (whatever cloud that may be, since Oracle Database now runs in all of them):
 
 ![9](./img/9-vscode-clouddb.png)
 
@@ -97,7 +97,7 @@ Notice the names given to them, `myatpdb` and `mycloudatpdb` as that is how you 
 
 ![10](./img/10-vscode-mcp.png)
 
-## 4. Oracle Database 23ai MCP - Usage
+## 4. Oracle Database 26ai MCP - Usage
 
 As you did to create an agent, in the component menu on the left of Langflow, type “agent” or “mcp” and select the “+” next to “MCP Tools” to create one:
 
@@ -165,7 +165,7 @@ Running this flow, you see results like this:
 ![18](./img/18-langflow-vector-example.png)
 
 
-## 6. Oracle Database 23ai NL2SQL/ “Select AI”
+## 6. Oracle Database 26ai NL2SQL/ “Select AI”
 
 There are many ways to go about implementing agentic flows, and a guiding light is almost always to try to bring the AI to the data. Oracle Database NL2SQL/”Select AI” takes natural language queries and converts them to SQL on the database side, and thus follows this best practice.
 
@@ -269,7 +269,7 @@ Easy and powerful, and it has an amazing roadmap ahead as well.
 
 ## 7. Oracle AI Optimizer and Toolkit
 
-The [Oracle AI Optimizer and Toolkit](https://github.com/oracle/ai-optimizer) provides an environment where developers and data scientists can explore the potential of GenAI combined with RAG capabilities. By integrating Oracle Database 23ai AI VectorSearch and soon SelectAI and MCP, the Sandbox enables users to tweak their models and usage. The optimizer has a GUI and is exposed as an endpoint, so we can call it from Langflow. Here is a screenshot of the GUI (this particular screen being of the very useful testbed):
+The [Oracle AI Optimizer and Toolkit](https://github.com/oracle/ai-optimizer) provides an environment where developers and data scientists can explore the potential of GenAI combined with RAG capabilities. By integrating Oracle Database 26ai AI VectorSearch and soon SelectAI and MCP, the Sandbox enables users to tweak their models and usage. The optimizer has a GUI and is exposed as an endpoint, so we can call it from Langflow. Here is a screenshot of the GUI (this particular screen being of the very useful testbed):
 
 ![19](./img/19-aioptimizer-testbed.png)
 
@@ -305,7 +305,7 @@ You can ask things like “I’d like to speak to a financial advisor” or “S
 
 This was first demoed at the `ai4` conference in 2025, [check out this video](https://www.youtube.com/watch?v=mXf0XmbtbNI) for more information.
 
-## 10. Langflow Custom components (for Oracle Database 23ai)
+## 10. Langflow Custom components (for Oracle Database 26ai)
 
 Langflow has many components for models, vector stores, tools, etc., and also allows you to add custom components. Currently, there is no Oracle-specific component built into Langflow; therefore, we have written one for you, and regardless, it is good to know as they are easy to write and convenient to use.
 
@@ -357,4 +357,4 @@ Notice the “Tool Model Enabled” mode. This filters the models that can actua
 
 ## Conclusions
 
-That’s all for now! Thanks for reading, let me know if you have any questions or feedback, and again, this is all built around **Oracle Database 23ai**, which you can run for free either on cloud or container, ready to run with Kubernetes. [Click here to try.](https://www.oracle.com/database/free/)
+That’s all for now! Thanks for reading, let me know if you have any questions or feedback, and again, this is all built around **Oracle Database 26ai**, which you can run for free either on cloud or container, ready to run with Kubernetes. [Click here to try.](https://www.oracle.com/database/free/)

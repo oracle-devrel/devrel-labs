@@ -20,7 +20,7 @@ In this lab, we'll leverage the power of AI with League of Legends in a unique a
 
 By the end of this workshop series, you will be able to use our already-trained ML model to make real-time predictions about our in-game performances. You will also get the chance to train your own model (with your own tuning hyperparameters) and use it while you play League.
 
-We'll also need to create an autonomous database, which will serve as storage for our generated datasets and access points as a whole.
+We'll also need to create an Autonomous AI Database, which will serve as storage for our generated datasets and access points as a whole.
 
 In this Hands-On Lab (HOL), we'll start with the assumption that users know about how League of Legends' matchmaking system works. If you have time and don't know a lot about League of Legends, we recommend reading these lists of articles (included in the repository as well) to get a feel for what we've done in the past, and what we'll partially cover in this Hands-on Lab:
 

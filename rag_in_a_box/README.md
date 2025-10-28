@@ -1,4 +1,4 @@
-# AI RAG in a BOX Demo using Oracle Autonomous Database 23ai and Local LLMs
+# AI RAG in a BOX Demo using Oracle AI Database 26ai and Local LLMs
 
 ## Introduction
 

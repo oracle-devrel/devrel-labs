@@ -2,7 +2,7 @@
 
 [![License: UPL](https://img.shields.io/badge/license-UPL-green)](https://img.shields.io/badge/license-UPL-green)
 
-Welcome to this tutorial on building a web application using Visual Builder Cloud Service! In this tutorial, we'll embark on an exciting journey of leveraging cutting-edge technologies to enhances team meetings by using Oracle 23AI and OCI AI Services for seamless real-time audio transcription, efficient summarization, and easy interrogation of transcriptions. It extracts sentiment, reduces administrative tasks, and provides data-driven insights. This solution, turns meeting data into actionable intelligence and boosts overall productivity.
+Welcome to this tutorial on building a web application using Visual Builder Cloud Service! In this tutorial, we'll embark on an exciting journey of leveraging cutting-edge technologies to enhances team meetings by using Oracle 26ai and OCI AI Services for seamless real-time audio transcription, efficient summarization, and easy interrogation of transcriptions. It extracts sentiment, reduces administrative tasks, and provides data-driven insights. This solution, turns meeting data into actionable intelligence and boosts overall productivity.
 
 # **1. Prepare your user**
 

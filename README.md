@@ -5,7 +5,7 @@ Welcome to DevRel Labs, a collection of AI solutions and tools built with Oracle
 ## 🚀 New AI Solutions (2024)
 
 ### 1. [Oracle MCP AI Agents](./oracle-mcp-ai-agents/)
-**Building AI Agents with Model Context Protocol (MCP) and Oracle Database 23ai**
+**Building AI Agents with Model Context Protocol (MCP) and Oracle Database 26ai**
 
 - **MCP Integration**: Secure tool calling between LLMs and Oracle Database
 - **Real-time Data Access**: Live business data integration without ETL
@@ -14,7 +14,7 @@ Welcome to DevRel Labs, a collection of AI solutions and tools built with Oracle
 - **Use Cases**: Financial advisor, customer service, business intelligence
 
 ### 2. [Oracle RAG Applications](./oracle-rag-applications/)
-**Building RAG Applications with Oracle Database 23ai**
+**Building RAG Applications with Oracle Database 26ai**
 
 - **Vector Embeddings**: Native vector storage and search
 - **Document Processing**: Support for PDF, DOCX, TXT, and other formats
@@ -34,7 +34,7 @@ Welcome to DevRel Labs, a collection of AI solutions and tools built with Oracle
 ## 🔧 Existing Solutions
 
 ### AI & Machine Learning
-- [Agentic RAG](./agentic_rag/) - AI RAG in a BOX Demo using Oracle Autonomous Database 23ai and Local LLMs
+- [Agentic RAG](./agentic_rag/) - AI RAG in a BOX Demo using Oracle AI Database 26ai and Local LLMs
 - [PlaneLLM](./planeLLM/) - PlaneLLM integration with Oracle Database
 - [Neural Networks Hero](./neural_networks_hero/) - Neural network implementations and tutorials
 
@@ -67,9 +67,8 @@ Each solution includes:
 
 ## 📚 Resources
 
-- [Oracle Database 23ai Documentation](https://docs.oracle.com/en/database/oracle/oracle-database/23ai/)
+- [Oracle AI Database 26ai](https://www.oracle.com/database/ai-native-database-26ai/)
 - [Oracle Cloud Infrastructure](https://www.oracle.com/cloud/)
-- [Oracle AI Documentation](https://docs.oracle.com/en/database/oracle/oracle-database/23ai/ai/)
 
 ## 🤝 Contributing
 

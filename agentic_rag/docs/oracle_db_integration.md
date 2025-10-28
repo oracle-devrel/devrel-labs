@@ -1,16 +1,16 @@
-# Oracle DB 23ai Integration
+# Oracle AI Database 26ai Integration
 
-The Agentic RAG system now supports Oracle DB 23ai as a vector store backend, providing enhanced performance, scalability, and enterprise-grade database features.
+The Agentic RAG system now supports Oracle AI Database 26ai as a vector store backend, providing enhanced performance, scalability, and enterprise-grade database features.
 
 ## Overview
 
-Oracle Database 23ai is used as the default vector storage system when available, with ChromaDB serving as a fallback option. This integration leverages Oracle's vector database capabilities for efficient semantic search and retrieval.
+Oracle Database 26ai is used as the default vector storage system when available, with ChromaDB serving as a fallback option. This integration leverages Oracle's vector database capabilities for efficient semantic search and retrieval.
 
 ## Requirements
 
 To use the Oracle DB integration, you need:
 
-1. **Oracle Database 23ai**: With vector extensions enabled
+1. **Oracle Database 26ai**: With vector extensions enabled
 2. **Python Packages**:
    - `oracledb`: For database connectivity
    - `sentence-transformers`: For generating embeddings
@@ -42,7 +42,7 @@ The system will automatically look for these credentials in your `config.yaml` f
 
 The system automatically determines which database to use:
 
-1. First tries to connect to Oracle DB 23ai
+1. First tries to connect to Oracle AI Database 26ai
 2. If connection succeeds, uses Oracle for all vector operations
 3. If Oracle DB is unavailable, falls back to ChromaDB
 
@@ -87,7 +87,7 @@ agent = LocalRAGAgent(use_oracle_db=False)
 
 The Gradio web interface displays which database system is active at the top of the page:
 
-- Green banner: Oracle DB 23ai is active
+- Green banner: Oracle AI Database 26ai is active
 - Red banner: ChromaDB is being used (Oracle DB not available)
 
 ## Troubleshooting
@@ -95,7 +95,7 @@ The Gradio web interface displays which database system is active at the top of 
 If you encounter database connection issues:
 
 1. Verify your Oracle DB credentials and connection string
-2. Check that the Oracle DB 23ai instance is running
+2. Check that the Oracle AI Database 26ai instance is running
 3. Ensure you have the required Python packages installed
 4. Check network connectivity to the database server
 

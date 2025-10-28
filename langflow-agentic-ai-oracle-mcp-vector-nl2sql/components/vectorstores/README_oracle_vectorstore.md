@@ -1,7 +1,7 @@
 
 # Oracle Database Vector Store (Langflow Custom Component)
 
-This custom component wraps `OracleVS` (Oracle 23ai Vector Store) and exposes *configurable retrieval* knobs inside Langflow.
+This custom component wraps `OracleVS` (Oracle 26ai Vector Store) and exposes *configurable retrieval* knobs inside Langflow.
 
 ## Features
 - Local embeddings handle (connect any Embeddings node)

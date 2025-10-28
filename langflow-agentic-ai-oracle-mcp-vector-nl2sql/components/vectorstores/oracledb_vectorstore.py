@@ -3,7 +3,7 @@
 Oracle Database Vector Store Component with Local Embeddings Integration
 (Configurable retrieval behavior for Langflow)
 
-This component integrates Oracle 23ai Vector Store (OracleVS) with a pluggable
+This component integrates Oracle 26ai Vector Store (OracleVS) with a pluggable
 embeddings handle and exposes configurable search parameters such as:
   - number_of_results (k)
   - search_type (similarity, mmr, similarity_score_threshold)
@@ -44,7 +44,7 @@ class OracleDatabaseVectorStoreComponent(LCVectorStoreComponent):
     """
 
     display_name = "Oracle Database Vector Store"
-    description = "Oracle 23ai Vector Store with local embeddings (no cloud dependencies) and configurable retrieval"
+    description = "Oracle 26ai Vector Store with local embeddings (no cloud dependencies) and configurable retrieval"
     name = "oracledb_vector"
 
     # ---------------------

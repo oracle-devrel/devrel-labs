@@ -3,13 +3,13 @@
 
 We all know the frustration of searching endlessly for a document you know exists somewhere in your personal files. Traditional search often relies on exact file names or rigid folder structures, making it difficult to quickly find what you need. But what if you could simply chat with your documents and instantly locate the right file—summarized, indexed, and ready to use?
 
-In this article, I’ll share a real-life example of how I built a solution that does exactly that. By combining **LangGraph** with **Oracle Generative AI** and **Oracle Database 23ai**, I created an intelligent system that automatically extracts metadata, generates concise summaries, and indexes file contents for easy retrieval. The result is a conversational agent that transforms how we interact with our personal data: instead of searching through folders, you ask questions in natural language and the system finds the right document for you.
+In this article, I’ll share a real-life example of how I built a solution that does exactly that. By combining **LangGraph** with **Oracle Generative AI** and **Oracle Database 26ai**, I created an intelligent system that automatically extracts metadata, generates concise summaries, and indexes file contents for easy retrieval. The result is a conversational agent that transforms how we interact with our personal data: instead of searching through folders, you ask questions in natural language and the system finds the right document for you.
 
 >**Note**: This agent is intended for file search only. It does not have the ability to answer in-depth questions regarding the content of your files, as it can only access the summary of each document.  
 
 # File Indexing: Discovery what your files are about
 
-This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python code, Generative AI models and Oracle 23ai database
+This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python code, Generative AI models and Oracle 26ai database
 
 ![T1_1](images/FileProcessingFlow.png "T1_1")
 
@@ -22,7 +22,7 @@ This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python 
 
 
 ## Technologies powering this solution  
-  - [Oracle Autonomous Database 23ai](https://docs.oracle.com/en-us/iaas/autonomous-database-serverless/doc/autonomous-intro-adb.html#GUID-8EAA5AE6-397D-4E9A-9BD0-3E37A0345E24) : Oracle 23ai is a converged database that seamlessly combines advanced vector search with proven relational capabilities, enabling AI-driven and traditional workloads in a single platform.     
+  - [Oracle Oracle AI Database 26ai](https://docs.oracle.com/en-us/iaas/autonomous-database-serverless/doc/autonomous-intro-adb.html#GUID-8EAA5AE6-397D-4E9A-9BD0-3E37A0345E24) : Oracle 26ai is a converged database that seamlessly combines advanced vector search with proven relational capabilities, enabling AI-driven and traditional workloads in a single platform.     
   - [LangGraph](https://github.com/langchain-ai/langgraph) : LangGraph is a low-level, stateful orchestration framework for building and managing long-running AI agents and complex multi-agent workflows using graph-based architecture 
   - [OCI Generative AI Services](https://docs.oracle.com/en-us/iaas/Content/generative-ai/getting-started.htm): OCI Generative AI is a managed service offering customizable LLMs for chat, text generation and summarization.  
   - [Sentence Transformers](https://pypi.org/project/sentence-transformers/): The sentence-transformers package is a Python framework designed for creating and working with embeddings—dense vector representations of text that capture semantic meaning. Built on top of PyTorch and Hugging Face Transformers, it simplifies the process of encoding sentences, paragraphs, or documents into fixed-size vectors suitable for a wide range of Natural Language Processing (NLP) tasks.  
@@ -33,7 +33,7 @@ This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python 
 
  - Oracle account with admin level access permissions, if not admin level then apply the needed policies [Getting Access to Generative AI](https://docs.oracle.com/en-us/iaas/Content/generative-ai/iam-policies.htm)
  - Oracle CLI installed on your local machine, see details here: [Installing the CLI](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm)
- - Oracle Autonomous Database 23ai, see details here: [Provision an Autonomous Database Instance](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-provision.html) 
+ - Oracle AI Database 26ai, see details here: [Provision an Autonomous AI Database Instance](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-provision.html) 
  
  - Python 3.12.10 installed, you can find more details here [Simple Python Version Management: pyenv](https://github.com/pyenv/pyenv) 
  - OpenGL libs installed on your machine, if you're using Oracle Linux, you can install by running the command:
@@ -47,7 +47,7 @@ This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python 
 
 1. Collect all database needed information:  
 
-    1.1 - Go to your autonomous Oracle 23ai database, click on **Database Connection** and then click on **Download Wallet**.
+    1.1 - Go to your autonomous Oracle 26ai database, click on **Database Connection** and then click on **Download Wallet**.
       >**Note** Take note of your database wallet password!   
 
     1.2 - Click on **Storage**, under **Object Storage & Archive Storage** click on **Buckets**, then create a new bucket to store your database wallet, then upload the downloaded wallet zip file.  
@@ -117,7 +117,7 @@ This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python 
 
 
     
-    2.3 - Initialize the database table on Oracle 23ai  
+    2.3 - Initialize the database table on Oracle 26ai  
     Run the **init_database.py** script that will create the table. 
 
     ```
@@ -143,7 +143,7 @@ This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python 
     ![T02_04](images/T02_04_IndexResultPart1.png "T02_04")
     ![T02_04](images/T02_04_IndexResultPart2.png "T02_04")  
 
-    The sample files from **samples** directory are now successfully indexed and stored your Oracle 23ai database.
+    The sample files from **samples** directory are now successfully indexed and stored your Oracle 26ai database.
   
     2.5 - Let's validate our indexed data (this is not our Search Agent).  
     To validate the data, run the **validation.py** script. This script verifies the loaded data and checks the distances returned by the model when querying specific columns. The results can be used to confirm and refine the distance thresholds applied in the Search Agent.  
@@ -237,7 +237,7 @@ This blog demonstrates how to index PDF, Images, DOCx or TXT files using Python 
 ## Conclusion
 
 
-This project demonstrates how combining LangGraph, Oracle Generative AI, and Oracle Database 23ai can transform the way we interact with our files—making search faster, smarter, and more intuitive. While the implementation here focuses on document indexing and retrieval, the same principles can be extended to many other real-world scenarios. By experimenting with additional tools, refining thresholds, and expanding metadata extraction, you can evolve this agent into a powerful foundation for building AI-driven knowledge management systems. The journey does not end here—this is just the starting point for reimagining how we connect with our data.  
+This project demonstrates how combining LangGraph, Oracle Generative AI, and Oracle Database 26ai can transform the way we interact with our files—making search faster, smarter, and more intuitive. While the implementation here focuses on document indexing and retrieval, the same principles can be extended to many other real-world scenarios. By experimenting with additional tools, refining thresholds, and expanding metadata extraction, you can evolve this agent into a powerful foundation for building AI-driven knowledge management systems. The journey does not end here—this is just the starting point for reimagining how we connect with our data.  
 
 ## Contributing
 

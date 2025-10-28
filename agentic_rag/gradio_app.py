@@ -50,7 +50,7 @@ repo_processor = RepoProcessor()
 if ORACLE_DB_AVAILABLE:
     try:
         vector_store = OraDBVectorStore()
-        print("Using Oracle DB 23ai for vector storage")
+        print("Using Oracle AI Database 26ai for vector storage")
     except Exception as e:
         print(f"Error initializing Oracle DB: {str(e)}")
         print("Falling back to ChromaDB")
@@ -777,13 +777,13 @@ def create_interface():
         if ORACLE_DB_AVAILABLE and hasattr(vector_store, 'connection'):
             gr.Markdown("""
             <div style="padding: 10px; background-color: #d4edda; color: #155724; border-radius: 5px; margin-bottom: 15px;">
-            ✅ <strong>Oracle DB 23ai</strong> is active and being used for vector storage.
+            ✅ <strong>Oracle AI Database 26ai</strong> is active and being used for vector storage.
             </div>
             """)
         else:
             gr.Markdown("""
             <div style="padding: 10px; background-color: #f8d7da; color: #721c24; border-radius: 5px; margin-bottom: 15px;">
-            ⚠️ <strong>ChromaDB</strong> is being used for vector storage. Oracle DB 23ai is not available.
+            ⚠️ <strong>ChromaDB</strong> is being used for vector storage. Oracle AI Database 26ai is not available.
             </div>
             """)
         

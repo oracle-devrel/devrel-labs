@@ -19,7 +19,7 @@ class OracleDatabaseEmbeddingsComponent(LCModelComponent):
     """
 
     display_name = "Oracle Database Local Embeddings"
-    description = "Local SentenceTransformer embeddings for Oracle 23ai (384 dimensions, no cloud dependencies)"
+    description = "Local SentenceTransformer embeddings for Oracle 26ai (384 dimensions, no cloud dependencies)"
 
     inputs = [
         DropdownInput(
@@ -131,7 +131,7 @@ class OracleDatabaseEmbeddingsComponent(LCModelComponent):
         """
         model_info = self.get_model_info()
 
-        # Oracle 23ai works best with these dimensions
+        # Oracle 26ai works best with these dimensions
         recommended_dims = [384, 512, 768]
         model_dims = model_info.get("dimensions", 0)
 
